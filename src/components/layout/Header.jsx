@@ -12,7 +12,7 @@ const Navbar = () => {
     { label: 'Our homes', href: '/about' },
     { label: 'How to book', href: '/howtobook' },
     { label: 'Rooms for rent', href: '/properties' },
-    { label: 'Terms & conditions', href: '/about' },
+    { label: 'Terms & conditions', href: '/terms' },
     { label: 'Contact', href: '/about' }
   ];
 
