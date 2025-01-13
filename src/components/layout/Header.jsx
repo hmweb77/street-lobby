@@ -9,11 +9,11 @@ const Navbar = () => {
 
   const menuItems = [
     { label: 'About', href: '/about' },
-    { label: 'Our homes', href: '/homes' },
-    { label: 'How to book', href: '/how-to-book' },
-    { label: 'Rooms for rent', href: '/rooms' },
-    { label: 'Terms & conditions', href: '/terms' },
-    { label: 'Contact', href: '/contact' }
+    { label: 'Our homes', href: '/about' },
+    { label: 'How to book', href: '/howtobook' },
+    { label: 'Rooms for rent', href: '/properties' },
+    { label: 'Terms & conditions', href: '/about' },
+    { label: 'Contact', href: '/about' }
   ];
 
   return (
