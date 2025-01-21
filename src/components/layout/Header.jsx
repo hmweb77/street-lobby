@@ -18,7 +18,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 bg-white z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-white z-50 ">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16 border-b border-gray-100">
             {/* Logo */}
@@ -33,11 +33,17 @@ const Navbar = () => {
             </Link>
 
             {/* Right side icons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center  ">
               {/* Notification Bell */}
-              <button className="relative p-2 hover:bg-gray-100 rounded-full">
-                <Bell className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-black text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+              <button className="relative p-2 hover:bg-gray-100 rounded-full pt-1 ">
+                <Image
+                width={20}
+                height={10}
+                src="/iconNotification.svg"
+
+                />
+                {/* <Bell className="w-6 h-6" /> */}
+                <span className="absolute -top-1 -right-1 text-black text-xs w-4 h-4 rounded-full flex items-center justify-center font-medium">
                   1
                 </span>
               </button>
@@ -56,13 +62,13 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="absolute top-16 right-0 w-64 bg-white shadow-lg rounded-bl-lg overflow-hidden">
+          <div className="absolute top-14 right-6 w-64  bg-white shadow-lg rounded-b-lg overflow-hidden">
             <div className="py-2">
               {menuItems.map((item, index) => (
                 <Link
                   key={index}
                   href={item.href}
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors border-t-[1px] border-gray-100"
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}

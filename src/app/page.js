@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 
+
 const LandingPage = () => {
-  const [expandedFilter, setExpandedFilter] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState("2024 / 2025");
-  const [priceValue, setPriceValue] = useState(650);
+  const [expandedFilter, setExpandedFilter] = useState(null);// Manages which filter section (if any) is expanded
+  const [isOpen, setIsOpen] = useState(false);//Tracks whether the year selection dropdown is open
+  const [selectedYear, setSelectedYear] = useState("2024 / 2025");//tores the year currently chosen by the user
+  const [priceValue, setPriceValue] = useState(650);//Tracks the user-selected price range for filtering
 
   const filters = [
    
@@ -145,7 +146,7 @@ const LandingPage = () => {
           </div>
 
           {/* Filters */}
-          <div className="space-y-4 px-12 text-sm">
+          <div className="space-y-4 px-12 text-sm ">
             {filters.map((filter) => (
               <div key={filter.id} className="border-t border-gray-200 pt-4">
                 <button
