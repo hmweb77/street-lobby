@@ -40,7 +40,7 @@ const Navbar = () => {
                 width={20}
                 height={10}
                 src="/iconNotification.svg"
-
+                alt='icon'
                 />
                 {/* <Bell className="w-6 h-6" /> */}
                 <span className="absolute -top-1 -right-1 text-black text-xs w-4 h-4 rounded-full flex items-center justify-center font-medium">

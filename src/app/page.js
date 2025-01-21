@@ -5,11 +5,19 @@ import Image from "next/image";
 
 
 const LandingPage = () => {
+
+   
   const [expandedFilter, setExpandedFilter] = useState(null);// Manages which filter section (if any) is expanded
   const [isOpen, setIsOpen] = useState(false);//Tracks whether the year selection dropdown is open
   const [selectedYear, setSelectedYear] = useState("2024 / 2025");//tores the year currently chosen by the user
   const [priceValue, setPriceValue] = useState(650);//Tracks the user-selected price range for filtering
-
+  const [selectedFilters, setSelectedFilters] = useState({
+    period: null,
+    location: null,
+    roomType: null,
+    colivingCapacity: null,
+    propertyType: null,
+  });
   const filters = [
    
     {
@@ -81,7 +89,11 @@ const LandingPage = () => {
     setSelectedYear(year);
     setIsOpen(false);
   };
-
+  //handle search btn 
+  const handleSearch =()=>{
+    console.log("Selected Filters:", selectedFilters);
+  }
+  
   return (
   
       <main className=" py-8">
@@ -89,7 +101,7 @@ const LandingPage = () => {
           {/* Hero Section */}
           <div className=" flex justify-center">
             <h1 className="relative text-4xl  font-black mb-2 tracking-wide">
-              <span className="absolute -left-1 text-[#4AE54A] z-0">
+              <span className="absolute -left-1 text-[#4AE54A] z-0 ">
                 BOOK NOW
               </span>
               <span className="relative text-black z-10">BOOK NOW</span>
@@ -118,7 +130,7 @@ const LandingPage = () => {
               onClick={() => setIsOpen(!isOpen)}
               className="w-full border-2 border-black rounded py-2 px-4 flex items-center justify-between font-bold text-lg"
             >
-              <span>{selectedYear}</span>
+              <span className="m-auto text-lg">{selectedYear}</span>
               <ChevronRight
                 className={`w-5 h-5 transform transition-transform ${isOpen ? "rotate-90" : ""}`}
               />
@@ -127,10 +139,10 @@ const LandingPage = () => {
             {isOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-40 "
                   onClick={() => setIsOpen(false)}
                 />
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-black rounded z-50">
+                <div className="relative  top-full left-0 right-0 mt-2 bg-white border-2 border-black rounded z-50">
                   {years.map((year) => (
                     <button
                       key={year}
@@ -146,9 +158,9 @@ const LandingPage = () => {
           </div>
 
           {/* Filters */}
-          <div className="space-y-4 px-12 text-sm ">
+          <div className="space-y-4 px-12 text-sm  ">
             {filters.map((filter) => (
-              <div key={filter.id} className="border-t border-gray-200 pt-4">
+              <div key={filter.id} className="border-t border-gray-100 pt-4">
                 <button
                   className="w-full text-left"
                   onClick={() =>
@@ -157,7 +169,7 @@ const LandingPage = () => {
                     )
                   }
                 >
-                  <span className="text-sm">
+                  <span className="text-sm font-semibold">
                     {expandedFilter === filter.id ? "−" : "+"} {filter.label}
                   </span>
                 </button>
@@ -170,7 +182,13 @@ const LandingPage = () => {
                           min={filter.min}
                           max={filter.max}
                           value={filter.value}
-                          onChange={(e) => filter.onChange(e.target.value)}
+                          onChange={(e) => {
+                            filter.onChange(e.target.value);
+                            setSelectedFilters((prev) => ({
+                              ...prev,
+                              [filter.id]: e.target.value,
+                            }));
+                          }}
                           className="w-full"
                         />
                         <div className="flex justify-between text-sm text-gray-600 mt-2">
@@ -190,8 +208,14 @@ const LandingPage = () => {
                             name={filter.id}
                             value={option.value}
                             className="form-radio"
+                            onChange={() =>
+                              setSelectedFilters((prev) => ({
+                                ...prev,
+                                [filter.id]: option.value,
+                              }))
+                            }
                           />
-                          <span className="text-gray-700">{option.label}</span>
+                          <span className="text-gray-400">{option.label}</span>
                         </label>
                       ))
                     )}
@@ -203,7 +227,8 @@ const LandingPage = () => {
 
           {/* Search Button */}
           <div className="mt-8 flex justify-center">
-            <button className=" bg-black text-white py-3 px-8 rounded-full font-medium">
+            <button className=" bg-black text-white py-3 px-8 rounded-full font-medium"
+            onClick={handleSearch}>
               Search
             </button>
           </div>
