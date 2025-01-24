@@ -1,33 +1,49 @@
 // app/components/booking/StepProcessBar.tsx
-'use client';
+"use client";
 
-import { Check } from 'lucide-react';
-
-
-
-const StepProcessBar = ({ currentStep = 1 }) => {
+import { Check } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+const StepProcessBar = ({ currentStep, setCurrentStep }) => {
   const steps = [
-    { number: 1, label: 'Bookings' },
-    { number: 2, label: 'Eligibility check' },
-    { number: 3, label: 'Payment' }
+    { number: 1, label: "Bookings" },
+    { number: 2, label: "Eligibility check" },
+    { number: 3, label: "Payment" }
   ];
-
+  const handleLeft = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
   return (
-    <nav className="w-full py-4" aria-label="Booking process">
-      <div className="flex justify-between items-center">
+    <nav className=" py-4 px-2 ml-5" aria-label="Booking process">
+      <div className="flex">
+        <ChevronLeft
+          className="relative top-1 right-2 hover:cursor-pointer"
+          onClick={() => {
+            handleLeft();
+          }}
+        />
         {steps.map((step, index) => (
-          <div key={step.number} className="flex flex-col items-center flex-1">
-            <div className="flex items-center">
+          <div
+            key={step.number}
+            className={`flex flex-col ${
+              step.number === 3 ? "w-14 " : "flex-1"
+            }`}
+          >
+            <div className="">
               <div
                 className={`
-                  w-8 h-8 rounded-full flex items-center justify-center shrink-0
-                  ${currentStep > step.number 
-                    ? 'bg-green-500 text-white' 
-                    : currentStep === step.number 
-                      ? 'bg-black text-white'
-                      : 'bg-gray-200 text-gray-500'}
+                  w-8 h-8 rounded-full flex items-center justify-center shrink-0 
+                
+                  ${
+                    currentStep > step.number
+                      ? "bg-green-500 text-white"
+                      : currentStep === step.number
+                      ? "bg-black text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }
                 `}
-                aria-current={currentStep === step.number ? 'step' : undefined}
+                aria-current={currentStep === step.number ? "step" : undefined}
               >
                 {currentStep > step.number ? (
                   <Check className="w-5 h-5" />
@@ -36,23 +52,33 @@ const StepProcessBar = ({ currentStep = 1 }) => {
                 )}
               </div>
               {index < steps.length - 1 && (
-                <div 
-                  className={`
-                    h-0.5 w-full mx-4
-                    ${currentStep > step.number + 1 
-                      ? 'bg-green-500'
-                      : 'bg-gray-200'}
-                  `}
-                  aria-hidden="true"
-                />
+                <div className=" ">
+                  <div
+                    className={`
+                  h-0.5 mx-4 
+                  relative -top-4 left-4 
+                  ${
+                    currentStep >= step.number + 1
+                      ? "bg-green-500"
+                      : "bg-gray-200"
+                  }
+                `}
+                    aria-hidden="true"
+                  />
+                </div>
               )}
             </div>
-            <span 
+
+            <span
               className={`
-                mt-2 text-sm
-                ${currentStep === step.number 
-                  ? 'text-black font-medium' 
-                  : 'text-gray-500'}
+                mt-2 text-sm 
+                relative  right-2
+                ${
+                  currentStep === step.number
+                    ? "text-black font-medium"
+                    : "text-gray-500"
+                }
+               
               `}
             >
               {step.label}
