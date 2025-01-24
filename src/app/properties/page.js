@@ -1,78 +1,124 @@
 // app/components/booking/BookingContainer.js
-'use client';
+"use client";
 
-import { useState } from 'react';
-import StepProcessBar from '@/components/booking/ProcessBar';
-
+import { useState } from "react";
+import StepProcessBar from "@/components/booking/ProcessBar";
+import Image from "next/image";
 // Room Selection Component
 const RoomSelection = ({ onNext }) => {
   const rooms = [
     {
       id: 1,
+      img: "/room.jpg",
       name: "ARROIOS 21, room 1",
       details: "Anjos / 16m2 / double bed",
-      price: "650€"
+      price: "650€",
+      About: `apartment w/ 4 double bed rooms/
+      1 single bed room / 2 shared WC's,
+      hosts 5 people`,
+      years: {
+        "2024/2025": ["2nd semester", "Summer"],
+        "2025/2026": ["1st semester", "2nd semester", "Summer"]
+      }
     },
     {
       id: 2,
+      img: "/room.jpg",
       name: "ARROIOS 21, room 2",
       details: "Anjos / 12m2 / double bed",
-      price: "500€"
+      price: "500€",
+      About: `apartment w/ 4 double bed rooms/
+      1 single bed room / 2 shared WC's,
+      hosts 5 people`,
+      years: {
+        "2024/2025": ["2nd semester", "Summer"],
+        "2025/2026": ["1st semester", "2nd semester"]
+      }
     }
   ];
 
   return (
     <section className="space-y-4" aria-label="Room selection">
       {rooms.map((room) => (
-        <div key={room.id} className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-medium text-lg">{room.name}</h3>
-              <p className="text-gray-500 text-sm">{room.details}</p>
-              <p className="text-gray-500 text-sm">{room.price}</p>
+        <div key={room.id} className="bg-white rounded-lg shadow-md">
+          <Image
+            src={room.img}
+            alt="room 1"
+            width={300}
+            height={400}
+            className="w-full h-full"
+          />
+          <div className="px-5 py-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-medium text-lg">{room.name}</h3>
+                <p className="text-gray-500 text-sm">
+                  {room.details} / {room.price}
+                </p>
+              </div>
+              <button
+                onClick={onNext}
+                className="px-6 py-2 border border-black rounded-full hover:bg-black hover:text-gray-200 transition-colors duration-700"
+              >
+                Book
+              </button>
             </div>
-            <button
-              onClick={onNext}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Book
-            </button>
-          </div>
-          <div className="mt-4 space-y-2">
-            <details className="group">
-              <summary className="cursor-pointer hover:text-gray-700 list-none">
-                + About this property
-              </summary>
-              <div className="pl-4 mt-2 text-sm text-gray-600">
-                <p>apartment w/ 4 double bed rooms</p>
-                <p>1 single bed room / 2 shared WC's</p>
-                <p>hosts 5 people</p>
-              </div>
-            </details>
-            <details className="group">
-              <summary className="cursor-pointer hover:text-gray-700 list-none">
-                + Availability
-              </summary>
-              <div className="pl-4 mt-2">
-                <p>2024/2025</p>
-                <p>2025/2026</p>
-              </div>
-            </details>
-            <details className="group">
-              <summary className="cursor-pointer hover:text-gray-700 list-none">
-                + Services
-              </summary>
-              <div className="pl-4 mt-2">
-                <p>Weekly room cleaning</p>
-                <p>Weekly replenishment of linen</p>
-              </div>
-            </details>
+            <div className="mt-4 space-y-2">
+              <details className="group">
+                <summary className="cursor-pointer hover:text-gray-700 list-none font-semibold">
+                  + About this property
+                </summary>
+                <div className="pl-4 mt-2 text-sm text-gray-400">
+                  <p className="w-56">{room.About}</p>
+                </div>
+              </details>
+              <details className="group">
+                <summary className="cursor-pointer hover:text-gray-700 list-none font-semibold">
+                  + Availability
+                </summary>
+                <div className="px-2 py-2 text-sm">
+                  {Object.keys(room.years).map((year) => (
+                    <div key={year}>
+                      <label className="font-semibold text-gray-500 p-2 block">
+                        {year}
+                      </label>
+                      {room.years[year].map((term) => (
+                        <label key={term} className="px-2 text-gray-400 block">
+                          <input
+                            type="checkbox"
+                            name={`semester_${year}`}
+                            value={term}
+                          />{" "}
+                          {term}
+                        </label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
+              <details className="group">
+                <summary className="cursor-pointer hover:text-gray-700 list-none font-semibold">
+                  + Services
+                </summary>
+                <div className="pl-4 mt-2">
+                  <label className="text-gray-400 block text-sm">
+                    <input
+                      type="checkbox"
+                      name="roomCleaning"
+                      value="Weekly room cleaning"
+                    />{" "}
+                    Weekly room cleaning
+                  </label>
+                </div>
+              </details>
+            </div>
           </div>
         </div>
       ))}
     </section>
   );
 };
+
 
 // Eligibility Check Component
 const EligibilityCheck = ({ onNext }) => {
@@ -143,9 +189,7 @@ const Payment = () => {
   return (
     <section className="text-center p-8" aria-label="Payment">
       <h2 className="text-xl font-medium mb-4">Payment Details</h2>
-      <p className="text-gray-600">
-        Payment section to be implemented
-      </p>
+      <p className="text-gray-600">Payment section to be implemented</p>
     </section>
   );
 };
@@ -173,7 +217,10 @@ const BookingContainer = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <StepProcessBar currentStep={currentStep} setCurrentStep={setCurrentStep}/>
+      <StepProcessBar
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+      />
       <main className="mt-8">
         {renderStep()}
       </main>
