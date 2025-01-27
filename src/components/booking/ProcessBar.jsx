@@ -37,7 +37,7 @@ const StepProcessBar = ({ currentStep, setCurrentStep }) => {
                 
                   ${
                     currentStep > step.number
-                      ? "bg-green-500 text-white"
+                      ? "bg-black text-white"
                       : currentStep === step.number
                       ? "bg-black text-white"
                       : "bg-gray-200 text-gray-500"
@@ -59,7 +59,7 @@ const StepProcessBar = ({ currentStep, setCurrentStep }) => {
                   relative -top-4 left-4 
                   ${
                     currentStep >= step.number + 1
-                      ? "bg-green-500"
+                      ? "bg-black"
                       : "bg-gray-200"
                   }
                 `}

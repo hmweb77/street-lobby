@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Image from "next/image";
+import properties from "@/lib/properties"; // Import properties data
 
 const LandingPage = () => {
   const [expandedFilter, setExpandedFilter] = useState(null);
@@ -16,12 +17,12 @@ const LandingPage = () => {
   });
 
   const years = ["2024 / 2025", "2025 / 2026", "2026 / 2027"];
-  
+
   const navigateYear = (direction) => {
     const currentIndex = years.indexOf(selectedYear);
-    if (direction === 'next' && currentIndex < years.length - 1) {
+    if (direction === "next" && currentIndex < years.length - 1) {
       setSelectedYear(years[currentIndex + 1]);
-    } else if (direction === 'prev' && currentIndex > 0) {
+    } else if (direction === "prev" && currentIndex > 0) {
       setSelectedYear(years[currentIndex - 1]);
     }
   };
@@ -42,10 +43,10 @@ const LandingPage = () => {
       id: "location",
       label: "Location",
       options: [
-        { label: "Anjos", value: "anjos" },
-        { label: "Avenidas Novas", value: "avenidas" },
-        { label: "Estefânia", value: "estefania" },
-        { label: "Costa de Caparica", value: "costa" },
+        { label: "Anjos", value: "Anjos" },
+        { label: "Avenidas Novas", value: "Avenidas Novas" },
+        { label: "Arroios", value: "Arroios" },
+        { label: "Costa de Caparica", value: "Costa de Caparica" },
         { label: "Doesn't matter", value: "any" },
       ],
     },
@@ -53,9 +54,9 @@ const LandingPage = () => {
       id: "roomType",
       label: "Room type",
       options: [
-        { label: "Single bed", value: "single" },
-        { label: "Double bed", value: "double" },
-        { label: "Twin beds", value: "twin" },
+        { label: "Single bed", value: "single bed" },
+        { label: "Double bed", value: "double bed" },
+        { label: "Twin beds", value: "twin beds" },
         { label: "Suite", value: "suite" },
         { label: "Any", value: "any" },
       ],
@@ -73,9 +74,9 @@ const LandingPage = () => {
       id: "colivingCapacity",
       label: "Coliving capacity",
       options: [
-        { label: "3 people or less", value: "3" },
-        { label: "6 people or less", value: "6" },
-        { label: "More than 6 people", value: "7plus" },
+        { label: "3 people or less", value: "3 people" },
+        { label: "6 people or less", value: "6 people" },
+        { label: "More than 6 people", value: "7 people" },
         { label: "Doesn't matter", value: "any" },
       ],
     },
@@ -90,8 +91,19 @@ const LandingPage = () => {
     },
   ];
 
+  // Filter function to apply filters to the properties list
+  const filteredProperties = properties.filter((property) => {
+    return (
+      (selectedFilters.location === null || selectedFilters.location === "any" || property.location === selectedFilters.location) &&
+      (selectedFilters.roomType === null || selectedFilters.roomType === "any" || property.roomType === selectedFilters.roomType) &&
+      (selectedFilters.colivingCapacity === null || selectedFilters.colivingCapacity === "any" || property.colivingCapacity === selectedFilters.colivingCapacity) &&
+      (selectedFilters.propertyType === null || selectedFilters.propertyType === "any" || property.propertyType.toLowerCase().includes(selectedFilters.propertyType.toLowerCase())) &&
+      (priceValue >= parseInt(property.priceWinter.replace("€", "")))
+    );
+  });
+
   const handleSearch = () => {
-    console.log("Selected Filters:", selectedFilters);
+    console.log("Filtered Properties:", filteredProperties);
   };
 
   return (
@@ -120,17 +132,17 @@ const LandingPage = () => {
         <div className="relative w-full mb-8 px-12">
           <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center justify-between font-bold text-lg">
             <button
-              onClick={() => navigateYear('prev')}
+              onClick={() => navigateYear("prev")}
               className="p-2 hover:bg-gray-100 rounded-full"
               disabled={years.indexOf(selectedYear) === 0}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            
+
             <span className="text-lg">{selectedYear}</span>
-            
+
             <button
-              onClick={() => navigateYear('next')}
+              onClick={() => navigateYear("next")}
               className="p-2 hover:bg-gray-100 rounded-full"
               disabled={years.indexOf(selectedYear) === years.length - 1}
             >
@@ -163,30 +175,18 @@ const LandingPage = () => {
                         value={filter.value}
                         onChange={(e) => {
                           filter.onChange(e.target.value);
-                          setSelectedFilters((prev) => ({
-                            ...prev,
-                            [filter.id]: e.target.value,
-                          }));
+                          setPriceValue(e.target.value);
                         }}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-sm text-gray-600 mt-2">
-                        <span>{filter.min}€</span>
-                        <span>{filter.value}€</span>
-                        <span>{filter.max}€</span>
-                      </div>
                     </div>
                   ) : (
                     filter.options.map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2"
-                      >
+                      <label key={option.value} className="flex items-center gap-2">
                         <input
                           type="radio"
                           name={filter.id}
                           value={option.value}
-                          className="form-radio"
                           onChange={() =>
                             setSelectedFilters((prev) => ({
                               ...prev,
@@ -205,10 +205,7 @@ const LandingPage = () => {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <button 
-            className="bg-black text-white py-3 px-8 rounded-full font-medium"
-            onClick={handleSearch}
-          >
+          <button className="bg-black text-white py-3 px-8 rounded-full font-medium" onClick={handleSearch}>
             Search
           </button>
         </div>
