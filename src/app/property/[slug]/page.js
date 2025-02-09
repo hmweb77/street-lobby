@@ -1,10 +1,10 @@
 import { sanityClient } from "@/lib/sanity";
 
-export async function generateStaticParams() {
-  const query = `*[_type == "property"]{ slug }`;
-  const properties = await sanityClient.fetch(query);
-  return properties.map((property) => ({ slug: property.slug.current }));
-}
+// export async function generateStaticParams() {
+//   const query = `*[_type == "property"]{ slug }`;
+//   const properties = await sanityClient.fetch(query);
+//   return properties.map((property) => ({ slug: property.slug.current }));
+// }
 
 export default async function PropertyPage({ params }) {
   const query = `*[_type == "property" && slug.current == $slug][0]{
