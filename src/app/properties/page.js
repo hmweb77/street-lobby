@@ -1,24 +1,41 @@
+// app/components/booking/BookingContainer.js
 "use client";
 
 import { useState } from "react";
 import StepProcessBar from "@/components/booking/ProcessBar";
 import Image from "next/image";
-import properties from "@/lib/properties"; // Importing properties data
-
 // Room Selection Component
 const RoomSelection = ({ onNext }) => {
-  const rooms = properties.map((property, index) => ({
-    id: index + 1,
-    img: "/room.jpg",
-    name: `${property.propertyName}, room ${property.roomNumber}`,
-    details: `${property.location} / ${property.propertyType.split(" ")[0]} / ${property.roomType}`,
-    price: `${property.priceWinter}`,
-    About: `${property.propertyType}, hosts ${property.colivingCapacity}`,
-    years: {
-      "2024/2025": ["2nd semester", "Summer"],
-      "2025/2026": ["1st semester", "2nd semester", "Summer"],
+  const rooms = [
+    {
+      id: 1,
+      img: "/room.jpg",
+      name: "ARROIOS 21, room 1",
+      details: "Anjos / 16m2 / double bed",
+      price: "650€",
+      About: `apartment w/ 4 double bed rooms/
+      1 single bed room / 2 shared WC's,
+      hosts 5 people`,
+      years: {
+        "2024/2025": ["2nd semester", "Summer"],
+        "2025/2026": ["1st semester", "2nd semester", "Summer"]
+      }
     },
-  }));
+    {
+      id: 2,
+      img: "/room.jpg",
+      name: "ARROIOS 21, room 2",
+      details: "Anjos / 12m2 / double bed",
+      price: "500€",
+      About: `apartment w/ 4 double bed rooms/
+      1 single bed room / 2 shared WC's,
+      hosts 5 people`,
+      years: {
+        "2024/2025": ["2nd semester", "Summer"],
+        "2025/2026": ["1st semester", "2nd semester"]
+      }
+    }
+  ];
 
   return (
     <section className="space-y-4" aria-label="Room selection">
@@ -26,7 +43,7 @@ const RoomSelection = ({ onNext }) => {
         <div key={room.id} className="bg-white rounded-lg shadow-md">
           <Image
             src={room.img}
-            alt={room.name}
+            alt="room 1"
             width={300}
             height={400}
             className="w-full h-full"
@@ -101,6 +118,7 @@ const RoomSelection = ({ onNext }) => {
     </section>
   );
 };
+
 
 // Eligibility Check Component
 const EligibilityCheck = ({ onNext }) => {
@@ -181,7 +199,7 @@ const BookingContainer = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const handleNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 3));
+    setCurrentStep(prev => Math.min(prev + 1, 3));
   };
 
   const renderStep = () => {
@@ -203,7 +221,9 @@ const BookingContainer = () => {
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
       />
-      <main className="mt-8">{renderStep()}</main>
+      <main className="mt-8">
+        {renderStep()}
+      </main>
     </div>
   );
 };

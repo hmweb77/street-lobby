@@ -1,8 +1,7 @@
-
+import Footer from "@/components/layout/Footer";
 import "./globals.css";
 import Navbar from "@/components/layout/Header";
-
-
+import { BookingProvider } from '@/context/BookingContext'
 
 export const metadata = {
   title: "Street Lobby",
@@ -13,8 +12,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Navbar/>
-        {children}
+        <BookingProvider>
+          <Navbar/>
+          {children}
+        </BookingProvider>
+        <Footer/>
       </body>
     </html>
   );
