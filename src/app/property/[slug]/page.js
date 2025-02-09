@@ -1,5 +1,6 @@
-import { sanityClient } from "@/lib/sanity";
 
+
+import { client } from "@/sanity/lib/client";
 // export async function generateStaticParams() {
 //   const query = `*[_type == "property"]{ slug }`;
 //   const properties = await sanityClient.fetch(query);
@@ -23,7 +24,7 @@ export default async function PropertyPage({ params }) {
     }
   }`;
   
-  const property = await sanityClient.fetch(query, { slug: params.slug });
+  const property = await client.fetch(query, { slug: params.slug });
 
   return (
     <div className="container mx-auto p-4">

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { sanityClient } from "@/lib/sanity";
 
+import { client } from "@/sanity/lib/client";
 export default function RoomList() {
   const [rooms, setRooms] = useState(null); 
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ export default function RoomList() {
           availability
         }`;
 
-        const data = await sanityClient.fetch(query);
+        const data = await client.fetch(query);
         setRooms(data);
       } catch (error) {
         console.error("Error fetching rooms:", error);

@@ -1,5 +1,6 @@
-import { sanityClient } from "@/lib/sanity";
+
 import Link from "next/link";
+import { client } from "@/sanity/lib/client";
 
 export default async function PropertyList() {
   const query = `*[_type == "property"]{
@@ -8,7 +9,7 @@ export default async function PropertyList() {
     slug
   }`;
 
-  const properties = await sanityClient.fetch(query);
+  const properties = await client.fetch(query);
 
   return (
     <div className="container mx-auto p-4">
