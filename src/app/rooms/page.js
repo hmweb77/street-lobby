@@ -22,10 +22,12 @@ export default function RoomList() {
           },
           "slug": slug.current,
           "imageUrl": property->images[0].asset->url,
-          availability
+          isAvailable,
+          bookedPeriods
         }`;
 
         const data = await client.fetch(query);
+        console.log("Fetched rooms data:", data);
         setRooms(data);
       } catch (error) {
         console.error("Error fetching rooms:", error);
@@ -87,26 +89,27 @@ export default function RoomList() {
                   + Availability
                 </summary>
                 <div className="px-2 py-2 text-sm">
-                  {room.availability?.years?.map((yearData) => (
-                    <div key={yearData.year}>
-                      <label className="font-semibold text-gray-500 p-2 block">
-                        {yearData.year}
-                      </label>
-                      {yearData.semesters.map((term, index) => (
+                  <div className="mb-2">
+                    <p className="font-semibold text-gray-500 p-2">
+                      Status: {room.isAvailable ? 'Available' : 'Not Available'}
+                    </p>
+                    <div className="ml-4">
+                      {["1st Semester", "2nd Semester", "Summer", "Both Semesters", "Full Year"].map((period) => (
                         <label
-                          key={`${yearData.year}-${index}`}
-                          className="px-2 text-gray-400 block"
+                          key={period}
+                          className="px-2 text-gray-400 block mb-2"
                         >
                           <input
                             type="checkbox"
-                            name={`semester_${yearData.year}`}
-                            value={term}
-                          />{" "}
-                          {term}
+                            checked={room.bookedPeriods?.includes(period)}
+                            readOnly
+                            className="mr-2"
+                          />
+                          {period}
                         </label>
                       ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </details>
               <details className="group">

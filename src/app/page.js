@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import properties from "@/lib/properties"; // Import properties data
+import { useRouter } from 'next/navigation';
 
 const LandingPage = () => {
   const [expandedFilter, setExpandedFilter] = useState(null);
@@ -15,7 +16,7 @@ const LandingPage = () => {
     colivingCapacity: null,
     propertyType: null,
   });
-
+  const router = useRouter();
   const years = ["2024 / 2025", "2025 / 2026", "2026 / 2027"];
 
   const navigateYear = (direction) => {
@@ -104,13 +105,14 @@ const LandingPage = () => {
 
   const handleSearch = () => {
     console.log("Filtered Properties:", filteredProperties);
+    router.push('/rooms');
   };
 
   return (
     <main className="py-8">
       <div className="max-w-lg mx-auto">
         <div className="flex justify-center">
-          <h1 className="relative text-4xl font-black mb-2 tracking-wide">
+          <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
             <span className="absolute -left-1 text-[#4AE54A] z-0">BOOK NOW</span>
             <span className="relative text-black z-10">BOOK NOW</span>
           </h1>
@@ -119,13 +121,20 @@ const LandingPage = () => {
           <p className="text-base font-normal">your next staycation in Lisbon</p>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-8 flex justify-center items-center">
           <Image
-            width={400}
-            height={300}
-            src="/Rectangle 1.png"
+            src="/Rectangle 1.svg"
             alt="Featured"
-            className="w-full h-64 rounded-lg"
+            width={393}
+            height={248}
+            className="rounded-lg block lg:hidden"
+          />
+          <Image
+            src="/Rectangle 25.svg"
+            alt="Featured"
+            width={1440}
+            height={409}
+            className="rounded-lg hidden lg:block"
           />
         </div>
 
