@@ -15,16 +15,7 @@ export const bookingSchema = {
         type: "reference",
         to: [{ type: "room" }],
       },
-      {
-        name: "checkInDate",
-        title: "Check-in Date",
-        type: "datetime",
-      },
-      {
-        name: "checkOutDate",
-        title: "Check-out Date",
-        type: "datetime",
-      },
+    
       {
         name: "semester",
         title: "Semester",

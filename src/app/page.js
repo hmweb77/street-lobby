@@ -19,15 +19,6 @@ const LandingPage = () => {
   const router = useRouter();
   const years = ["2024 / 2025", "2025 / 2026", "2026 / 2027"];
 
-  const navigateYear = (direction) => {
-    const currentIndex = years.indexOf(selectedYear);
-    if (direction === "next" && currentIndex < years.length - 1) {
-      setSelectedYear(years[currentIndex + 1]);
-    } else if (direction === "prev" && currentIndex > 0) {
-      setSelectedYear(years[currentIndex - 1]);
-    }
-  };
-
   const filters = [
     {
       id: "period",
@@ -113,7 +104,7 @@ const LandingPage = () => {
       <div className="max-w-lg mx-auto">
         <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
-            <span className="absolute -left-1 text-[#4AE54A] z-0">BOOK NOW</span>
+            <span className="absolute -right-1 text-[#4AE54A] z-0">BOOK NOW</span>
             <span className="relative text-black z-10">BOOK NOW</span>
           </h1>
         </div>
@@ -138,21 +129,53 @@ const LandingPage = () => {
           />
         </div>
 
-        <div className="relative w-full mb-8 px-12">
-          <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center justify-between font-bold text-lg">
+        <div className="relative w-full mb-8 px-4">
+          <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
             <button
-              onClick={() => navigateYear("prev")}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              onClick={() => {
+                document.getElementById('yearScroller').scrollBy({
+                  left: -document.getElementById('yearScroller').offsetWidth,
+                  behavior: 'smooth'
+                });
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === 0}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <span className="text-lg">{selectedYear}</span>
+            <div 
+              id="yearScroller"
+              className="flex flex-1 overflow-x-auto snap-x snap-mandatory scrollbar-hide mx-4"
+              onScroll={(e) => {
+                const scrollPosition = e.currentTarget.scrollLeft;
+                const itemWidth = e.currentTarget.offsetWidth;
+                const newIndex = Math.round(scrollPosition / itemWidth);
+                setSelectedYear(years[newIndex]);
+              }}
+            >
+              {years.map((year) => (
+                <div 
+                  key={year}
+                  className="flex-none  w-full snap-center flex justify-center items-center"
+                >
+                  <span className={`text-lg font-bold transition-all duration-300 ${
+                    selectedYear === year ? 'scale-110' : ''
+                  }`}>
+                    {year}
+                  </span>
+                </div>
+              ))}
+            </div>
 
             <button
-              onClick={() => navigateYear("next")}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              onClick={() => {
+                document.getElementById('yearScroller').scrollBy({
+                  left: document.getElementById('yearScroller').offsetWidth,
+                  behavior: 'smooth'
+                });
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === years.length - 1}
             >
               <ChevronRight className="w-5 h-5" />
