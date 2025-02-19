@@ -1,54 +1,55 @@
-"use client";
+// "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+// import { useState, useEffect } from "react";
 import Image from "next/image";
 
 import { client } from "@/sanity/lib/client";
 
-export default function RoomDetails() {
-  const [room, setRoom] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { slug } = router.query;
+export default async function RoomDetails({ params }) {
+  // const [room, setRoom] = useState(null);
+  // const [loading, setLoading] = useState(true);
+  // const router = useRouter();
+  const slug = (await params).slug;
+  console.log(slug);
 
-  useEffect(() => {
-    if (!slug) return;
+  if (!slug) return;
 
-    const fetchRoom = async () => {
-      try {
-        const query = `*[_type == "room" && slug.current == $slug][0]{
-          roomNumber,
-          roomType,
-          priceWinter,
-          priceSummer,
-          "property": property->{
-            propertyName,
-            slug
-          },
-          "imageUrl": property->images[0].asset->url,
-          availability.years[]{
-            year,
-            semesters
-          },
-          services
-        }`;
+  const fetchRoom = async () => {
+    try {
+      const query = `*[_type == "room" && slug.current == $slug][0]{
+        roomNumber,
+        roomType,
+        priceWinter,
+        priceSummer,
+        "property": property->{
+          propertyName,
+          slug
+        },
+        "imageUrl": property->images[0].asset->url,
+        availability.years[]{
+          year,
+          semesters
+        },
+        services
+      }`;
 
-        const params = { slug };
-        const data = await client.fetch(query, params);
-        setRoom(data);
-      } catch (error) {
-        console.error("Error fetching room:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const params = { slug };
+      console.log(params);
+      const data = await client.fetch(query, params);
+      console.log("Fetched room data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching room:", error);
+    } finally {
+      // setLoading(false);
+    }
+  };
 
-    fetchRoom();
-  }, [slug]);
+  const room = await  fetchRoom();
 
-  if (loading) return <p className="text-center text-gray-500">Loading...</p>;
-  if (!room) return <p className="text-center text-gray-500">Room not found.</p>;
+  // if (loading) return <p className="text-center text-gray-500">Loading...</p>;
+  if (!room)
+    return <p className="text-center text-gray-500">Room not found.</p>;
 
   return (
     <section className="space-y-4">
@@ -67,7 +68,8 @@ export default function RoomDetails() {
             Room {room.roomNumber} - {room.roomType}
           </h3>
           <p className="text-gray-500">
-            {room.property.propertyName} / Winter: {room.priceWinter} / Summer: {room.priceSummer}
+            {room.property.propertyName} / Winter: {room.priceWinter} / Summer:{" "}
+            {room.priceSummer}
           </p>
 
           <details className="group">
@@ -77,10 +79,20 @@ export default function RoomDetails() {
             <div className="px-2 py-2 text-sm">
               {room.availability?.map(({ year, semesters }) => (
                 <div key={year}>
-                  <label className="font-semibold text-gray-500 p-2 block">{year}</label>
+                  <label className="font-semibold text-gray-500 p-2 block">
+                    {year}
+                  </label>
                   {semesters.map((term, index) => (
-                    <label key={`${year}-${index}`} className="px-2 text-gray-400 block">
-                      <input type="checkbox" name={`semester_${year}`} value={term} /> {term}
+                    <label
+                      key={`${year}-${index}`}
+                      className="px-2 text-gray-400 block"
+                    >
+                      <input
+                        type="checkbox"
+                        name={`semester_${year}`}
+                        value={term}
+                      />{" "}
+                      {term}
                     </label>
                   ))}
                 </div>
@@ -95,7 +107,12 @@ export default function RoomDetails() {
             <div className="pl-4 mt-2">
               {room.services?.map((service, index) => (
                 <label key={index} className="text-gray-400 block text-sm">
-                  <input type="checkbox" name={`service_${index}`} value={service} /> {service}
+                  <input
+                    type="checkbox"
+                    name={`service_${index}`}
+                    value={service}
+                  />{" "}
+                  {service}
                 </label>
               ))}
             </div>
@@ -105,4 +122,3 @@ export default function RoomDetails() {
     </section>
   );
 }
-
