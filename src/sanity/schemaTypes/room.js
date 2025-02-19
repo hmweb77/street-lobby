@@ -83,13 +83,28 @@ export const roomSchema = {
               options: {
                 list: Array.from(
                   { length: 3 },
-                  (_, i) => `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
+                  (_, i) =>
+                    `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
                 ),
               },
             },
           ],
+          preview: {
+            select: {
+              semester: "semester",
+              year: "year",
+            },
+            prepare({ semester, year }) {
+              return {
+                title: `${semester} - ${year}`, // Combine semester and year
+                subtitle: year,
+              };
+            },
+          },
         },
+        
       ],
+
       initialValue: Array.from({ length: 3 }, (_, i) => {
         const currentYear = `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`;
         return [
@@ -131,93 +146,126 @@ export const roomSchema = {
               options: {
                 list: Array.from(
                   { length: 3 },
-                  (_, i) => `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
+                  (_, i) =>
+                    `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
                 ),
               },
             },
+            {
+              name: "services",
+              title: "Services",
+              type: "string",
+            },
           ],
-          
+          preview: {
+            select: {
+              semester: "semester",
+              year: "year",
+            },
+            prepare({ semester, year }) {
+              return {
+                title: `${semester} - ${year}`, // Combine semester and year
+                subtitle: year,
+              };
+            },
+          },
         },
       ],
-      validation: (Rule) => Rule.custom((bookedPeriods) => {
-        if (!bookedPeriods) return true;
-    
-        const errors = [];
-        const yearMap = new Map(); // Tracks semesters per year
-    
-        // First Pass: Populate yearMap and check duplicates
-        bookedPeriods.forEach((period, index) => {
-          const { semester, year } = period;
-          if (!yearMap.has(year)) {
-            yearMap.set(year, {
-              fullYear: false,
-              bothSemesters: false,
-              semesters: new Set(), // Tracks "1st", "2nd", "Summer"
-            });
-          }
-          const yearData = yearMap.get(year);
-    
-          // Handle "Full Year"
-          if (semester === "Full Year") {
-            if (yearData.fullYear) {
-              errors.push(`Duplicate "Full Year" for ${year} at position ${index + 1}.`);
+      validation: (Rule) =>
+        Rule.custom((bookedPeriods) => {
+          if (!bookedPeriods) return true;
+
+          const errors = [];
+          const yearMap = new Map(); // Tracks semesters per year
+
+          // First Pass: Populate yearMap and check duplicates
+          bookedPeriods.forEach((period, index) => {
+            const { semester, year } = period;
+            if (!yearMap.has(year)) {
+              yearMap.set(year, {
+                fullYear: false,
+                bothSemesters: false,
+                semesters: new Set(), // Tracks "1st", "2nd", "Summer"
+              });
             }
-            yearData.fullYear = true;
-          }
-          // Handle "Both Semesters"
-          else if (semester === "Both Semesters") {
-            if (yearData.bothSemesters) {
-              errors.push(`Duplicate "Both Semesters" for ${year} at position ${index + 1}.`);
+            const yearData = yearMap.get(year);
+
+            // Handle "Full Year"
+            if (semester === "Full Year") {
+              if (yearData.fullYear) {
+                errors.push(
+                  `Already has booked "Full Year" for ${year}. Cannot book "Full Year" twice in ${year}.`
+                );
+              }
+              yearData.fullYear = true;
             }
-            yearData.bothSemesters = true;
-          }
-          // Handle "1st", "2nd", "Summer"
-          else {
-            if (yearData.semesters.has(semester)) {
-              errors.push(`Duplicate "${semester}" for ${year} at position ${index + 1}.`);
+            // Handle "Both Semesters"
+            else if (semester === "Both Semesters") {
+              if (yearData.bothSemesters) {
+                errors.push(
+                  `Already has booked "Both Semesters" for ${year}. Cannot book "Both Semesters" twice in ${year}.`
+                );
+              }
+              yearData.bothSemesters = true;
             }
-            yearData.semesters.add(semester);
-          }
-        });
-    
-        // Second Pass: Check all conflicts
-        bookedPeriods.forEach((period, index) => {
-          const { semester, year } = period;
-          const yearData = yearMap.get(year);
-    
-          // Conflict 1: "Full Year" vs. any other entry
-          if (semester === "Full Year") {
-            if (yearData.bothSemesters || yearData.semesters.size > 0) {
-              errors.push(`"Full Year" cannot coexist with other semesters in ${year} (position ${index + 1}).`);
+            // Handle "1st", "2nd", "Summer"
+            else {
+              if (yearData.semesters.has(semester)) {
+                errors.push(
+                  `Already has booked "${semester}" for ${year}. Cannot book "${semester}" twice in ${year}.`
+                );
+              }
+              yearData.semesters.add(semester);
             }
-          } else {
-            if (yearData.fullYear) {
-              errors.push(`"${semester}" cannot coexist with "Full Year" in ${year} (position ${index + 1}).`);
+          });
+
+          // Second Pass: Check all conflicts
+          bookedPeriods.forEach((period, index) => {
+            const { semester, year } = period;
+            const yearData = yearMap.get(year);
+
+            // Conflict 1: "Full Year" vs. any other entry
+            if (semester === "Full Year") {
+              if (yearData.bothSemesters || yearData.semesters.size > 0) {
+                errors.push(
+                  `"Already has "Both Semesters" or "1st/2nd Semester" or "Summer" for ${year}. "Full Year" cannot booked with other semesters or "Both Semesters" or "1st/2nd Semester" or "Summer" in ${year}.`
+                );
+              }
+            } else {
+              if (yearData.fullYear) {
+                errors.push(
+                  `Already has booked "Full Year" in ${year}. "${semester}" cannot book with "Full Year" in ${year}.`
+                );
+              }
             }
-          }
-    
-          // Conflict 2: "Both Semesters" vs. "1st" or "2nd"
-          if (semester === "Both Semesters") {
-            const hasIndividual = ["1st Semester", "2nd Semester"].some(s => yearData.semesters.has(s));
-            if (hasIndividual) {
-              errors.push(`"Both Semesters" cannot coexist with "1st/2nd Semester" in ${year} (position ${index + 1}).`);
+
+            // Conflict 2: "Both Semesters" vs. "1st" or "2nd"
+            if (semester === "Both Semesters") {
+              const hasIndividual = ["1st Semester", "2nd Semester"].some((s) =>
+                yearData.semesters.has(s)
+              );
+              if (hasIndividual) {
+                errors.push(
+                  `Already has booked "1st/2nd Semester" in ${year}. "Both Semesters" cannot book with "1st/2nd Semester" in ${year} .`
+                );
+              }
+            } else if (["1st Semester", "2nd Semester"].includes(semester)) {
+              if (yearData.bothSemesters) {
+                errors.push(
+                  ` Already has booked Both Semesters in ${year}. "${semester}" cannot book with "Both Semesters" in ${year}.`
+                );
+              }
             }
-          } else if (["1st Semester", "2nd Semester"].includes(semester)) {
-            if (yearData.bothSemesters) {
-              errors.push(`"${semester}" cannot coexist with "Both Semesters" in ${year} (position ${index + 1}).`);
-            }
-          }
-        });
-    
-        return errors.length > 0 ? errors.join(" ") : true;
-      }),
+          });
+
+          return errors.length > 0 ? errors.join(" ") : true;
+        }),
     },
     {
       name: "isAvailable",
       title: "Is Available?",
       type: "boolean",
       initialValue: true,
-      readOnly: true,
     },
     {
       name: "services",
@@ -234,11 +282,13 @@ export const roomSchema = {
       title: "title",
       roomNumber: "roomNumber",
       isAvailable: "isAvailable",
+      _id: "_id",
     },
-    prepare({ title, roomNumber, isAvailable }) {
+    prepare({ title, roomNumber, isAvailable , _id }) {
+      const isDraft = _id.startsWith("drafts");
       return {
         title: `${title} (Room ${roomNumber})`,
-        subtitle: isAvailable ? "Available" : "Unavailable",
+        subtitle: isDraft ? "Draft" : isAvailable ? "Available" : "Unavailable",
       };
     },
   },
