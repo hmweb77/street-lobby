@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useBooking } from "@/context/BookingContext";
+import { useFilterBooking } from "@/context/BookingFilterContext";
 
 const FilterRooms = () => {
   const router = useRouter();
@@ -15,7 +15,7 @@ const FilterRooms = () => {
     roomTypes,
     propertyTypes,
     loading 
-  } = useBooking();
+  } = useFilterBooking();
   
   const [expandedFilter, setExpandedFilter] = useState(null);
   const years = ["2024 / 2025", "2025 / 2026", "2026 / 2027"];

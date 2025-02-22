@@ -9,6 +9,7 @@ export const sanityClient = createClient({
   apiVersion: "2023-01-01", // Use a recent Sanity API version
 });
 
+
 // Fetch properties
 export const fetchProperties = async () => {
   const query = `*[_type == "property"]{

@@ -1,88 +1,137 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from 'react';
-import { client } from '@/sanity/lib/client';
 
-import { propertyQueries } from '@/lib/sanity/queries';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+// Initial state
+export const initialState = {
+  bookingPeriods: [{
+    year: '',
+    semester: '',
+    price: 0,
+  }],
+  services: [],
+  room: {
+    id: '',
+    title: '',
+    propertyTitle: '',
+  },
+  userDetails: {
+    email: '',
+    name: '',
+    age: 0,
+    genre: '',
+    permanentAddress: '',
+    nationality: '',
+    idNumber: '',
+    currentProfession: '',
+    currentLocation: '',
+  },
+  totalPrice: 0,
+};
 
 const BookingContext = createContext();
 
-export const BookingProvider = ({ children }) => {
-  const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [roomTypes, setRoomTypes] = useState([]);
-  const [propertyTypes, setPropertyTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [selectedFilters, setSelectedFilters] = useState({
-    period: null,
-    location: null,
-    roomType: null,
-    colivingCapacity: null,
-    propertyType: null,
-    priceValue: 650,
-    selectedYear: "2024 / 2025"
-  });
+export const BookingContextProvider = ({ children }) => {
+  const [state, setState] = useState(initialState);
 
+  // Calculate total price whenever booking periods change
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [propertiesData, locationsData, roomTypesData, propertyTypesData] = await Promise.all([
-          client.fetch(propertyQueries.getAllProperties),
-          client.fetch(propertyQueries.getLocations),
-          client.fetch(propertyQueries.getRoomTypes),
-          client.fetch(propertyQueries.getPropertyTypes),
-        ]);
+    const newTotal = state.bookingPeriods.reduce((sum, period) => sum + (period.price || 0), 0);
+    setState(prev => ({ ...prev, totalPrice: newTotal }));
+  }, [state.bookingPeriods]);
 
-        setProperties(propertiesData);
-        setFilteredProperties(propertiesData);
-        setLocations(locationsData);
-        setRoomTypes(roomTypesData);
-        setPropertyTypes(propertyTypesData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Update specific booking period by index
+  const setBookingPeriod = (index, period) => {
+    setState(prev => {
+      const updatedPeriods = [...prev.bookingPeriods];
+      updatedPeriods[index] = { ...updatedPeriods[index], ...period };
+      return { ...prev, bookingPeriods: updatedPeriods };
+    });
+  };
 
-    fetchData();
-  }, []);
-
-  const updateFilters = (newFilters) => {
-    setSelectedFilters(prev => ({
+  // Add new booking period
+  const addBookingPeriod = () => {
+    setState(prev => ({
       ...prev,
-      ...newFilters
+      bookingPeriods: [...prev.bookingPeriods, { year: '', semester: '', price: 0 }]
     }));
   };
 
-  const updateFilteredProperties = (properties) => {
-    setFilteredProperties(properties);
+  const clearAllBooking = () => {
+    setState(prev => ({
+      ...prev,
+      bookingPeriods: initialState.bookingPeriods,
+      room: initialState.room,
+      services: initialState.services,
+      totalPrice: initialState.totalPrice
+    }));
+  }
+
+
+  // In your booking context provider
+const toggleBookingPeriod = (year, semester, price) => {
+  setState(prev => {
+    const existingIndex = prev.bookingPeriods.findIndex(
+      period => period.year === year && period.semester === semester
+    );
+    
+    if (existingIndex >= 0) {
+      // Remove period
+      const updatedPeriods = prev.bookingPeriods.filter((_, i) => i !== existingIndex);
+      return { ...prev, bookingPeriods: updatedPeriods };
+    } else {
+      // Add new period
+      const newPeriod = { year, semester, price };
+      return { ...prev, bookingPeriods: [...prev.bookingPeriods, newPeriod] };
+    }
+  });
+};
+
+
+  const setServices = (services) => {
+    setState(prev => ({
+      ...prev,
+      services: Array.isArray(services) ? services : [],
+    }));
   };
 
-  const value = {
-    properties,
-    filteredProperties,
-    selectedFilters,
-    locations,
-    roomTypes,
-    propertyTypes,
-    loading,
-    updateFilters,
-    updateFilteredProperties
+  // Update room information
+  const setRoom = (roomInfo) => {
+    setState(prev => ({
+      ...prev,
+      room: { ...prev.room, ...roomInfo },
+    }));
+  };
+
+  // Update user details
+  const setUserDetails = (details) => {
+    setState(prev => ({
+      ...prev,
+      userDetails: { ...prev.userDetails, ...details },
+    }));
   };
 
   return (
-    <BookingContext.Provider value={value}>
+    <BookingContext.Provider value={{
+      state,
+      setState,
+      clearAllBooking,
+      setBookingPeriod,
+      addBookingPeriod,
+      setServices,
+      setRoom,
+      setUserDetails,
+      toggleBookingPeriod
+    }}>
       {children}
     </BookingContext.Provider>
   );
 };
 
-export const useBooking = () => {
+export const useBookingState = () => {
   const context = useContext(BookingContext);
-  if (context === undefined) {
-    throw new Error('useBooking must be used within a BookingProvider');
+  if (!context) {
+    throw new Error('useBookingState must be used within a BookingContextProvider');
   }
   return context;
 };

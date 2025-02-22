@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 const LandingPage = () => {
   const [expandedFilter, setExpandedFilter] = useState(null);
-  const [selectedYear, setSelectedYear] = useState("2024 / 2025");
+  const [selectedYear, setSelectedYear] = useState("2024/2025");
   const [priceValue, setPriceValue] = useState(650);
   const [selectedFilters, setSelectedFilters] = useState({
     period: null,
@@ -17,7 +17,7 @@ const LandingPage = () => {
     propertyType: null,
   });
   const router = useRouter();
-  const years = ["2024 / 2025", "2025 / 2026", "2026 / 2027"];
+  const years = ["2024/2025", "2025/2026", "2026/2027"];
 
   const filters = [
     {
@@ -96,7 +96,7 @@ const LandingPage = () => {
 
   const handleSearch = () => {
     console.log("Filtered Properties:", filteredProperties);
-    router.push('/rooms');
+    router.push('/rooms?year=' + selectedYear);
   };
 
   return (

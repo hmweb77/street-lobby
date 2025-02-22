@@ -1,42 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Image from "next/image";
-
+import { useParams } from "next/navigation";
 import { client } from "@/sanity/lib/client";
+import RoomCard from "@/components/RoomCard";
+import StepProcessBar from "@/components/booking/ProcessBar";
+import EligibilityCheck from "@/components/EligibilityCheck";
+import { Payment } from "@/components/Payment";
+import { useBookingState } from "@/context/BookingContext";
 
 export default function RoomDetails() {
+  const { slug } = useParams();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { slug } = router.query;
+  const { state, setUserDetails } = useBookingState();
+  const [currentStep, setCurrentStep] = useState(
+    state.room.id && state.totalPrice > 0 ? 2 : 1
+  ); // Start at Eligibility Check step
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
+    const query = `*[_type == "room" && slug.current == $slug][0]{
+      _id,
+      roomNumber,
+      title,
+      roomType,
+      priceWinter,
+      priceSummer,
+      services,
+      "property": property->{
+        propertyName,
+        slug
+      },
+      "slug": slug.current,
+      "imageUrl": property->images[0].asset->url,
+      isAvailable,
+      bookedPeriods,
+      availableSemesters
+    }`;
 
     const fetchRoom = async () => {
       try {
-        const query = `*[_type == "room" && slug.current == $slug][0]{
-          roomNumber,
-          roomType,
-          priceWinter,
-          priceSummer,
-          "property": property->{
-            propertyName,
-            slug
-          },
-          "imageUrl": property->images[0].asset->url,
-          availability.years[]{
-            year,
-            semesters
-          },
-          services
-        }`;
-
-        const params = { slug };
-        const data = await client.fetch(query, params);
-        setRoom(data);
+        const response = await client.fetch(query, { slug });
+        setRoom(response);
       } catch (error) {
         console.error("Error fetching room:", error);
       } finally {
@@ -47,62 +57,80 @@ export default function RoomDetails() {
     fetchRoom();
   }, [slug]);
 
+  const handleNextStep = () => {
+    setCurrentStep((prev) => Math.min(prev + 1, 3)); // Only allow steps 2 and 3
+  };
+
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
-  if (!room) return <p className="text-center text-gray-500">Room not found.</p>;
+  if (!room)
+    return <p className="text-center text-gray-500">Room not found.</p>;
 
   return (
     <section className="space-y-4">
-      <div className="bg-white rounded-lg shadow-md">
-        {room.imageUrl && (
-          <Image
-            src={room.imageUrl}
-            alt={`Room ${room.roomNumber}`}
-            width={500}
-            height={400}
-            className="w-full h-full object-cover"
-          />
+      <StepProcessBar
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+        showPrev={ currentStep >= 4 ? false  : true}
+      />
+      <div className="container mx-auto px-4 py-8">
+        {/* Room Details Section */}
+        <h1 className="text-3xl font-bold mb-6">Room Details</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Room Image and Details... */}
+        </div>
+
+        {currentStep === 1 && (
+          <div className="mt-8">
+            <div className="w-full flex justify-center items-center mb-10">
+              <button
+                onClick={() => {
+                  if (state.room.id && state.totalPrice > 0) handleNextStep();
+                }}
+                disabled={!(state.room.id && state.totalPrice > 0)}
+                className={`bg-gray-800 text-white px-4 py-2 rounded ${state.room.id && state.totalPrice > 0 ? "" : "opacity-50 cursor-not-allowed"} `}
+              >
+                Next
+              </button>
+            </div>
+            <RoomCard room={room} isReversed={true} />
+            <div className="w-full flex justify-center items-center mt-10">
+              <button
+                onClick={() => {
+                  if (state.room.id && state.totalPrice > 0) handleNextStep();
+                }}
+                disabled={!(state.room.id && state.totalPrice > 0)}
+                className={`bg-gray-800 text-white px-4 py-2 rounded ${state.room.id && state.totalPrice > 0 ? "" : "opacity-50 cursor-not-allowed"} `}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
-        <div className="px-5 py-2">
-          <h3 className="font-medium text-lg">
-            Room {room.roomNumber} - {room.roomType}
-          </h3>
-          <p className="text-gray-500">
-            {room.property.propertyName} / Winter: {room.priceWinter} / Summer: {room.priceSummer}
-          </p>
 
-          <details className="group">
-            <summary className="cursor-pointer hover:text-gray-700 list-none font-semibold">
-              + Availability
-            </summary>
-            <div className="px-2 py-2 text-sm">
-              {room.availability?.map(({ year, semesters }) => (
-                <div key={year}>
-                  <label className="font-semibold text-gray-500 p-2 block">{year}</label>
-                  {semesters.map((term, index) => (
-                    <label key={`${year}-${index}`} className="px-2 text-gray-400 block">
-                      <input type="checkbox" name={`semester_${year}`} value={term} /> {term}
-                    </label>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </details>
+        {/* Booking Process Steps */}
+        <div className="w-full mx-auto p-4 mt-12">
+          <main className="mt-8">
+            {currentStep === 2 ? (
+              <EligibilityCheck
+                onNext={handleNextStep}
+                room={room} // Pass room data to eligibility check
+              />
+            ) : null}
 
-          <details className="group">
-            <summary className="cursor-pointer hover:text-gray-700 list-none font-semibold">
-              + Services
-            </summary>
-            <div className="pl-4 mt-2">
-              {room.services?.map((service, index) => (
-                <label key={index} className="text-gray-400 block text-sm">
-                  <input type="checkbox" name={`service_${index}`} value={service} /> {service}
-                </label>
-              ))}
-            </div>
-          </details>
+            {currentStep === 1 && (
+              <div>
+                <p>
+                  {" "}
+                  To book this room, you must first select semesters and years
+                  for which you want to book the room.{" "}
+                </p>
+              </div>
+            )}
+
+            {currentStep === 3 || currentStep === 4 && <Payment setCurrentStep={setCurrentStep} />}
+          </main>
         </div>
       </div>
     </section>
   );
 }
-
