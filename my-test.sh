@@ -1,0 +1,1 @@
+curl http://127.0.0.1:5001/$PROJECT/us-central1/myfunc

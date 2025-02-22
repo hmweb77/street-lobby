@@ -1,7 +1,8 @@
 import Footer from "@/components/layout/Footer";
 import "./globals.css";
 import Navbar from "@/components/layout/Header";
-import { BookingProvider } from '@/context/BookingContext'
+import { BookingFilterProvider } from "@/context/BookingFilterContext";
+import { BookingContextProvider } from "@/context/BookingContext";
 
 export const metadata = {
   title: "Street Lobby",
@@ -12,11 +13,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <BookingProvider>
-          <Navbar/>
-          {children}
-        </BookingProvider>
-        <Footer/>
+        <BookingFilterProvider>
+          <BookingContextProvider>
+            <Navbar />
+            {children}
+          </BookingContextProvider>
+        </BookingFilterProvider>
+        <Footer />
       </body>
     </html>
   );

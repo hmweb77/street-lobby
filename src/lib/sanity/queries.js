@@ -29,4 +29,25 @@ export const propertyQueries = {
     name,
     value
   }`
-}; 
+};
+
+
+// Queries with year Note: This will be removed in future version when we make the query dynamic with firebase firestore realtime
+export const roomQueriesWithYear = `*[_type == "room" && isAvailable == true]{
+          _id,
+          roomNumber,
+          title,
+          roomType,
+          priceWinter,
+          priceSummer,
+          services,
+          "property": property->{
+            propertyName,
+            slug
+          },
+          "slug": slug.current,
+          "imageUrl": property->images[0].asset->url,
+          isAvailable,
+          "bookedPeriods": bookedPeriods[year == $year],
+          "availableSemesters": availableSemesters[year == $year]
+        }`;

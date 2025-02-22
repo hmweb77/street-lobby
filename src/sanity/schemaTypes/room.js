@@ -75,6 +75,7 @@ export const roomSchema = {
                   "Full Year",
                 ],
               },
+              validation: (Rule) => Rule.required(),
             },
             {
               name: "year",
@@ -87,6 +88,7 @@ export const roomSchema = {
                     `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
                 ),
               },
+              validation: (Rule) => Rule.required(),
             },
           ],
           preview: {
@@ -102,7 +104,6 @@ export const roomSchema = {
             },
           },
         },
-        
       ],
 
       initialValue: Array.from({ length: 3 }, (_, i) => {
@@ -138,6 +139,7 @@ export const roomSchema = {
                   "Full Year",
                 ],
               },
+              validation: (Rule) => Rule.required(),
             },
             {
               name: "year",
@@ -150,6 +152,7 @@ export const roomSchema = {
                     `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
                 ),
               },
+              validation: (Rule) => Rule.required(),
             },
             {
               name: "services",
@@ -284,7 +287,7 @@ export const roomSchema = {
       isAvailable: "isAvailable",
       _id: "_id",
     },
-    prepare({ title, roomNumber, isAvailable , _id }) {
+    prepare({ title, roomNumber, isAvailable, _id }) {
       const isDraft = _id.startsWith("drafts");
       return {
         title: `${title} (Room ${roomNumber})`,
