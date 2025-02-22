@@ -189,9 +189,9 @@ export const bookingSchema = {
         list: ["pending", "confirmed", "cancelled"],
         layout: "dropdown",
       },
-      readOnly: ({ value }) => value === "cancelled",
+      readOnly: ({ document }) => document?.cancellationKey?.startsWith("cancelled+"),
       initialValue: "pending",
-
+    
       preview: {
         select: {
           status: "status",
@@ -202,13 +202,12 @@ export const bookingSchema = {
           };
         },
       },
-      // validation: (Rule) =>
-      //   Rule.custom((status) => {
-      //     if ( status === "cancelled") {
-      //       return "Status cannot be 'Changed'. after cancellation";
-      //     }
-      //     return true;
-      //   }),
+    },
+    {
+      name: "cancellationKey",
+      title: "Cancellation Key",
+      type: "string",
+      hidden: true, // Hide this field from editors
     },
     {
       name: "totalPrice",

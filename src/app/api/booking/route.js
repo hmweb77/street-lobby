@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanityAdminClient } from "@/lib/sanityAdmin";
 const { v4: uuidv4 } = require("uuid");
+import { adminAccessDb as db } from '@/lib/firebase-admin'
 
 export async function POST(req) {
   try {
@@ -93,12 +94,14 @@ export async function POST(req) {
     }
 
     await sanityAdminClient.patch(roomId).set({ bookedPeriods: allBookedPeriods }).commit();
+    await db.collection("room").doc(roomId).set({ bookedPeriods: allBookedPeriods }, { merge: true })
 
     return NextResponse.json({ message: "Booking successful", data: response }, { status: 201 });
   } catch (error) {
     console.error("Error creating booking:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
+    
 }
 
 function validateBookingPeriods(bookedPeriods) {

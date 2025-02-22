@@ -127,7 +127,7 @@ export default function RoomDetails() {
               </div>
             )}
 
-            {currentStep === 3 || currentStep === 4 && <Payment setCurrentStep={setCurrentStep} />}
+            {(currentStep === 3 || currentStep === 4 )&& <Payment setCurrentStep={setCurrentStep} />}
           </main>
         </div>
       </div>
