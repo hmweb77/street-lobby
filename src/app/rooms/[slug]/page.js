@@ -13,40 +13,49 @@ export default function RoomDetails() {
   const { slug } = useParams();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { state, setUserDetails } = useBookingState();
-  const [currentStep, setCurrentStep] = useState(
-    state.room.id && state.totalPrice > 0 ? 2 : 1
-  ); // Start at Eligibility Check step
+  const { state, clearAllBookings, setRoom: setContextRoom } = useBookingState();
+  const [currentStep, setCurrentStep] = useState(1);
 
   useEffect(() => {
-    if (!slug) {
-      setLoading(false);
-      return;
-    }
-
-    const query = `*[_type == "room" && slug.current == $slug][0]{
-      _id,
-      roomNumber,
-      title,
-      roomType,
-      priceWinter,
-      priceSummer,
-      services,
-      "property": property->{
-        propertyName,
-        slug
-      },
-      "slug": slug.current,
-      "imageUrl": property->images[0].asset->url,
-      isAvailable,
-      bookedPeriods,
-      availableSemesters
-    }`;
-
     const fetchRoom = async () => {
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
+
+      const query = `*[_type == "room" && slug.current == $slug][0]{
+        _id,
+        roomNumber,
+        title,
+        roomType,
+        priceWinter,
+        priceSummer,
+        services,
+        "property": property->{
+          propertyName,
+          slug
+        },
+        "slug": slug.current,
+        "imageUrl": property->images[0].asset->url,
+        isAvailable,
+        bookedPeriods,
+        availableSemesters
+      }`;
+
       try {
         const response = await client.fetch(query, { slug });
         setRoom(response);
+        
+        // Reset booking context if room changes
+        if (state.room.id !== response._id) {
+          clearAllBookings();
+          setContextRoom({
+            id: response._id,
+            title: response.roomNumber,
+            propertyTitle: response.property.propertyName,
+            imageUrl: response.imageUrl
+          });
+        }
       } catch (error) {
         console.error("Error fetching room:", error);
       } finally {
@@ -57,77 +66,77 @@ export default function RoomDetails() {
     fetchRoom();
   }, [slug]);
 
+  useEffect(() => {
+    // Automatically progress to step 2 if bookings exist
+    if (state.bookingPeriods.length > 0 && currentStep === 1) {
+      setCurrentStep(2);
+    }
+  }, [state.bookingPeriods, currentStep]);
+
   const handleNextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 3)); // Only allow steps 2 and 3
+    if (currentStep === 1 && state.bookingPeriods.length === 0) return;
+    if (currentStep === 2 && !state.commonUserDetails.email) return;
+    setCurrentStep(prev => Math.min(prev + 1, 3));
   };
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
-  if (!room)
-    return <p className="text-center text-gray-500">Room not found.</p>;
+  if (!room) return <p className="text-center text-gray-500">Room not found.</p>;
 
   return (
     <section className="space-y-4">
       <StepProcessBar
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
-        showPrev={ currentStep >= 4 ? false  : true}
+        showPrev={currentStep !== 4}
       />
+
       <div className="container mx-auto px-4 py-8">
-        {/* Room Details Section */}
         <h1 className="text-3xl font-bold mb-6">Room Details</h1>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Room Image and Details... */}
+          {/* Room Image and Details */}
         </div>
 
         {currentStep === 1 && (
           <div className="mt-8">
-            <div className="w-full flex justify-center items-center mb-10">
-              <button
-                onClick={() => {
-                  if (state.room.id && state.totalPrice > 0) handleNextStep();
-                }}
-                disabled={!(state.room.id && state.totalPrice > 0)}
-                className={`bg-gray-800 text-white px-4 py-2 rounded ${state.room.id && state.totalPrice > 0 ? "" : "opacity-50 cursor-not-allowed"} `}
-              >
-                Next
-              </button>
-            </div>
             <RoomCard room={room} isReversed={true} />
+            
             <div className="w-full flex justify-center items-center mt-10">
               <button
-                onClick={() => {
-                  if (state.room.id && state.totalPrice > 0) handleNextStep();
-                }}
-                disabled={!(state.room.id && state.totalPrice > 0)}
-                className={`bg-gray-800 text-white px-4 py-2 rounded ${state.room.id && state.totalPrice > 0 ? "" : "opacity-50 cursor-not-allowed"} `}
+                onClick={handleNextStep}
+                disabled={state.bookingPeriods.length === 0}
+                className={`bg-gray-800 text-white px-6 py-3 rounded-lg ${
+                  state.bookingPeriods.length === 0 
+                    ? "opacity-50 cursor-not-allowed" 
+                    : "hover:bg-gray-700"
+                }`}
               >
-                Next
+                Proceed to Eligibility Check
               </button>
             </div>
           </div>
         )}
 
-        {/* Booking Process Steps */}
         <div className="w-full mx-auto p-4 mt-12">
           <main className="mt-8">
-            {currentStep === 2 ? (
+            {currentStep === 2 && (
               <EligibilityCheck
                 onNext={handleNextStep}
-                room={room} // Pass room data to eligibility check
+                requiredDetails={{
+                  minAge: room.minAge,
+                  maxAge: room.maxAge,
+                  requiredDocuments: room.requiredDocuments
+                }}
               />
-            ) : null}
-
-            {currentStep === 1 && (
-              <div>
-                <p>
-                  {" "}
-                  To book this room, you must first select semesters and years
-                  for which you want to book the room.{" "}
-                </p>
-              </div>
             )}
 
-            {(currentStep === 3 || currentStep === 4 )&& <Payment setCurrentStep={setCurrentStep} />}
+            {currentStep === 3 && (
+              <Payment 
+                setCurrentStep={setCurrentStep}
+                totalAmount={state.totalPrice}
+                bookingDetails={state}
+              />
+            )}
           </main>
         </div>
       </div>

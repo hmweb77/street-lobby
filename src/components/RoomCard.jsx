@@ -1,196 +1,215 @@
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { initialState, useBookingState } from "@/context/BookingContext";
 import { useParams } from "next/navigation";
 
-// Conflict configuration for semester selection
 const semesterConflicts = {
   "1st Semester": ["Both Semesters", "Full Year"],
   "2nd Semester": ["Both Semesters", "Full Year"],
   "Both Semesters": ["1st Semester", "2nd Semester", "Full Year"],
   "Full Year": ["1st Semester", "2nd Semester", "Both Semesters", "Summer"],
-  "Summer": ["Full Year"], // Summer conflicts with Full Year
+  "Summer": ["Full Year"],
 };
 
-const RoomCard = ({ room , isReversed = false }) => {
-
-    const params = useParams();
-    const propertySlug = params.slug;
-
-  const { state, setBookingPeriod, addBookingPeriod, setServices, setState } = useBookingState();
-  let { availableSemesters = [], bookedPeriods = [] } = room || {};
-  console.log("🚀 ~ RoomCard ~ bookedPeriods:", bookedPeriods)
-
-
-  // Filter available semesters considering existing bookings
-  const filteredAvailable = availableSemesters.filter((available) => {
-    if (!Array.isArray(bookedPeriods) || bookedPeriods.length === 0) {
-      return true; // No booked periods, so all available semesters remain available.
-    }
+const RoomCard = ({ room, isReversed = false }) => {
+  const params = useParams();
+  const propertySlug = params.slug;
+  const { 
+    state: globalState, 
+    setBooking, 
+    removeBooking,
+    getBooking,
+    addServiceToBooking,
+    removeServiceFromBooking
+  } = useBookingState();
   
-    const bookedForSameYear = bookedPeriods.filter(
-      (booked) => booked.year === available.year
-    );
-  
-    for (const booked of bookedForSameYear) {
-      const bookedSemester = booked.semester;
-      const availableSemester = available.semester;
-  
-      if (bookedSemester === "Full Year") return false;
-      if (
-        bookedSemester === "Both Semesters" &&
-        ["1st Semester", "2nd Semester", "Both Semesters", "Full Year"].includes(availableSemester)
-      ) {
-        return false;
-      }
-      if (
-        bookedSemester === "1st Semester" &&
-        ["1st Semester", "Both Semesters", "Full Year"].includes(availableSemester)
-      ) {
-        return false;
-      }
-      if (
-        bookedSemester === "2nd Semester" &&
-        ["2nd Semester", "Both Semesters", "Full Year"].includes(availableSemester)
-      ) {
-        return false;
-      }
-      if (bookedSemester === "Summer" && availableSemester === "Summer") return false;
-    }
-    return true;
+  // Local state management with room details
+  const [localState, setLocalState] = useState({
+    roomDetails: {
+      id: "",
+      title: "",
+      propertyTitle: "",
+      imageUrl: "",
+      roomType: "",
+      priceWinter: 0,
+      priceSummer: 0
+    },
+    bookingPeriods: [],
+    services: [],
+    totalPrice: 0
   });
-  
 
-  if (filteredAvailable.length === 0) return null;
+  // Initialize local state with room details
+  useEffect(() => {
+    const globalBooking = globalState.bookingPeriods.filter(bp => bp.roomId === room._id);
+    const initialServices = globalBooking.flatMap(bp => bp.services);
+    
+    setLocalState({
+      roomDetails: {
+        id: room._id,
+        title: room.roomNumber,
+        propertyTitle: room.property?.propertyName,
+        imageUrl: room.imageUrl,
+        roomType: room.roomType,
+        priceWinter: room.priceWinter,
+        priceSummer: room.priceSummer
+      },
+      bookingPeriods: globalBooking,
+      services: initialServices,
+      totalPrice: globalBooking.reduce((sum, bp) => sum + bp.price, 0)
+    });
+  }, [room, globalState]);
 
-  // Group available semesters by academic year
-  const groupedByYear = filteredAvailable.reduce((acc, curr) => {
-    if (!acc[curr.year]) acc[curr.year] = [];
-    acc[curr.year].push(curr.semester);
-    return acc;
-  }, {});
+  // Helper to get room details object
+  const getRoomDetails = () => ({
+    roomTitle: room.roomNumber,
+    propertyTitle: room.property?.propertyName,
+    imageUrl: room.imageUrl,
+    roomType: room.roomType,
+    priceWinter: room.priceWinter,
+    priceSummer: room.priceSummer
+  });
 
-  // Check if a semester is disabled based on current selections
   const isSemesterDisabled = (yearKey, semester) => {
-    const selectedSemesters = state.bookingPeriods
+    const selectedSemesters = localState.bookingPeriods
       .filter((bp) => bp.year === yearKey)
       .map((bp) => bp.semester);
-  
-    // If selecting a new room, ignore past selections
-    if (state.room.id !== room._id) return false;
-  
-    // Check if the semester is already selected (allow deselection)
+
     if (selectedSemesters.includes(semester)) return false;
-  
-    // Check if any selected semester conflicts with the one being checked
+
     return selectedSemesters.some((selected) =>
       semesterConflicts[selected]?.includes(semester)
     );
   };
 
-  // Calculate price based on the selected semester
   const calculatePrice = (semester) => {
     switch (semester) {
-      case "Full Year":
-        return room.priceWinter + room.priceSummer; // Full Year = Winter + Summer
-      case "Both Semesters":
-        return room.priceWinter; // Both Semesters = Winter price
+      case "Full Year": return room.priceWinter + room.priceSummer;
+      case "Both Semesters": return room.priceWinter;
       case "1st Semester":
-      case "2nd Semester":
-        return room.priceWinter / 2; // Single Semester = Winter price / 2
-      case "Summer":
-        return room.priceSummer; // Summer = Summer price
-      default:
-        return 0;
+      case "2nd Semester": return room.priceWinter / 2;
+      case "Summer": return room.priceSummer;
+      default: return 0;
     }
   };
 
-  // Handle semester selection with conflict checking and dynamic pricing
   const handleSemesterClick = (yearKey, semester) => {
     if (isSemesterDisabled(yearKey, semester)) return;
-  
-    setState((prev) => {
-      const isNewRoom = prev.room.id !== room._id;
-      const updatedBookingPeriods = isNewRoom
-        ? [{ year: yearKey, semester, price: calculatePrice(semester) }]
-        : prev.bookingPeriods.some((bp) => bp.year === yearKey && bp.semester === semester)
-        ? prev.bookingPeriods.filter((bp) => !(bp.year === yearKey && bp.semester === semester))
-        : [...prev.bookingPeriods, { year: yearKey, semester, price: calculatePrice(semester) }];
-  
-      // Calculate total price
-      const newTotalPrice = updatedBookingPeriods.reduce((sum, period) => sum + period.price, 0);
-  
-      return {
-        ...initialState, // Reset to initial state
-        room: {
-          id: room._id,
-          title: room.roomNumber,
-          propertyTitle: room.property.propertyName,
-        },
-        bookingPeriods: updatedBookingPeriods,
-        totalPrice: newTotalPrice, // Explicitly set total price
-        services: isNewRoom ? [] : prev.services,
-      };
-    });
-  };
-  
-  
 
-  // Service selection handler
-  const handleServiceClick = (service) => {
-    setState((prev) => {
-      const isNewRoom = prev.room.id !== room._id;
-  
+    setLocalState(prev => {
+      const existingIndex = prev.bookingPeriods.findIndex(
+        bp => bp.year === yearKey && bp.semester === semester
+      );
+
+      let updatedPeriods;
+      if (existingIndex >= 0) {
+        updatedPeriods = prev.bookingPeriods.filter((_, i) => i !== existingIndex);
+      } else {
+        updatedPeriods = [...prev.bookingPeriods, {
+          ...getRoomDetails(),
+          roomId: room._id,
+          year: yearKey,
+          semester,
+          price: calculatePrice(semester)
+        }];
+      }
+
       return {
-        ...initialState, // Reset to initial state if new room
-        room: {
-          id: room._id,
-          title: room.roomNumber,
-          propertyTitle: room.property.propertyName,
-        },
-        services: isNewRoom
-          ? [service] // Start fresh with only the selected service
-          : prev.services.includes(service)
-          ? prev.services.filter((s) => s !== service)
-          : [...prev.services, service],
-        bookingPeriods: isNewRoom ? [] : prev.bookingPeriods, // Reset booking periods if new room
-        totalPrice: isNewRoom ? 0 : prev.totalPrice, // Reset total price if new room
+        ...prev,
+        bookingPeriods: updatedPeriods,
+        totalPrice: updatedPeriods.reduce((sum, p) => sum + p.price, 0)
       };
     });
   };
-  
+
+  const handleServiceClick = (service) => {
+    setLocalState(prev => ({
+      ...prev,
+      services: prev.services.some(s => s.id === service.id)
+        ? prev.services.filter(s => s.id !== service.id)
+        : [...prev.services, { ...service, roomId: room._id }]
+    }));
+  };
+
+  const handleIncludeBooking = () => {
+    // Update global bookings with room details
+    localState.bookingPeriods.forEach(bp => {
+      setBooking(
+        room._id,
+        getRoomDetails(),
+        bp.year,
+        bp.semester,
+        {
+          ...bp,
+          services: localState.services,
+          price: calculatePrice(bp.semester)
+        }
+      );
+    });
+
+    // Sync services with room context
+    localState.services.forEach(service => {
+      localState.bookingPeriods.forEach(bp => {
+        addServiceToBooking(
+          room._id,
+          bp.year,
+          bp.semester,
+          { ...service, roomId: room._id }
+        );
+      });
+    });
+
+    // Cleanup removed bookings
+    const globalRoomBookings = globalState.bookingPeriods.filter(bp => bp.roomId === room._id);
+    globalRoomBookings.forEach(globalBp => {
+      if (!localState.bookingPeriods.some(localBp => 
+        localBp.year === globalBp.year && 
+        localBp.semester === globalBp.semester
+      )) {
+        removeBooking(room._id, globalBp.year, globalBp.semester);
+      }
+    });
+  };
+
+  // Group available semesters by academic year
+  const groupedByYear = (room.availableSemesters || []).reduce((acc, curr) => {
+    if (!acc[curr.year]) acc[curr.year] = [];
+    acc[curr.year].push(curr.semester);
+    return acc;
+  }, {});
 
   return (
-    <div className={` ${ isReversed ? 'flex flex-col' : '' }bg-white rounded-lg shadow-md`}>
+    <div className={`${isReversed ? 'flex flex-col' : ''} bg-white rounded-lg shadow-md`}>
       {/* Room image and basic info */}
       <div>
-      {room.imageUrl && (
-        <img
-          src={room.imageUrl}
-          alt={`Room ${room.roomNumber}`}
-          className="w-full h-48 object-cover"
-        />
-      )}
+        {localState.roomDetails.imageUrl && (
+          <img
+            src={localState.roomDetails.imageUrl}
+            alt={`Room ${localState.roomDetails.title}`}
+            className="w-full h-48 object-cover"
+          />
+        )}
       </div>
       <div className="p-4">
         <div className="flex justify-between gap-10 items-center mb-4">
           <div>
             <h3 className="font-semibold">
-              {room.property.propertyName}, Room {room.roomNumber}
+              {localState.roomDetails.propertyTitle}, Room {localState.roomDetails.title}
             </h3>
             <p className="text-sm text-gray-500">
-              {room.roomType} - ${room.priceWinter}/Both semester
+              {localState.roomDetails.roomType} - ${localState.roomDetails.priceWinter}/Both semester
             </p>
           </div>
-          <Link className={`${room.slug === propertySlug ? 'hidden' : ''}`} href={`/rooms/${room.slug}`}>
-            <button className="px-4 py-2 border rounded-full bg-gray-800 text-white hover:bg-gray-600">
-              Book Now!
-            </button>
-          </Link>
+          <button 
+            onClick={handleIncludeBooking}
+            className="px-4 py-2 border rounded-full bg-blue-600 text-white hover:bg-blue-700"
+          >
+            {localState.bookingPeriods.length > 0 ? "Update Booking" : "Include Booking"}
+          </button>
         </div>
 
         {/* Availability section */}
-        <details open={state.room.id === room._id} className="mb-3">
+        <details open={localState.roomDetails.id === room._id} className="mb-3">
           <summary className="cursor-pointer font-medium">Availability</summary>
           <div className="mt-2 pl-4">
             {Object.keys(groupedByYear)
@@ -212,8 +231,8 @@ const RoomCard = ({ room , isReversed = false }) => {
                         >
                           <input
                             type="checkbox"
-                            checked={state.bookingPeriods.some(
-                              (bp) => bp.year === yearKey && bp.semester === semester && state.room.id === room._id
+                            checked={localState.bookingPeriods.some(
+                              bp => bp.year === yearKey && bp.semester === semester
                             )}
                             onChange={() => handleSemesterClick(yearKey, semester)}
                             disabled={disabled}
@@ -231,18 +250,20 @@ const RoomCard = ({ room , isReversed = false }) => {
         </details>
 
         {/* Services section */}
-        <details open={state.room.id === room._id} >
+        <details open={localState.roomDetails.id === room._id}>
           <summary className="cursor-pointer font-medium">Services</summary>
           <div className="mt-2 pl-4">
             {(room.services || ["Weekly room cleaning"]).map((service) => (
-              <label key={service} className="flex items-center">
+              <label key={service.id || service} className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={state.services.includes(service === "" ? "Weekly room cleaning" : service) && state.room.id === room._id}
-                  onChange={() => handleServiceClick(service === "" ? "Weekly room cleaning" : service)}
+                  checked={localState.services.some(s => s.id === (service.id || service))}
+                  onChange={() => handleServiceClick(typeof service === 'string' ? 
+                    { id: service, name: service, price: 0 } : service
+                  )}
                   className="mr-2"
                 />
-                {service === "" ? "Weekly room cleaning" : service}
+                {service.name || (service === "" ? "Weekly room cleaning" : service)}
               </label>
             ))}
           </div>

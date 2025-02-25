@@ -4,18 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Initial state
 export const initialState = {
-  bookingPeriods: [{
-    year: '',
-    semester: '',
-    price: 0,
-  }],
-  services: [],
-  room: {
-    id: '',
-    title: '',
-    propertyTitle: '',
-  },
-  userDetails: {
+  bookingPeriods: [],
+  commonUserDetails: {
     email: '',
     name: '',
     age: 0,
@@ -27,6 +17,7 @@ export const initialState = {
     currentLocation: '',
   },
   totalPrice: 0,
+  useCommonDetails: false // Added useCommonDetails flag
 };
 
 const BookingContext = createContext();
@@ -34,94 +25,161 @@ const BookingContext = createContext();
 export const BookingContextProvider = ({ children }) => {
   const [state, setState] = useState(initialState);
 
-  // Calculate total price whenever booking periods change
+  // Automatic total price calculation
+  // Automatic total price calculation
   useEffect(() => {
-    const newTotal = state.bookingPeriods.reduce((sum, period) => sum + (period.price || 0), 0);
+    const newTotal = state.bookingPeriods.reduce(
+      (sum, period) => sum + (period.price || 0) +
+        (period.services?.reduce((sSum, service) => sSum + (service.price || 0), 0) || 0),
+      0
+    );
     setState(prev => ({ ...prev, totalPrice: newTotal }));
   }, [state.bookingPeriods]);
 
-  // Update specific booking period by index
-  const setBookingPeriod = (index, period) => {
+  // Enhanced setBooking with room details
+  const setBooking = (roomId, roomDetails, year, semester, data) => {
     setState(prev => {
+      const existingIndex = prev.bookingPeriods.findIndex(
+        period => period.roomId === roomId &&
+                 period.year === year &&
+                 period.semester === semester
+      );
+
+      const newPeriod = {
+        roomId,
+        ...roomDetails,
+        year,
+        semester,
+        services: [],
+        ...data,
+        userDetails: data.userDetails || prev.commonUserDetails
+      };
+
+      if (existingIndex >= 0) {
+        const updatedPeriods = [...prev.bookingPeriods];
+        updatedPeriods[existingIndex] = newPeriod;
+        return { ...prev, bookingPeriods: updatedPeriods };
+      }
+      
+      return { ...prev, bookingPeriods: [...prev.bookingPeriods, newPeriod] };
+    });
+  };
+
+  // Service management functions
+  const addServiceToBooking = (roomId, year, semester, service) => {
+    setState(prev => {
+      const index = prev.bookingPeriods.findIndex(
+        period => period.roomId === roomId &&
+                 period.year === year &&
+                 period.semester === semester
+      );
+      if (index === -1) return prev;
+      
       const updatedPeriods = [...prev.bookingPeriods];
-      updatedPeriods[index] = { ...updatedPeriods[index], ...period };
+      updatedPeriods[index].services = [
+        ...updatedPeriods[index].services,
+        { ...service, roomId }
+      ];
+      
       return { ...prev, bookingPeriods: updatedPeriods };
     });
   };
 
-  // Add new booking period
-  const addBookingPeriod = () => {
-    setState(prev => ({
-      ...prev,
-      bookingPeriods: [...prev.bookingPeriods, { year: '', semester: '', price: 0 }]
-    }));
-  };
-
-  const clearAllBooking = () => {
-    setState(prev => ({
-      ...prev,
-      bookingPeriods: initialState.bookingPeriods,
-      room: initialState.room,
-      services: initialState.services,
-      totalPrice: initialState.totalPrice
-    }));
-  }
-
-
-  // In your booking context provider
-const toggleBookingPeriod = (year, semester, price) => {
-  setState(prev => {
-    const existingIndex = prev.bookingPeriods.findIndex(
-      period => period.year === year && period.semester === semester
-    );
-    
-    if (existingIndex >= 0) {
-      // Remove period
-      const updatedPeriods = prev.bookingPeriods.filter((_, i) => i !== existingIndex);
+  const removeServiceFromBooking = (roomId, year, semester, serviceId) => {
+    setState(prev => {
+      const index = prev.bookingPeriods.findIndex(
+        period => period.roomId === roomId &&
+                 period.year === year &&
+                 period.semester === semester
+      );
+      if (index === -1) return prev;
+      
+      const updatedPeriods = [...prev.bookingPeriods];
+      updatedPeriods[index].services = updatedPeriods[index].services.filter(
+        service => service.id !== serviceId
+      );
+      
       return { ...prev, bookingPeriods: updatedPeriods };
-    } else {
-      // Add new period
-      const newPeriod = { year, semester, price };
-      return { ...prev, bookingPeriods: [...prev.bookingPeriods, newPeriod] };
-    }
-  });
-};
+    });
+  };
 
-
-  const setServices = (services) => {
+  // Booking management functions
+  const removeBooking = (roomId, year, semester) => {
     setState(prev => ({
       ...prev,
-      services: Array.isArray(services) ? services : [],
+      bookingPeriods: prev.bookingPeriods.filter(
+        period => !(period.roomId === roomId &&
+                   period.year === year &&
+                   period.semester === semester)
+      )
     }));
   };
 
-  // Update room information
-  const setRoom = (roomInfo) => {
+  const getBooking = (roomId, year, semester) => {
+    return state.bookingPeriods.find(
+      period => period.roomId === roomId &&
+               period.year === year &&
+               period.semester === semester
+    );
+  };
+
+  // Common details management
+  const setCommonUserDetails = (details) => {
     setState(prev => ({
       ...prev,
-      room: { ...prev.room, ...roomInfo },
+      commonUserDetails: { ...prev.commonUserDetails, ...details }
     }));
   };
 
-  // Update user details
-  const setUserDetails = (details) => {
+  const applyCommonToAll = () => {
     setState(prev => ({
       ...prev,
-      userDetails: { ...prev.userDetails, ...details },
+      bookingPeriods: prev.bookingPeriods.map(period => ({
+        ...period,
+        userDetails: { ...prev.commonUserDetails }
+      }))
     }));
+  };
+
+  // Common details mode management
+  const setUseCommonDetails = (value) => {
+    setState(prev => ({
+      ...prev,
+      useCommonDetails: value
+    }));
+  };
+
+  const clearAllBookings = () => {
+    setState({
+      ...initialState,
+      useCommonDetails: false // Reset to initial false state
+    });
+  };
+
+  // Helper function
+  const getRoomDetails = (roomId) => {
+    const period = state.bookingPeriods.find(p => p.roomId === roomId);
+    return period ? {
+      id: period.roomId,
+      title: period.roomTitle,
+      propertyTitle: period.propertyTitle,
+      imageUrl: period.imageUrl
+    } : null;
   };
 
   return (
     <BookingContext.Provider value={{
       state,
-      setState,
-      clearAllBooking,
-      setBookingPeriod,
-      addBookingPeriod,
-      setServices,
-      setRoom,
-      setUserDetails,
-      toggleBookingPeriod
+      setBooking,
+      removeBooking,
+      getBooking,
+      addServiceToBooking,
+      removeServiceFromBooking,
+      setCommonUserDetails,
+      applyCommonToAll,
+      clearAllBookings,
+      setUseCommonDetails, // Expose the setter
+      getRoomDetails
     }}>
       {children}
     </BookingContext.Provider>
