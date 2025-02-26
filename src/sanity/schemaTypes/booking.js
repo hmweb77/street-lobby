@@ -6,20 +6,12 @@ export const bookingSchema = {
   type: "document",
   fields: [
     {
-      name: "room",
-      title: "Room",
-      type: "reference",
-      to: [{ type: "room" }],
-      validation: (Rule) => Rule.required(),
-    },
-    {
       name: "user",
       title: "User",
       type: "reference",
       to: [{ type: "user" }],
       validation: (Rule) => Rule.required(),
     },
-
     {
       name: "bookedPeriod",
       title: "Booked Period",
@@ -29,6 +21,13 @@ export const bookingSchema = {
         {
           type: "object",
           fields: [
+            {
+              name: "room",
+              title: "Room",
+              type: "reference",
+              to: [{ type: "room" }],
+              validation: (Rule) => Rule.required(),
+            },
             {
               name: "semester",
               title: "Semester",
@@ -66,17 +65,19 @@ export const bookingSchema = {
             {
               name: "services",
               title: "Services",
-              type: "string",
+              type: "array",
+              of: [{ type: "reference", to: [{ type: "service" }] }],
             },
           ],
           preview: {
             select: {
+              roomTitle: "room.title",
               semester: "semester",
               year: "year",
             },
-            prepare({ semester, year }) {
+            prepare({ roomTitle, semester, year }) {
               return {
-                title: `${semester} - ${year}`,
+                title: `${roomTitle} - ${semester} ${year}`,
               };
             },
           },
@@ -89,89 +90,74 @@ export const bookingSchema = {
           if (!bookedPeriods) return true;
 
           const errors = [];
-          const yearMap = new Map(); // Tracks semesters per year
+          const conflictMap = new Map(); // Tracks room/year combinations
 
-          // First Pass: Populate yearMap and check duplicates
           bookedPeriods.forEach((period, index) => {
-            const { semester, year } = period;
-            if (!yearMap.has(year)) {
-              yearMap.set(year, {
+            const { room, semester, year } = period;
+            if (!room) return true;
+            
+            const roomYearKey = `${room._ref}-${year}`;
+            
+            if (!conflictMap.has(roomYearKey)) {
+              conflictMap.set(roomYearKey, {
                 fullYear: false,
                 bothSemesters: false,
-                semesters: new Set(), // Tracks "1st", "2nd", "Summer"
+                semesters: new Set(),
               });
             }
-            const yearData = yearMap.get(year);
+            const roomYearData = conflictMap.get(roomYearKey);
 
-            // Handle "Full Year"
+            // Handle conflicts per room/year
             if (semester === "Full Year") {
-              if (yearData.fullYear) {
+              if (roomYearData.fullYear) {
                 errors.push(
-                  `Already has booked "Full Year" for ${year}. Cannot book "Full Year" twice in ${year}.`
+                  `Room ${room._ref} already has "Full Year" booked for ${year}`
                 );
               }
-              yearData.fullYear = true;
+              roomYearData.fullYear = true;
             }
-            // Handle "Both Semesters"
             else if (semester === "Both Semesters") {
-              if (yearData.bothSemesters) {
+              if (roomYearData.bothSemesters) {
                 errors.push(
-                  `Already has booked "Both Semesters" for ${year}. Cannot book "Both Semesters" twice in ${year}.`
+                  `Room ${room._ref} already has "Both Semesters" booked for ${year}`
                 );
               }
-              yearData.bothSemesters = true;
+              roomYearData.bothSemesters = true;
             }
-            // Handle "1st", "2nd", "Summer"
             else {
-              if (yearData.semesters.has(semester)) {
+              if (roomYearData.semesters.has(semester)) {
                 errors.push(
-                  `Already has booked "${semester}" for ${year}. Cannot book "${semester}" twice in ${year}.`
+                  `Room ${room._ref} already has "${semester}" booked for ${year}`
                 );
               }
-              yearData.semesters.add(semester);
+              roomYearData.semesters.add(semester);
             }
-          });
 
-          // Second Pass: Check all conflicts
-          bookedPeriods.forEach((period, index) => {
-            const { semester, year } = period;
-            const yearData = yearMap.get(year);
-
-            // Conflict 1: "Full Year" vs. any other entry
+            // Check for incompatible combinations
             if (semester === "Full Year") {
-              if (yearData.bothSemesters || yearData.semesters.size > 0) {
+              if (roomYearData.bothSemesters || roomYearData.semesters.size > 0) {
                 errors.push(
-                  `"Already has "Both Semesters" or "1st/2nd Semester" or "Summer" for ${year}. "Full Year" cannot booked with other semesters or "Both Semesters" or "1st/2nd Semester" or "Summer" in ${year}.`
-                );
-              }
-            } else {
-              if (yearData.fullYear) {
-                errors.push(
-                  `Already has booked "Full Year" in ${year}. "${semester}" cannot book with "Full Year" in ${year}.`
+                  `Room ${room._ref} has conflicting bookings for ${year} - Full Year cannot coexist with other semesters`
                 );
               }
             }
-
-            // Conflict 2: "Both Semesters" vs. "1st" or "2nd"
-            if (semester === "Both Semesters") {
-              const hasIndividual = ["1st Semester", "2nd Semester"].some((s) =>
-                yearData.semesters.has(s)
-              );
-              if (hasIndividual) {
+            else if (semester === "Both Semesters") {
+              if (["1st Semester", "2nd Semester"].some(s => roomYearData.semesters.has(s))) {
                 errors.push(
-                  `Already has booked "1st/2nd Semester" in ${year}. "Both Semesters" cannot book with "1st/2nd Semester" in ${year} .`
+                  `Room ${room._ref} has conflicting bookings for ${year} - Both Semesters cannot coexist with individual semesters`
                 );
               }
-            } else if (["1st Semester", "2nd Semester"].includes(semester)) {
-              if (yearData.bothSemesters) {
+            }
+            else if (["1st Semester", "2nd Semester"].includes(semester)) {
+              if (roomYearData.bothSemesters) {
                 errors.push(
-                  ` Already has booked Both Semesters in ${year}. "${semester}" cannot book with "Both Semesters" in ${year}.`
+                  `Room ${room._ref} has conflicting bookings for ${year} - Individual semesters cannot coexist with Both Semesters`
                 );
               }
             }
           });
 
-          return errors.length > 0 ? errors.join(" ") : true;
+          return errors.length > 0 ? errors.join(" \n") : true;
         }),
     },
     {

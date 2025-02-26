@@ -20,10 +20,8 @@ export const propertySchema = {
     {
       name: "location",
       title: "Location",
-      type: "string",
-      options: {
-        list: ["Anjos", "Avenidas Novas", "Estefânia", "Costa de Caparica"],
-      },
+      type: "reference",
+      to: [{ type: "location" }],
     },
     {
       name: "colivingCapacity",
@@ -49,7 +47,7 @@ export const propertySchema = {
       type: "array",
       of: [{ type: "image" }],
       options: { layout: "grid" },
-      validation: Rule => Rule.max(10),
+      validation: (Rule) => Rule.max(10),
     },
     {
       name: "availableRooms",
