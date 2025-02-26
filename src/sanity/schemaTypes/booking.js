@@ -1,5 +1,3 @@
-import { validation } from "sanity";
-
 export const bookingSchema = {
   name: "booking",
   title: "Booking",
@@ -65,8 +63,7 @@ export const bookingSchema = {
             {
               name: "services",
               title: "Services",
-              type: "array",
-              of: [{ type: "reference", to: [{ type: "service" }] }],
+              type: "string",
             },
           ],
           preview: {
