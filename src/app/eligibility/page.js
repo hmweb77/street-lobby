@@ -13,7 +13,7 @@ function page() {
     const [step , setStep] = useState(2);
     const handleLeft = () => {
       if(isEligible === false) router.push("/");
-      if(step > 1 && step !== 4 ) {
+      if(step > 2 && step !== 4 ) {
         setStep(prev => prev-1);
       } else{
         router.push(urlSearchParams);

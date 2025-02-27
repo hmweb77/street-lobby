@@ -28,7 +28,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
   try {
     // Base collection reference
-    let roomsQuery = query(collection(firestore, "room"));
+    let roomsQuery = query(collection(firestore, "room"), where("status", "==" , "published"));
     console.log(roomsQuery);
 
     // If no filters are provided, fetch all available and remaining rooms
@@ -110,12 +110,11 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             };
           });
 
-          console.log("Final" , roomsWithAvailableSemesters);
-
           onSnapshotCallback(roomsWithAvailableSemesters);
         } catch (error) {
           console.error("Error processing rooms:", error);
           onSnapshotCallback([]); // Fallback in case of error
+          return (() => {});
         }
       });
 
@@ -193,7 +192,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           })
         );
 
-        console.log("Rooms with properties:", roomsWithProperties);
 
         // Apply property-related filters
         const filteredRooms = roomsWithProperties.filter((room) => {
@@ -244,7 +242,8 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
     console.log(slug);
     let roomsQuery = query(
       collection(firestore, "room"),
-      where("slug.current", "==", slug)
+      where("slug.current", "==", slug),
+      where("status", "==" , "published")
     );
 
     // Listen for real-time updates
