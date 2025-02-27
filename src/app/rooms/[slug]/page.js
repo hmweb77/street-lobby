@@ -95,15 +95,15 @@ export default function RoomDetails() {
                 className="border-2 border-black rounded-lg overflow-hidden"
               />
               
-              <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="grid grid-cols-1 gap-4 text-center">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Property Type</p>
                   <p className="font-medium">{room.propertyDetails?.propertyType || "N/A"}</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
+                {/* <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Location</p>
                   <p className="font-medium">{room.propertyDetails?.location?.name || "N/A"}</p>
-                </div>
+                </div> */}
               </div>
 
               <div className="bg-black text-white p-4 rounded-lg">

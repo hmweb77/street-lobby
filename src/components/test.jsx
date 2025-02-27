@@ -4,20 +4,20 @@ import { useBookingState } from "@/context/BookingContext";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 
-const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
-  const { state, setBooking, setCommonUserDetails , clearAllBookings  } = useBookingState();
-  const {clearParams}  = useUrlSearchParams();
+const EligibilityCheck = ({ onNext }) => {
+  const { state, setBooking, setCommonUserDetails } = useBookingState();
   const [errors, setErrors] = useState({});
   const [useCommonDetails, setUseCommonDetails] = useState(true);
   const [apiErrors, setApiErrors] = useState([]);
+  const [isEligible, setIsEligible] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Redirect if no bookings
+
+
   useEffect(() => {
-    if (state.bookingPeriods.length === 0 && isEligible !== false ) {
+    if (state.bookingPeriods.length === 0) {
       router.push("/");
     }
   }, [state.bookingPeriods, router]);
@@ -127,7 +127,7 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/eligibility-check", {
+      const response = await fetch("/api/check-eligibility", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,13 +146,9 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
       } else {
         setApiErrors(data.errors || ["Unable to process booking"]);
         setIsEligible(false);
-        clearParams()
-        clearAllBookings();
       }
     } catch (error) {
       setApiErrors(["Failed to check eligibility"]);
-      clearAllBookings();
-      clearParams();
       setIsEligible(false);
     } finally {
       setLoading(false);
@@ -501,37 +497,50 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
 
   if (isEligible === false) {
     return (
-      <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <div className="bg-white p-4 rounded-lg">
-          <h1 className="font-semibold text-2xl">OOPS...</h1>
-          <h2 className="text-md">
-            Unfortunately you are not eligible to proceed with this booking.
-            <br />
-            Instead, we recommend the following options to ensure the best
-            experience according to your profile:
+      <div className="max-w-4xl mx-auto p-6 space-y-8 text-center">
+        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">
+            Unfortunately, you are not eligible to proceed with this booking
           </h2>
 
-          <div className="space-y-2 mb-6 mt-10">
-            {state.bookingPeriods.map((period, index) => (
-              <div key={index} className="border-b pb-4 mb-4">
-                <h4 className="font-medium">
-                  {period.propertyTitle} {period.roomTitle}. {period.year}{" "}
-                  {period.semester} €{period.price.toFixed(2)}{" "}
-                </h4>
-              </div>
+          <div className="space-y-2 mb-6">
+            {apiErrors.map((error, index) => (
+              <p key={index} className="text-sm">
+                • {error}
+              </p>
             ))}
           </div>
 
           <Image
-            src="/oops.jpg"
+            src="/images/booking-error.svg"
             alt="Booking error"
-            width={500}
-            height={380}
+            width={400}
+            height={300}
             className="mx-auto"
           />
         </div>
 
         <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+          <h3 className="text-xl font-semibold">Recommended Alternatives</h3>
+
+          {state.bookingPeriods.map((period, index) => (
+            <div key={index} className="border-b pb-4 mb-4">
+              <h4 className="font-medium">{period.propertyTitle}</h4>
+              <p className="text-gray-600">
+                {period.roomTitle} | {period.year} | {period.semester}
+              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-sm">
+                  Original Price: €{period.price.toFixed(2)}
+                </p>
+                <p className="text-sm text-green-600">
+                  Suggested Alternative: €{(period.price * 0.9).toFixed(2)} (10%
+                  discount)
+                </p>
+              </div>
+            </div>
+          ))}
+
           <button
             onClick={() => {
               setIsEligible(null);
@@ -597,7 +606,7 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
         </>
       )}
 
-      {/* Submit Button */}
+      {/* Updated Submit Button */}
       <div className="mt-8 flex justify-center">
         <button
           onClick={handleSubmit}

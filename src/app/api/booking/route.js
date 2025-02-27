@@ -18,7 +18,7 @@ export async function POST(req) {
 
     console.log(JSON.stringify(body));
 
-    if (!bookingPeriods || bookedPeriods.length <= 0 || !commonUserDetails || totalPrice === undefined) {
+    if (!bookingPeriods || bookingPeriods.length <= 0 || !commonUserDetails || totalPrice === undefined) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 

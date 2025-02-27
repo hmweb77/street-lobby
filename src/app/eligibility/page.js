@@ -8,9 +8,11 @@ import React, { useState } from "react";
 
 function page() {
    const router = useRouter();
+   const [isEligible, setIsEligible] = useState(null);
    const { urlSearchParams } = useUrlSearchParams();
     const [step , setStep] = useState(2);
     const handleLeft = () => {
+      if(isEligible === false) router.push("/");
       if(step > 1 && step !== 4 ) {
         setStep(prev => prev-1);
       } else{
@@ -26,7 +28,7 @@ function page() {
     <main className="max-w-2xl mx-auto">
         <StepProcessBar currentStep={step} handleLeft={handleLeft} />
         { step === 2 && (
-          <EligibilityCheck onNext={() => setStep(3)} />
+          <EligibilityCheck isEligible={isEligible} setIsEligible={setIsEligible}  onNext={() => setStep(3)} />
         ) }
 
         {
