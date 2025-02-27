@@ -5,6 +5,7 @@ import Image from "next/image";
 import properties from "@/lib/properties";
 import { useRouter } from 'next/navigation';
 import { fetchAllLocations } from "@/lib/fireStoreQuery/filterQuery";
+import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 
 const LandingPage = () => {
   const [expandedFilters, setExpandedFilters] = useState([]);
@@ -20,6 +21,8 @@ const LandingPage = () => {
     propertyType: null,
   });
 
+  const { setParams }  = useUrlSearchParams();
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     params.set("year", selectedYear);
@@ -27,6 +30,7 @@ const LandingPage = () => {
     Object.entries(selectedFilters).forEach(([key, value]) => {
       if (value !== null && value !== false && value !== "false") params.set(key, value);
     });
+    setParams(`/rooms?${params.toString()}`);
     router.push(`/rooms?${params.toString()}`);
   };
 

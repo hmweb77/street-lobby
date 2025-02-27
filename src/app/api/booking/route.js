@@ -16,7 +16,9 @@ export async function POST(req) {
       paymentStatus
     } = body;
 
-    if (!bookingPeriods || !commonUserDetails || totalPrice === undefined) {
+    console.log(JSON.stringify(body));
+
+    if (!bookingPeriods || bookedPeriods.length <= 0 || !commonUserDetails || totalPrice === undefined) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
@@ -101,6 +103,8 @@ export async function POST(req) {
         }
         userRef = user._id;
       }
+
+      console.log("Here!");
 
       // Prepare booked period data
       const periodKey = uuidv4();

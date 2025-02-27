@@ -1,6 +1,8 @@
 import { useState, useContext, createContext } from 'react'
 import { CreditCard, Landmark, Wallet, Contactless, Clock, Smartphone } from 'lucide-react'
 import { useBookingState } from '@/context/BookingContext'
+import { useUrlSearchParams } from '@/context/UrlSearchParamsContext'
+import { useRouter } from 'next/navigation'
 
 // Radio Group Components
 const RadioGroupContext = createContext()
@@ -43,14 +45,20 @@ export const RadioGroupItem = ({ value, id, className }) => {
 }
 
 // Payment Selector Component
-export default function PaymentSelector() {
-  const { state, clearAllBooking } = useBookingState()
+export default function PaymentSelector({onSuccess}) {
+  const router = useRouter();
+  const { state, clearAllBookings } = useBookingState()
+  const { clearParams } = useUrlSearchParams();
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState('card')
+  const [selectedPayment, setSelectedPayment] = useState('later')
 
   const handleBooking = async () => {
+    if(state.bookingPeriods.length <= 0 ) {
+      setMessage("Somethings went wrongs.");
+      return false;
+    } 
     setLoading(true)
     setMessage('')
     
@@ -74,9 +82,11 @@ export default function PaymentSelector() {
 
       setMessage('Booking successful! Redirecting...')
       setSuccess(true)
-      clearAllBooking()
+      clearAllBookings();
+      clearParams();
+      onSuccess();
       
-      setTimeout(() => setSuccess(false), 2000)
+      // setTimeout(() => { ; setSuccess(false) } , 1000)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Payment processing failed')
       setSuccess(false)
@@ -87,16 +97,31 @@ export default function PaymentSelector() {
 
   if (success) {
     return (
-      <div className="w-full max-w-md mx-auto p-6 space-y-4 text-center">
-        <h3 className="text-2xl font-semibold text-green-600">Booking Confirmed!</h3>
-        <p className="text-gray-500">
-          {selectedPayment === 'later' 
-            ? 'Please settle payment at check-in. Confirmation email sent.'
-            : 'Payment processed successfully. Confirmation email sent.'}
-        </p>
+      <div className="w-full max-w-md mx-auto p-6 space-y-6 text-center">
+        <div className="space-y-4">
+          <div className="inline-flex bg-green-100 p-3 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900">Booking Confirmed!</h3>
+          <p className="text-gray-600">
+            {selectedPayment === 'later' 
+              ? 'Your reservation is secured. Please settle payment at check-in.'
+              : 'Payment processed successfully. Enjoy your stay!'}
+          </p>
+        </div>
+        
+        <button
+          onClick={() => router.push('/')}
+          className="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-900 transition-colors"
+        >
+          Return to Homepage
+        </button>
       </div>
     )
   }
+
 
   return (
     <div className="w-full max-w-md mx-auto p-6 space-y-8">
@@ -112,9 +137,9 @@ export default function PaymentSelector() {
           { value: 'card', label: 'Credit Card', icon: CreditCard },
           { value: 'bank', label: 'Bank Transfer', icon: Landmark },
           { value: 'paypal', label: 'PayPal', icon: Wallet },
-          { value: 'later', label: 'Pay Later', icon: Clock },
+          { value: 'later', label: 'Pay Later', icon: Clock , active : true },
         ].map((method) => (
-          <div key={method.value} className="relative">
+          <div  key={method.value} className={`relative ${method.active ? "" : "opacity-45 pointer-events-none cursor-not-allowed"}`}>
             <RadioGroupItem 
               value={method.value} 
               id={method.value} 
@@ -142,7 +167,7 @@ export default function PaymentSelector() {
         <button 
           onClick={handleBooking}
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-gray-800 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">

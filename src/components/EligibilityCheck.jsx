@@ -510,7 +510,6 @@ const EligibilityCheck = ({ onNext }) => {
         <button
           onClick={handleSubmit}
           className="bg-gray-900 text-white px-8 py-3 rounded-2xl hover:bg-blue-700 transition-colors font-medium text-lg"
-          disabled={Object.keys(errors).length > 0}
         >
           Check eligibility
         </button>

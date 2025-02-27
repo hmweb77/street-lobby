@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Header";
 import { BookingFilterProvider } from "@/context/BookingFilterContext";
 import { BookingContextProvider } from "@/context/BookingContext";
+import { UrlSearchParamsProvider } from "@/context/UrlSearchParamsContext";
 
 export const metadata = {
   title: "Street Lobby",
@@ -14,10 +15,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <BookingFilterProvider>
-          <BookingContextProvider>
-            <Navbar />
-            {children}
-          </BookingContextProvider>
+          <UrlSearchParamsProvider>
+            <BookingContextProvider>
+              <Navbar />
+              {children}
+            </BookingContextProvider>
+          </UrlSearchParamsProvider>
         </BookingFilterProvider>
         <Footer />
       </body>

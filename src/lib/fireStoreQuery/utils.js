@@ -2,7 +2,7 @@ export const getRemainingAvailableSemesters = (room, year) => {
   const { availableSemesters = [], bookedPeriods = [] } = room;
 
   // 1. Handle case where year is NOT provided
-  if (year === undefined) {
+  if (!year) {
     // Return all available semesters that aren't booked in THEIR OWN YEAR
     return availableSemesters.filter((available) => {
       return !bookedPeriods.some(

@@ -47,7 +47,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Rooms:", rooms);
 
         try {
           // Fetch and merge property details
@@ -81,28 +80,26 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             })
           );
 
-          console.log("Rooms with properties:", roomsWithProperties);
-
           // Apply property-related filters
-          const filteredRooms = roomsWithProperties.filter((room) => {
-            if (!room.propertyDetails) return false;
-            if (location && room.propertyDetails.location?._ref !== location)
-              return false;
-            if (
-              propertyType &&
-              room.propertyDetails.propertyType !== propertyType
-            )
-              return false;
-            if (
-              colivingCapacity &&
-              room.propertyDetails.colivingCapacity > colivingCapacity
-            )
-              return false;
-            return true;
-          });
+          // const filteredRooms = roomsWithProperties.filter((room) => {
+          //   if (!room.propertyDetails) return false;
+          //   if (location && room.propertyDetails.location?._ref !== location)
+          //     return false;
+          //   if (
+          //     propertyType &&
+          //     room.propertyDetails.propertyType !== propertyType
+          //   )
+          //     return false;
+          //   if (
+          //     colivingCapacity &&
+          //     room.propertyDetails.colivingCapacity > colivingCapacity
+          //   )
+          //     return false;
+          //   return true;
+          // });
 
           // Extract remaining available semesters for the specified year
-          const roomsWithAvailableSemesters = filteredRooms.map((room) => {
+          const roomsWithAvailableSemesters = roomsWithProperties.map((room) => {
             const remainingSemesters = getRemainingAvailableSemesters(
               room,
               year
@@ -112,6 +109,8 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
               remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
             };
           });
+
+          console.log("Final" , roomsWithAvailableSemesters);
 
           onSnapshotCallback(roomsWithAvailableSemesters);
         } catch (error) {

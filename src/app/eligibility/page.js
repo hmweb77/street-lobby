@@ -2,15 +2,25 @@
 import StepProcessBar from "@/components/booking/ProcessBar";
 import EligibilityCheck from "@/components/EligibilityCheck";
 import PaymentSelector from "@/components/PaymentSelectors";
+import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 function page() {
    const router = useRouter();
+   const { urlSearchParams } = useUrlSearchParams();
     const [step , setStep] = useState(2);
     const handleLeft = () => {
-      router.back();
+      if(step > 1 && step !== 4 ) {
+        setStep(prev => prev-1);
+      } else{
+        router.push(urlSearchParams);
+      }
     };
+
+    const onSuccess = () => {
+      setStep(4);
+    }
 
   return (
     <main className="max-w-2xl mx-auto">
@@ -20,8 +30,8 @@ function page() {
         ) }
 
         {
-          step === 3 && (
-            <PaymentSelector />
+          (step === 3 || step === 4 ) && (
+            <PaymentSelector onSuccess={onSuccess} />
           )
         }
         

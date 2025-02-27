@@ -184,6 +184,8 @@ export const BookingContextProvider = ({ children }) => {
     });
   };
 
+  console.log(state);
+
   // Helper function
   const getRoomDetails = (roomId) => {
     const period = state.bookingPeriods.find((p) => p.roomId === roomId);

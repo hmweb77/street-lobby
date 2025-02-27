@@ -44,8 +44,7 @@ export async function POST(req) {
 
     // Process booking data
     const booking = await req.json();
-    const { room, bookedPeriod, status, _id , tracker , cancellationKey } = booking;
-    const roomId = room?._ref;
+    const { bookedPeriod, status, _id, tracker, cancellationKey } = booking;
 
     if (_id.includes("draft")) {
       return NextResponse.json(
@@ -54,46 +53,65 @@ export async function POST(req) {
       );
     }
 
-    if (!booking || !roomId || !bookedPeriod) {
+    // Validate booked periods
+    if (!booking || !bookedPeriod || !bookedPeriod.length) {
       return NextResponse.json(
         { error: "Invalid booking data" },
         { status: 400, headers }
       );
     }
 
-    // Fetch and update Sanity document
-    const roomData = await sanityAdminClient.getDocument(roomId);
-    if (!roomData) {
+    // Get unique room IDs from all booked periods
+    const roomIds = Array.from(new Set(
+      bookedPeriod.map(period => period.room?._ref).filter(Boolean)
+    ));
+
+    if (roomIds.length === 0) {
       return NextResponse.json(
-        { error: "Room not found" },
-        { status: 404, headers }
+        { error: "No valid room references found" },
+        { status: 400, headers }
       );
     }
 
-    let updatedBookedPeriods = roomData.bookedPeriods || [];
-
+    // Handle cancellation/deletion
     if (status === "cancelled" || operation === "delete") {
-      updatedBookedPeriods = updatedBookedPeriods.filter(
-        (period) => period._key.split("__^^__")[0] !== tracker
-      );
-      await sanityAdminClient
-        .patch(roomId)
-        .set({ bookedPeriods: updatedBookedPeriods })
-        .commit();
-      
-      await db.collection("room").doc(roomId).set({ bookedPeriods: updatedBookedPeriods }, { merge: true })
+      // Process each room in booked periods
+      for (const roomId of roomIds) {
+        const roomData = await sanityAdminClient.getDocument(roomId);
+        if (!roomData) {
+          console.error(`Room ${roomId} not found`);
+          continue;
+        }
 
-      if (status === "cancelled" && !(cancellationKey && cancellationKey.includes("cancelled+"))) {
+        // Filter out periods linked to this booking
+        let updatedBookedPeriods = (roomData.bookedPeriods || []).filter(
+          period => period._key.split("__^^__")[0] !== tracker
+        );
+
+        // Update Sanity
         await sanityAdminClient
-          .patch(_id)
-          .set({ cancellationKey : `cancelled+${uuidv4()}` })
+          .patch(roomId)
+          .set({ bookedPeriods: updatedBookedPeriods })
           .commit();
 
+        // Update Firestore
+        await db.collection("room").doc(roomId).set(
+          { bookedPeriods: updatedBookedPeriods }, 
+          { merge: true }
+        );
+      }
+
+      // Update cancellation key if needed
+      if (status === "cancelled" && !cancellationKey?.startsWith("cancelled+")) {
+        await sanityAdminClient
+          .patch(_id)
+          .set({ cancellationKey: `cancelled+${uuidv4()}` })
+          .commit();
       }
     }
 
     return NextResponse.json(
-      { message: "Room updated successfully" },
+      { message: "Rooms updated successfully" },
       { status: 200, headers }
     );
   } catch (error) {

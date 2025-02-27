@@ -15,6 +15,7 @@ const RoomCard = ({ room, isReversed = false }) => {
   const params = useParams();
   const propertySlug = params.slug;
 
+  console.log(room);
   const {
     state: globalState,
     setBooking,
@@ -43,13 +44,13 @@ const RoomCard = ({ room, isReversed = false }) => {
   // Initialize local state
   useEffect(() => {
     const globalBooking = globalState.bookingPeriods.filter(
-      (bp) => bp.roomId === room._id
+      (bp) => bp.roomId === room.id
     );
     const initialServices = globalBooking.flatMap((bp) => bp.services);
 
     setLocalState({
       roomDetails: {
-        id: room._id,
+        id: room.id,
         title: room.roomNumber,
         propertyTitle: room.propertyDetails?.propertyName,
         imageUrl: room.imageUrl,
@@ -66,7 +67,7 @@ const RoomCard = ({ room, isReversed = false }) => {
   // Detect changes between local and global state
   useEffect(() => {
     const globalBookingPeriods = globalState.bookingPeriods.filter(
-      (bp) => bp.roomId === room._id
+      (bp) => bp.roomId === room.id
     );
     const globalServices = globalBookingPeriods.flatMap((bp) => bp.services);
 
@@ -89,11 +90,11 @@ const RoomCard = ({ room, isReversed = false }) => {
       );
 
     setShowIncludeButton(!bookingPeriodsMatch || !servicesMatch);
-  }, [localState, globalState, room._id]);
+  }, [localState, globalState, room.id]);
 
   const getRoomDetails = () => ({
     roomTitle: room.roomNumber,
-    propertyTitle: room.property?.propertyName,
+    propertyTitle: room.propertyDetails?.propertyName,
     imageUrl: room.imageUrl,
     roomType: room.roomType,
     priceWinter: room.priceWinter,
@@ -145,7 +146,7 @@ const RoomCard = ({ room, isReversed = false }) => {
           ...prev.bookingPeriods,
           {
             ...getRoomDetails(),
-            roomId: room._id,
+            roomId: room.id,
             year: yearKey,
             semester,
             price: calculatePrice(semester),
@@ -166,14 +167,14 @@ const RoomCard = ({ room, isReversed = false }) => {
       ...prev,
       services: prev.services.some((s) => s.id === service.id)
         ? prev.services.filter((s) => s.id !== service.id)
-        : [...prev.services, { ...service, roomId: room._id }],
+        : [...prev.services, { ...service, roomId: room.id }],
     }));
   };
 
   const handleIncludeBooking = () => {
     // Update global state
     localState.bookingPeriods.forEach((bp) => {
-      setBooking(room._id, getRoomDetails(), bp.year, bp.semester, {
+      setBooking(room.id, getRoomDetails(), bp.year, bp.semester, {
         ...bp,
         services: localState.services,
         price: calculatePrice(bp.semester),
@@ -182,7 +183,7 @@ const RoomCard = ({ room, isReversed = false }) => {
 
     // Cleanup removed bookings
     const globalRoomBookings = globalState.bookingPeriods.filter(
-      (bp) => bp.roomId === room._id
+      (bp) => bp.roomId === room.id
     );
     globalRoomBookings.forEach((globalBp) => {
       if (
@@ -192,7 +193,7 @@ const RoomCard = ({ room, isReversed = false }) => {
             localBp.semester === globalBp.semester
         )
       ) {
-        removeBooking(room._id, globalBp.year, globalBp.semester);
+        removeBooking(room.id, globalBp.year, globalBp.semester);
       }
     });
   };
@@ -249,7 +250,7 @@ const RoomCard = ({ room, isReversed = false }) => {
           </div>
         </div>
 
-        <details open={localState.roomDetails.id === room._id} className="mb-3">
+        <details open={localState.roomDetails.id === room.id} className="mb-3">
           <summary className="cursor-pointer font-medium">Availability</summary>
           <div className="mt-2 pl-4">
             {Object.keys(groupedByYear)
@@ -293,7 +294,7 @@ const RoomCard = ({ room, isReversed = false }) => {
           </div>
         </details>
 
-        <details open={localState.roomDetails.id === room._id}>
+        <details open={localState.roomDetails.id === room.id}>
           <summary className="cursor-pointer font-medium">Services</summary>
           <div className="mt-2 pl-4">
             {(room.services || ["Weekly room cleaning"]).filter(service => (service !== "" || service !== null || service !== undefined )).map((service) => (
