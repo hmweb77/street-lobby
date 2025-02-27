@@ -5,105 +5,194 @@ import { adminAccessDb as db } from '@/lib/firebase-admin'
 
 export async function POST(req) {
   try {
+    const bookingTrackerId = uuidv4();
     const body = await req.json();
-    const { roomId, userDetails, bookingPeriods, totalPrice, services } = body;
+    const {
+      bookingPeriods,
+      commonUserDetails,
+      useCommonDetails,
+      totalPrice,
+      paymentMethod,
+      paymentStatus
+    } = body;
 
-    if (!roomId || !userDetails || !bookingPeriods || !totalPrice) {
+    if (!bookingPeriods || !commonUserDetails || totalPrice === undefined) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
-    const existingUsers = await sanityAdminClient.fetch(
-      `*[_type == "user" && email == $email][0]`,
-      { email: userDetails.email }
-    );
+    // Process common user (used for all periods if useCommonDetails is true)
+    let commonUser;
+    if (useCommonDetails) {
+      const existingUser = await sanityAdminClient.fetch(
+        `*[_type == "user" && email == $email][0]`,
+        { email: commonUserDetails.email }
+      );
 
-    let userId;
-    if (!existingUsers) {
-      const newUser = {
-        _type: "user",
-        name: userDetails.name,
-        age: Number(userDetails.age) ?? 18,
-        genre: userDetails.genre,
-        email: userDetails.email,
-        permanentAddress: userDetails.permanentAddress,
-        nationality: userDetails.nationality,
-        idNumber: userDetails.idNumber,
-        currentProfession: userDetails.currentProfession,
-        currentLocation: userDetails.currentLocation,
-      };
-      const createdUser = await sanityAdminClient.create(newUser);
-      userId = createdUser._id;
-    } else {
-      userId = existingUsers._id;
-      const updates = {};
-      [
-        "name",
-        "age",
-        "genre",
-        "permanentAddress",
-        "nationality",
-        "idNumber",
-        "currentProfession",
-        "currentLocation",
-      ].forEach((field) => {
-        if (existingUsers[field] !== userDetails[field]) {
-          updates[field] = userDetails[field];
+      if (!existingUser) {
+        const newUser = {
+          _type: "user",
+          ...commonUserDetails,
+          age: Number(commonUserDetails.age) || 18
+        };
+        commonUser = await sanityAdminClient.create(newUser);
+      } else {
+        commonUser = existingUser;
+        const updates = {};
+        [
+          "name", "age", "genre", "permanentAddress",
+          "nationality", "idNumber", "currentProfession", "currentLocation"
+        ].forEach(field => {
+          if (existingUser[field] !== commonUserDetails[field]) {
+            updates[field] = commonUserDetails[field];
+          }
+        });
+        if (Object.keys(updates).length > 0) {
+          await sanityAdminClient.patch(commonUser._id).set(updates).commit();
         }
-      });
-
-      if (Object.keys(updates).length > 0) {
-        await sanityAdminClient.patch(userId).set(updates).commit();
       }
     }
 
-    const roomData = await sanityAdminClient.getDocument(roomId);
-    let updatedBookedPeriods = roomData.bookedPeriods || [];
-    
-    const bookingData = {
-      _type: "booking",
-      room: { _type: "reference", _ref: roomId },
-      user: { _type: "reference", _ref: userId },
-      bookedPeriod: bookingPeriods.map((period) => ({
-        _key: uuidv4(),
+    const processedUsers = new Map();
+    const roomUpdatesMap = new Map();
+    const bookedPeriods = [];
+
+    // Process all booking periods
+    for (const period of bookingPeriods) {
+      let userRef;
+      
+      if (useCommonDetails) {
+        userRef = commonUser._id;
+      } else {
+        // Process individual user for each period
+        const userDetails = period.userDetails;
+        let user;
+
+        if (processedUsers.has(userDetails.email)) {
+          user = processedUsers.get(userDetails.email);
+        } else {
+          const existingUser = await sanityAdminClient.fetch(
+            `*[_type == "user" && email == $email][0]`,
+            { email: userDetails.email }
+          );
+
+          if (!existingUser) {
+            const newUser = {
+              _type: "user",
+              ...userDetails,
+              age: Number(userDetails.age) || 18
+            };
+            user = await sanityAdminClient.create(newUser);
+          } else {
+            user = existingUser;
+            const updates = {};
+            [
+              "name", "age", "genre", "permanentAddress",
+              "nationality", "idNumber", "currentProfession", "currentLocation"
+            ].forEach(field => {
+              if (existingUser[field] !== userDetails[field]) {
+                updates[field] = userDetails[field];
+              }
+            });
+            if (Object.keys(updates).length > 0) {
+              await sanityAdminClient.patch(user._id).set(updates).commit();
+            }
+          }
+          processedUsers.set(userDetails.email, user);
+        }
+        userRef = user._id;
+      }
+
+      // Prepare booked period data
+      const periodKey = uuidv4();
+      bookedPeriods.push({
+        _key: periodKey,
+        user: { _type: "reference", _ref: userRef },
+        room: { _type: "reference", _ref: period.roomId },
         semester: period.semester,
         price: period.price,
         year: period.year,
-        services: services?.toString() || "",
-      })),
+        services: period.services?.join(',') || ""
+      });
+
+      // Track room updates
+      const roomId = period.roomId;
+      if (!roomUpdatesMap.has(roomId)) {
+        const roomData = await sanityAdminClient.getDocument(roomId);
+        roomUpdatesMap.set(roomId, {
+          currentPeriods: roomData.bookedPeriods || [],
+          newPeriods: []
+        });
+      }
+
+      roomUpdatesMap.get(roomId).newPeriods.push({
+        _key: `${bookingTrackerId}__^^__${periodKey}`,
+        semester: period.semester,
+        year: period.year,
+        services: period.services?.join(',') || ""
+      });
+    }
+
+    // Validate room availability for all rooms
+    const validationErrors = [];
+    for (const [roomId, { currentPeriods, newPeriods }] of roomUpdatesMap) {
+      const updatedPeriods = [...currentPeriods, ...newPeriods];
+      const errors = validateBookingPeriods(updatedPeriods);
+      if (errors.length > 0) {
+        validationErrors.push(`Room ${roomId}: ${errors.join(' ')}`);
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        { message: validationErrors.join('; ') },
+        { status: 400 }
+      );
+    }
+
+    // Create single booking document
+    const bookingData = {
+      tracker : bookingTrackerId, 
+      _type: "booking",
+      bookedPeriod: bookedPeriods,
       bookingDate: new Date().toISOString(),
       status: "pending",
       totalPrice,
-      notes: "",
+      paymentMethod,
+      paymentStatus: paymentStatus || "pending",
+      notes: ""
     };
 
-    const response = await sanityAdminClient.create(bookingData);
-    
-    const newPeriods = bookingPeriods.map((period) => ({
-      _key: `${response._id}__^^__${uuidv4()}`,
-      semester: period.semester,
-      year: period.year,
-      services: period.services || "",
-    }));
+    const createdBooking = await sanityAdminClient.create(bookingData);
 
-    const allBookedPeriods = [...updatedBookedPeriods, ...newPeriods];
+    // Update rooms with new periods
+    for (const [roomId, { currentPeriods, newPeriods }] of roomUpdatesMap) {
+      const updatedPeriods = [...currentPeriods, ...newPeriods];
+      
+      await sanityAdminClient.patch(roomId)
+        .set({ bookedPeriods: updatedPeriods })
+        .commit();
 
-    const errors = validateBookingPeriods(allBookedPeriods);
-    if (errors.length > 0) {
-      await sanityAdminClient.delete(response._id);
-      return NextResponse.json({ message: errors.join(" ") }, { status: 400 });
+      await db.collection("room")
+        .doc(roomId)
+        .set({ bookedPeriods: updatedPeriods }, { merge: true });
     }
 
-    await sanityAdminClient.patch(roomId).set({ bookedPeriods: allBookedPeriods }).commit();
-    await db.collection("room").doc(roomId).set({ bookedPeriods: allBookedPeriods }, { merge: true })
 
-    return NextResponse.json({ message: "Booking successful", data: response }, { status: 201 });
+    return NextResponse.json(
+      { message: "Booking successful", data: { bookingId: createdBooking._id } },
+      { status: 201 }
+    );
+
   } catch (error) {
     console.error("Error creating booking:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-    
 }
 
+// Keep the existing validateBookingPeriods function
 function validateBookingPeriods(bookedPeriods) {
   const errors = [];
   const yearMap = new Map();

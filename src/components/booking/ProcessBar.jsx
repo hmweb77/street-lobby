@@ -3,17 +3,13 @@
 
 import { Check } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
-const StepProcessBar = ({ currentStep, setCurrentStep , showPrev = true }) => {
+const StepProcessBar = ({ currentStep, handleLeft , showPrev = true }) => {
   const steps = [
     { number: 1, label: "Bookings" },
     { number: 2, label: "Eligibility check" },
     { number: 3, label: "Payment" }
   ];
-  const handleLeft = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+  
   return (
     <nav className=" py-4 px-2 ml-5" aria-label="Booking process">
       <div className="flex">

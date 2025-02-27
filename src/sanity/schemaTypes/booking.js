@@ -4,13 +4,6 @@ export const bookingSchema = {
   type: "document",
   fields: [
     {
-      name: "user",
-      title: "User",
-      type: "reference",
-      to: [{ type: "user" }],
-      validation: (Rule) => Rule.required(),
-    },
-    {
       name: "bookedPeriod",
       title: "Booked Period",
       readOnly: true,
@@ -19,6 +12,13 @@ export const bookingSchema = {
         {
           type: "object",
           fields: [
+            {
+              name: "user",
+              title: "User",
+              type: "reference",
+              to: [{ type: "user" }],
+              validation: (Rule) => Rule.required(),
+            },
             {
               name: "room",
               title: "Room",
@@ -31,13 +31,7 @@ export const bookingSchema = {
               title: "Semester",
               type: "string",
               options: {
-                list: [
-                  "1st Semester",
-                  "2nd Semester",
-                  "Summer",
-                  "Both Semesters",
-                  "Full Year",
-                ],
+                list: ["1st Semester", "2nd Semester", "Summer"],
               },
               validation: (Rule) => Rule.required(),
             },
@@ -92,9 +86,9 @@ export const bookingSchema = {
           bookedPeriods.forEach((period, index) => {
             const { room, semester, year } = period;
             if (!room) return true;
-            
+
             const roomYearKey = `${room._ref}-${year}`;
-            
+
             if (!conflictMap.has(roomYearKey)) {
               conflictMap.set(roomYearKey, {
                 fullYear: false,
@@ -112,16 +106,14 @@ export const bookingSchema = {
                 );
               }
               roomYearData.fullYear = true;
-            }
-            else if (semester === "Both Semesters") {
+            } else if (semester === "Both Semesters") {
               if (roomYearData.bothSemesters) {
                 errors.push(
                   `Room ${room._ref} already has "Both Semesters" booked for ${year}`
                 );
               }
               roomYearData.bothSemesters = true;
-            }
-            else {
+            } else {
               if (roomYearData.semesters.has(semester)) {
                 errors.push(
                   `Room ${room._ref} already has "${semester}" booked for ${year}`
@@ -132,20 +124,25 @@ export const bookingSchema = {
 
             // Check for incompatible combinations
             if (semester === "Full Year") {
-              if (roomYearData.bothSemesters || roomYearData.semesters.size > 0) {
+              if (
+                roomYearData.bothSemesters ||
+                roomYearData.semesters.size > 0
+              ) {
                 errors.push(
                   `Room ${room._ref} has conflicting bookings for ${year} - Full Year cannot coexist with other semesters`
                 );
               }
-            }
-            else if (semester === "Both Semesters") {
-              if (["1st Semester", "2nd Semester"].some(s => roomYearData.semesters.has(s))) {
+            } else if (semester === "Both Semesters") {
+              if (
+                ["1st Semester", "2nd Semester"].some((s) =>
+                  roomYearData.semesters.has(s)
+                )
+              ) {
                 errors.push(
                   `Room ${room._ref} has conflicting bookings for ${year} - Both Semesters cannot coexist with individual semesters`
                 );
               }
-            }
-            else if (["1st Semester", "2nd Semester"].includes(semester)) {
+            } else if (["1st Semester", "2nd Semester"].includes(semester)) {
               if (roomYearData.bothSemesters) {
                 errors.push(
                   `Room ${room._ref} has conflicting bookings for ${year} - Individual semesters cannot coexist with Both Semesters`
@@ -165,6 +162,12 @@ export const bookingSchema = {
       initialValue: new Date().toISOString(),
     },
     {
+      name : "tracker",
+      title: "tracker",
+      hidden: true,
+      type: "text"
+    },
+    {
       name: "status",
       title: "Status",
       type: "string",
@@ -172,9 +175,10 @@ export const bookingSchema = {
         list: ["pending", "confirmed", "cancelled"],
         layout: "dropdown",
       },
-      readOnly: ({ document }) => document?.cancellationKey?.startsWith("cancelled+"),
+      readOnly: ({ document }) =>
+        document?.cancellationKey?.startsWith("cancelled+"),
       initialValue: "pending",
-    
+
       preview: {
         select: {
           status: "status",
@@ -200,6 +204,25 @@ export const bookingSchema = {
       validation: (Rule) => Rule.required(),
     },
     {
+      name: "paymentMethod",
+      title: "Payment Method",
+      type: "string",
+      options: {
+        list: ["Credit Card", "PayPal", "Bank Transfer", "Cash"],
+      },
+    },
+    {
+      name: "paymentStatus",
+      title: "Payment Status",
+      type: "string",
+      options: {
+        list: ["pending", "paid", "failed", "refunded"],
+        layout: "dropdown",
+      },
+      initialValue: "pending",
+    },
+
+    {
       name: "notes",
       title: "Notes",
       type: "text",
@@ -207,17 +230,38 @@ export const bookingSchema = {
   ],
   preview: {
     select: {
-      userName: "user.name",
-      email: "user.email",
-      room: "room.title",
-      booking: "bookingDate",
-      bookingStatus: "status",
+      userName: "bookedPeriod.0.user.name",
+      email: "bookedPeriod.0.user.email",
+      roomTitle: "bookedPeriod.0.room.title",
+      bookingDate: "bookingDate",
+      status: "status",
       total: "totalPrice",
+      paymentStatus: "paymentStatus",
     },
-    prepare({ userName, email, room, booking, bookingStatus, total }) {
+    prepare(selection) {
+      const {
+        userName,
+        email,
+        roomTitle,
+        bookingDate,
+        status,
+        total,
+        paymentStatus,
+      } = selection;
+      const date = bookingDate
+        ? new Date(bookingDate).toLocaleDateString()
+        : "No date";
+
       return {
-        title: `${userName} | ${room} | ${bookingStatus}`,
-        subtitle: `${email} |  ${total} | ${booking}  `,
+        title: `${userName || "Unknown user"} | ${roomTitle || "No room"} | ${status}`,
+        subtitle: [
+          email && `Email: ${email}`,
+          date && `Booked: ${date}`,
+          total !== undefined && `Total: $${total}`,
+          paymentStatus && `Payment: ${paymentStatus}`,
+        ]
+          .filter(Boolean)
+          .join(" | "),
       };
     },
   },

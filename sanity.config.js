@@ -24,10 +24,10 @@ export default defineConfig({
     structureTool({ structure }),
     visionTool({ defaultApiVersion: '2025-02-04' }),
   ],
-  document: {
-    actions: (prev, context) => {
-      // Only add the action for documents of type "booking"
-      return context.schemaType === 'booking' ? prev.filter(originalActions => originalActions.action !== 'delete' && originalActions.action !== 'unpublish' && originalActions.action !== 'duplicate') : prev;
-    },
-  },
+  // document: {
+  //   actions: (prev, context) => {
+  //     // Only add the action for documents of type "booking"
+  //     return context.schemaType === 'booking' ? prev.filter(originalActions => originalActions.action !== 'delete' && originalActions.action !== 'unpublish' && originalActions.action !== 'duplicate') : prev;
+  //   },
+  // },
 })

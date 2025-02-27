@@ -1,14 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Image from "next/image";
-import properties from "@/lib/properties"; // Import properties data
+import properties from "@/lib/properties";
 import { useRouter } from 'next/navigation';
+import { fetchAllLocations } from "@/lib/fireStoreQuery/filterQuery";
 
 const LandingPage = () => {
-  const [expandedFilter, setExpandedFilter] = useState(null);
+  const [expandedFilters, setExpandedFilters] = useState([]);
   const [selectedYear, setSelectedYear] = useState("2024/2025");
   const [priceValue, setPriceValue] = useState(650);
+  const [locations, setLocations] = useState([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState({
     period: null,
     location: null,
@@ -16,48 +19,68 @@ const LandingPage = () => {
     colivingCapacity: null,
     propertyType: null,
   });
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    params.set("year", selectedYear);
+    params.set("price", priceValue);
+    Object.entries(selectedFilters).forEach(([key, value]) => {
+      if (value !== null && value !== false && value !== "false") params.set(key, value);
+    });
+    router.push(`/rooms?${params.toString()}`);
+  };
+
   const router = useRouter();
-  const years = ["2024/2025", "2025/2026", "2026/2027"];
+  const years = Array.from({ length: 3 }, (_, i) => 
+    `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
+  );
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchAllLocations();
+        setLocations(data);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    })();
+  }, []);
 
   const filters = [
     {
       id: "period",
       label: "Period",
       options: [
-        { label: "1st semester (Sep - Jan)", value: "semester1" },
-        { label: "2nd semester (Feb - Jun)", value: "semester2" },
-        { label: "Both (1st and 2nd semester)", value: "both" },
-        { label: "Summer", value: "summer" },
-        { label: "All (1st, 2nd semester and summer)", value: "all" },
+        { label: "1st semester (Sep - Jan)", value: "1st Semester" },
+        { label: "2nd semester (Feb - Jun)", value: "2nd Semester" },
+        { label: "Both (1st and 2nd semester)", value: "1st Semester,2nd Semester" },
+        { label: "Summer", value: "Summer" },
+        { label: "All (1st, 2nd semester and summer)", value: false },
       ],
     },
     {
       id: "location",
       label: "Location",
-      options: [
-        { label: "Anjos", value: "Anjos" },
-        { label: "Avenidas Novas", value: "Avenidas Novas" },
-        { label: "Arroios", value: "Arroios" },
-        { label: "Costa de Caparica", value: "Costa de Caparica" },
-        { label: "Doesn't matter", value: "any" },
-      ],
+      options: isLoadingLocations
+        ? [{ label: "Loading locations...", value: false, disabled: true }]
+        : [...locations, { label: "Doesn't matter", value: false }],
     },
     {
       id: "roomType",
       label: "Room type",
       options: [
-        { label: "Single bed", value: "single bed" },
-        { label: "Double bed", value: "double bed" },
-        { label: "Twin beds", value: "twin beds" },
-        { label: "Suite", value: "suite" },
-        { label: "Any", value: "any" },
+        { label: "Single bed", value: "Single bed" },
+        { label: "Double bed", value: "Double bed" },
+        { label: "Twin beds", value: "Twin beds" },
+        { label: "Suite", value: "Suite" },
+        { label: "Any", value: false },
       ],
     },
     {
       id: "monthlyPrice",
       label: "Monthly Price",
       type: "range",
-      min: 300,
+      min: 100,
       max: 1000,
       value: priceValue,
       onChange: (value) => setPriceValue(value),
@@ -66,37 +89,29 @@ const LandingPage = () => {
       id: "colivingCapacity",
       label: "Coliving capacity",
       options: [
-        { label: "3 people or less", value: "3 people" },
-        { label: "6 people or less", value: "6 people" },
-        { label: "More than 6 people", value: "7 people" },
-        { label: "Doesn't matter", value: "any" },
+        { label: "3 people or less", value: 3 },
+        { label: "6 people or less", value: 6 },
+        { label: "More than 6 people", value: 7 },
+        { label: "Doesn't matter", value: false },
       ],
     },
     {
       id: "propertyType",
       label: "Property type",
       options: [
-        { label: "House", value: "house" },
-        { label: "Apartment", value: "apartment" },
-        { label: "Any", value: "any" },
+        { label: "House", value: "House" },
+        { label: "Apartment", value: "Apartment" },
+        { label: "Any", value: false },
       ],
     },
   ];
 
-  // Filter function to apply filters to the properties list
-  const filteredProperties = properties.filter((property) => {
-    return (
-      (selectedFilters.location === null || selectedFilters.location === "any" || property.location === selectedFilters.location) &&
-      (selectedFilters.roomType === null || selectedFilters.roomType === "any" || property.roomType === selectedFilters.roomType) &&
-      (selectedFilters.colivingCapacity === null || selectedFilters.colivingCapacity === "any" || property.colivingCapacity === selectedFilters.colivingCapacity) &&
-      (selectedFilters.propertyType === null || selectedFilters.propertyType === "any" || property.propertyType.toLowerCase().includes(selectedFilters.propertyType.toLowerCase())) &&
-      (priceValue >= parseInt(property.priceWinter.replace("€", "")))
+  const handleFilterToggle = (filterId) => {
+    setExpandedFilters(prev => 
+      prev.includes(filterId) 
+        ? prev.filter(id => id !== filterId) 
+        : [...prev, filterId]
     );
-  });
-
-  const handleSearch = () => {
-    console.log("Filtered Properties:", filteredProperties);
-    router.push('/rooms?year=' + selectedYear);
   };
 
   return (
@@ -132,12 +147,7 @@ const LandingPage = () => {
         <div className="relative w-full mb-8 px-4">
           <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
             <button
-              onClick={() => {
-                document.getElementById('yearScroller').scrollBy({
-                  left: -document.getElementById('yearScroller').offsetWidth,
-                  behavior: 'smooth'
-                });
-              }}
+              onClick={() => document.getElementById('yearScroller').scrollBy({ left: -document.getElementById('yearScroller').offsetWidth, behavior: 'smooth' })}
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === 0}
             >
@@ -157,7 +167,7 @@ const LandingPage = () => {
               {years.map((year) => (
                 <div 
                   key={year}
-                  className="flex-none  w-full snap-center flex justify-center items-center"
+                  className="flex-none w-full snap-center flex justify-center items-center"
                 >
                   <span className={`text-lg font-bold transition-all duration-300 ${
                     selectedYear === year ? 'scale-110' : ''
@@ -169,12 +179,7 @@ const LandingPage = () => {
             </div>
 
             <button
-              onClick={() => {
-                document.getElementById('yearScroller').scrollBy({
-                  left: document.getElementById('yearScroller').offsetWidth,
-                  behavior: 'smooth'
-                });
-              }}
+              onClick={() => document.getElementById('yearScroller').scrollBy({ left: document.getElementById('yearScroller').offsetWidth, behavior: 'smooth' })}
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === years.length - 1}
             >
@@ -184,60 +189,69 @@ const LandingPage = () => {
         </div>
 
         <div className="space-y-4 px-12 text-sm">
-          {filters.map((filter) => (
-            <div key={filter.id} className="border-t border-gray-100 pt-4">
-              <button
-                className="w-full text-left"
-                onClick={() =>
-                  setExpandedFilter(expandedFilter === filter.id ? null : filter.id)
-                }
-              >
-                <span className="text-sm font-semibold">
-                  {expandedFilter === filter.id ? "−" : "+"} {filter.label}
-                </span>
-              </button>
-              {expandedFilter === filter.id && (
-                <div className="mt-4 space-y-3 pl-4">
-                  {filter.type === "range" ? (
-                    <div>
-                      <input
-                        type="range"
-                        min={filter.min}
-                        max={filter.max}
-                        value={filter.value}
-                        onChange={(e) => {
-                          filter.onChange(e.target.value);
-                          setPriceValue(e.target.value);
-                        }}
-                        className="w-full"
-                      />
-                    </div>
-                  ) : (
-                    filter.options.map((option) => (
-                      <label key={option.value} className="flex items-center gap-2">
+          {filters.map((filter) => {
+            const hasSelection = selectedFilters[filter.id] !== null;
+            const isExpanded = expandedFilters.includes(filter.id);
+
+            return (
+              <div key={filter.id} className="border-t border-gray-100 pt-4">
+                <button
+                  className="w-full text-left"
+                  onClick={() => handleFilterToggle(filter.id)}
+                >
+                  <span className="text-sm font-semibold">
+                    {isExpanded ? "−" : "+"} {filter.label}
+                    {filter.id === 'monthlyPrice' && ` (€${priceValue})`}
+                  </span>
+                </button>
+                {isExpanded && (
+                  <div className="mt-4 space-y-3 pl-4">
+                    {filter.type === "range" ? (
+                      <div>
                         <input
-                          type="radio"
-                          name={filter.id}
-                          value={option.value}
-                          onChange={() =>
-                            setSelectedFilters((prev) => ({
-                              ...prev,
-                              [filter.id]: option.value,
-                            }))
-                          }
+                          type="range"
+                          min={filter.min}
+                          max={filter.max}
+                          value={filter.value}
+                          onChange={(e) => filter.onChange(e.target.value)}
+                          className="w-full"
                         />
-                        <span className="text-gray-400">{option.label}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                        <div className="text-center mt-2">€{priceValue}</div>
+                      </div>
+                    ) : (
+                      filter.options.map((option) => (
+                        <label key={option.value} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={filter.id}
+                            value={option.value}
+                            checked={selectedFilters[filter.id] === option.value}
+                            onChange={() => {
+                              setSelectedFilters(prev => ({
+                                ...prev,
+                                [filter.id]: option.value
+                              }));
+                            }}
+                            disabled={option.disabled}
+                          />
+                          <span className={`${option.disabled ? 'text-gray-300' : 'text-gray-400'}`}>
+                            {option.label}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-8 flex justify-center">
-          <button className="bg-black text-white py-3 px-8 rounded-full font-medium" onClick={handleSearch}>
+          <button 
+            className="bg-black text-white py-3 px-8 rounded-full font-medium"
+            onClick={handleSearch}
+          >
             Search
           </button>
         </div>

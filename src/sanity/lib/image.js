@@ -1,10 +1,15 @@
-import createImageUrlBuilder from '@sanity/image-url'
+
+import { client } from "@/sanity/lib/client";
+import imageUrlBuilder from "@sanity/image-url";
+// Initialize image URL builder with the Sanity client
+const builder = imageUrlBuilder(client);
 
 
-
-// https://www.sanity.io/docs/image-url
-const builder = createImageUrlBuilder({ projectId:"pkg5i4cw", dataset:"production" })
-
-export const urlFor = (source) => {
-  return builder.image(source)
+export async function getSanityImageUrl(imageRef) {
+  console.log("Sanity Image Ref:", imageRef); // Debugging
+  if (!imageRef?.asset?._ref) {
+    console.warn("Invalid image reference:", imageRef);
+    return null;
+  }
+  return builder.image(imageRef).url();
 }

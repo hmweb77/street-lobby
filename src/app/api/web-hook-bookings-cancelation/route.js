@@ -44,7 +44,7 @@ export async function POST(req) {
 
     // Process booking data
     const booking = await req.json();
-    const { room, bookedPeriod, status, _id , cancellationKey } = booking;
+    const { room, bookedPeriod, status, _id , tracker , cancellationKey } = booking;
     const roomId = room?._ref;
 
     if (_id.includes("draft")) {
@@ -74,7 +74,7 @@ export async function POST(req) {
 
     if (status === "cancelled" || operation === "delete") {
       updatedBookedPeriods = updatedBookedPeriods.filter(
-        (period) => period._key.split("__^^__")[0] !== _id
+        (period) => period._key.split("__^^__")[0] !== tracker
       );
       await sanityAdminClient
         .patch(roomId)
