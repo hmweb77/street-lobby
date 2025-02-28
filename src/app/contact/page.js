@@ -5,7 +5,7 @@ export default function ContactInfo() {
     <div className="min-h-screen">
       <div className=" my-10 flex justify-center">
         <h1 className="relative text-4xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">CONTACT</span>
+          <span className="absolute -right-1 text-[#4AE54A] z-0">CONTACT</span>
           <span className="relative text-black z-10">CONTACT</span>
         </h1>
       </div>

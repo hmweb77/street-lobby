@@ -136,7 +136,7 @@ export default function PropertyMap() {
             size={60}
           />
           <h1 className="relative text-5xl font-black mb-2 tracking-wide">
-            <span className="absolute -left-1 text-[#4AE54A] z-0">RESIDENCES</span>
+            <span className="absolute -right-1 text-[#4AE54A] z-0">RESIDENCES</span>
             <span className="relative text-black z-10">RESIDENCES</span>
           </h1>
         </div>

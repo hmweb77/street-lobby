@@ -119,7 +119,7 @@ export default function BookingProcessAccordion() {
     <div className="max-w-2xl mx-auto p-8 min-h-screen">
       <div className=" my-10 flex justify-center">
         <h1 className="relative text-4xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">HOW TO BOOK</span>
+          <span className="absolute -right-1 text-[#4AE54A] z-0">HOW TO BOOK</span>
           <span className="relative text-black z-10">HOW TO BOOK</span>
         </h1>
       </div>

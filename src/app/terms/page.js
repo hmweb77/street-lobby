@@ -5,7 +5,7 @@ const page = () => {
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 bg-white">
         <div className=" flex justify-center">
         <h1 className="relative text-2xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">TERMS & CONDITIONS</span>
+          <span className="absolute -right-1 text-[#4AE54A] z-0">TERMS & CONDITIONS</span>
           <span className="relative text-black z-10">TERMS & CONDITIONS</span>
         </h1>
       </div>
