@@ -18,6 +18,11 @@ export const propertySchema = {
       type: "string",
     },
     {
+      name: "propertyDescriptions",
+      title: "Property Descriptions",
+      type: "string",
+    },
+    {
       name: "location",
       title: "Location",
       type: "reference",

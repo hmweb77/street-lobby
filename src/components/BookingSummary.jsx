@@ -19,18 +19,21 @@ const BookingSummary = () => {
       {/* Header - Simplified */}
       {/* Header */}
       <div className="w-full relative flex justify-center gap-1">
-      <ChevronLeft onClick={handleKeepBooking} className="absolute left-[-35px] top-1/2 -translate-y-1/2 text-black" size={60} />
+        <ChevronLeft
+          onClick={handleKeepBooking}
+          className="cursor-pointer absolute left-[-35px] top-1/2 -translate-y-1/2 text-black"
+          size={60}
+        />
 
-      <div className="flex-1 flex justify-center">
-        <h1 className="relative text-4xl md:text-5xl font-black  mb-2 tracking-wide">
-          <span className="absolute -right-1 text-[#4AE54A] z-0">
-            BOOKING SUMMARY
-          </span>
-          <span className="relative text-black z-10">BOOKING SUMMARY</span>
-        </h1>
+        <div className="flex-1 flex justify-center">
+          <h1 className="relative text-4xl md:text-5xl font-black  mb-2 tracking-wide">
+            <span className="absolute -right-1 text-[#4AE54A] z-0">
+              BOOKING SUMMARY
+            </span>
+            <span className="relative text-black z-10">BOOKING SUMMARY</span>
+          </h1>
+        </div>
       </div>
-      </div>
-     
 
       {/* Bookings List */}
       <div className="space-y-4 mb-8 mt-10">

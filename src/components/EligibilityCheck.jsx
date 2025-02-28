@@ -6,9 +6,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 
-const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
-  const { state, setBooking, setCommonUserDetails , clearAllBookings  } = useBookingState();
-  const {clearParams}  = useUrlSearchParams();
+const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
+  const { state, setBooking, setCommonUserDetails, clearAllBookings } =
+    useBookingState();
+  const { clearParams } = useUrlSearchParams();
   const [errors, setErrors] = useState({});
   const [useCommonDetails, setUseCommonDetails] = useState(true);
   const [apiErrors, setApiErrors] = useState([]);
@@ -17,7 +18,7 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
 
   // Redirect if no bookings
   useEffect(() => {
-    if (state.bookingPeriods.length === 0 && isEligible !== false ) {
+    if (state.bookingPeriods.length === 0 && isEligible !== false) {
       router.push("/");
     }
   }, [state.bookingPeriods, router]);
@@ -146,7 +147,7 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
       } else {
         setApiErrors(data.errors || ["Unable to process booking"]);
         setIsEligible(false);
-        clearParams()
+        clearParams();
         clearAllBookings();
       }
     } catch (error) {
@@ -240,25 +241,18 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Gender */}
+        {/* Genre */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Gender*
+            Genre*
           </label>
-          <div className="flex gap-4">
-            {["Male", "Female", "Other"].map((option) => (
-              <label key={option} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="genre"
-                  value={option}
-                  checked={state.commonUserDetails.genre === option}
-                  onChange={handleCommonChange}
-                />
-                {option}
-              </label>
-            ))}
-          </div>
+          <input
+            type="text"
+            name="genre"
+            value={state.commonUserDetails.genre || ""}
+            onChange={handleCommonChange}
+            className="w-full p-2 border rounded-md"
+          />
           {errors["common-genre"] && (
             <p className="text-red-500 text-sm">{errors["common-genre"]}</p>
           )}
@@ -390,27 +384,20 @@ const EligibilityCheck = ({ onNext , isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Gender */}
+        {/* Genre */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Gender*
+            Genre*
           </label>
-          <div className="flex gap-4">
-            {["Male", "Female", "Other"].map((option) => (
-              <label key={option} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name={`genre-${index}`}
-                  value={option}
-                  checked={period.userDetails?.genre === option}
-                  onChange={() =>
-                    handleIndividualChange(period, "genre", option)
-                  }
-                />
-                {option}
-              </label>
-            ))}
-          </div>
+          <input
+            type="text"
+            name={`genre-${index}`}
+            value={period.userDetails?.genre || ""}
+            onChange={(e) =>
+              handleIndividualChange(period, "genre", e.target.value)
+            }
+            className="w-full p-2 border rounded-md"
+          />
           {errors[`${index}-genre`] && (
             <p className="text-red-500 text-sm">{errors[`${index}-genre`]}</p>
           )}

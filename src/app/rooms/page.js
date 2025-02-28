@@ -7,6 +7,7 @@ import RoomCard from "@/components/RoomCard";
 import StepProcessBar from "@/components/booking/ProcessBar";
 import { CheckoutBanner } from "@/components/CheckoutBanner";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
+import { ChevronLeft } from "lucide-react";
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -32,16 +33,19 @@ export default function RoomList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const filters = useMemo(() => ({
-    year: searchParams.get("year") || null,
-    semester: searchParams.get("period")?.split(",") || null,
-    roomType: searchParams.get("roomType") || null,
-    location: searchParams.get("location") || null,
-    minPrice: Number(searchParams.get("price")) ? 0 : undefined,
-    maxPrice: Number(searchParams.get("price")) || undefined,
-    propertyType: searchParams.get("propertyType") || null,
-    colivingCapacity: Number(searchParams.get("colivingCapacity")) || null,
-  }), [searchParams]);
+  const filters = useMemo(
+    () => ({
+      year: searchParams.get("year") || null,
+      semester: searchParams.get("period")?.split(",") || null,
+      roomType: searchParams.get("roomType") || null,
+      location: searchParams.get("location") || null,
+      minPrice: Number(searchParams.get("price")) ? 0 : undefined,
+      maxPrice: Number(searchParams.get("price")) || undefined,
+      propertyType: searchParams.get("propertyType") || null,
+      colivingCapacity: Number(searchParams.get("colivingCapacity")) || null,
+    }),
+    [searchParams]
+  );
 
   useEffect(() => {
     let unsubscribe;
@@ -73,70 +77,94 @@ export default function RoomList() {
 
   const handleLeft = () => router.push("/");
 
-  const filteredRooms = rooms.filter(room => 
-    room.remainingSemesters?.length > 0
+  const filteredRooms = rooms.filter(
+    (room) => room.remainingSemesters?.length > 0
   );
 
   return (
     <>
-      <div className="max-w-2xl mx-auto p-4">
-        <StepProcessBar currentStep={1} handleLeft={handleLeft} />
-        
-        {/* Always show year filter status */}
-        <p className="text-center text-gray-500 mb-8 mt-4 font-medium">
-          Search Results for Academic Year:{" "}
-          <span className="text-black">{filters.year ?? "Every"}</span>
-        </p>
-
+      <div className="">
         {loading ? (
-          <div className="space-y-6">
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+          <div className="max-w-2xl mx-auto">
+            <StepProcessBar currentStep={1} handleLeft={handleLeft} />
+
+            {/* Always show year filter status */}
+            <p className="text-center text-gray-500 mb-8 mt-4 font-medium">
+              Search Results for Academic Year:{" "}
+              <span className="text-black">{filters.year ?? "Every"}</span>
+            </p>
+            <div className="space-y-6">
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+              {[...Array(3)].map((_, i) => (
+                <RoomCardSkeleton key={i} />
+              ))}
             </div>
-            {[...Array(3)].map((_, i) => (
-              <RoomCardSkeleton key={i} />
-            ))}
           </div>
         ) : error ? (
-          <div className="text-center py-12 space-y-4">
-            <div className="text-red-500 text-xl font-medium">
-              ⚠️ Oops! Something went wrong
+          <div className="text-center">
+            <div className="w-full relative">
+              <div className="flex-1 flex justify-center items-center gap-4 py-20">
+                <ChevronLeft
+                  onClick={handleLeft}
+                  className="cursor-pointer text-black"
+                  size={32}
+                />
+                <h1 className="text-md md:text-lg font-normal tracking-wide">
+                  ⚠️ Oops! Something went wrong
+                </h1>
+              </div>
+              <img
+                src="/oops_desktop.jpg"
+                alt="Room"
+                className="w-full hidden md:block"
+              />
+              <img src="/oops.jpg" alt="Room" className="w-full  md:hidden" />
             </div>
-            <p className="text-gray-600">{error}</p>
-            <button
-              onClick={handleLeft}
-              className="mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Return to Home
-            </button>
           </div>
         ) : filteredRooms.length === 0 ? (
-          <div className="text-center py-12 space-y-4">
-            <div className="text-2xl font-medium text-gray-800">
-              🏠 No Matching Rooms Found
+          <div className="text-center">
+            <div className="w-full relative">
+              <div className="flex-1 flex justify-center items-center gap-4 py-20">
+                <ChevronLeft
+                  onClick={handleLeft}
+                  className="cursor-pointer text-black"
+                  size={32}
+                />
+                <h1 className="text-md md:text-lg font-normal tracking-wide">
+                  Your search returned no matches{" "}
+                </h1>
+              </div>
+              <img
+                src="/oops_desktop.jpg"
+                alt="Room"
+                className="w-full hidden md:block"
+              />
+              <img src="/oops.jpg" alt="Room" className="w-full  md:hidden" />
             </div>
-            <p className="text-gray-600">
-              Try adjusting your filters for better results
-            </p>
-            <button
-              onClick={handleLeft}
-              className="mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Modify Search Criteria
-            </button>
           </div>
         ) : (
-          <div className="space-y-6">
-            {filteredRooms.map((room) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                year={filters.year}
-                imageUrl={room.imageUrl}
-                price={room.price}
-                remainingSemesters={room.remainingSemesters}
-              />
-            ))}
+          <div className="max-w-2xl mx-auto">
+            <StepProcessBar currentStep={1} handleLeft={handleLeft} />
+
+            {/* Always show year filter status */}
+            <p className="text-center text-gray-500 mb-8 mt-4 font-medium">
+              Search Results for Academic Year:{" "}
+              <span className="text-black">{filters.year ?? "Every"}</span>
+            </p>
+            <div className="space-y-6">
+              {filteredRooms.map((room) => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  year={filters.year}
+                  imageUrl={room.imageUrl}
+                  price={room.price}
+                  remainingSemesters={room.remainingSemesters}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

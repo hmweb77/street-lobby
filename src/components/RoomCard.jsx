@@ -89,7 +89,7 @@ const RoomCard = ({ room, isReversed = false }) => {
         globalServices.some((globalSvc) => globalSvc.id === localSvc.id)
       );
 
-    setShowIncludeButton(!bookingPeriodsMatch || !servicesMatch);
+    setShowIncludeButton((!bookingPeriodsMatch || (!servicesMatch  && localState.bookingPeriods.length > 0)));
   }, [localState, globalState, room.id]);
 
   const getRoomDetails = () => ({
@@ -230,23 +230,20 @@ const RoomCard = ({ room, isReversed = false }) => {
             </p>
           </div>
           <div className="flex h-20 flex-col gap-2">
-            {!propertySlug && (
+            {/* {!propertySlug && (
               <Link
                 href={`/rooms/${room.slug.current}`}
                 className="px-4 py-2 w-40 text-center rounded-full text-black border border-black hover:bg-black hover:text-white  transition-colors"
               >
                 Details
               </Link>
-            )}
-
-            {showIncludeButton && (
-              <button
+            )} */}
+            <button
                 onClick={handleIncludeBooking}
-                className="px-4 py-2 w-40 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+                className={`${showIncludeButton ? 'cursor-pointer' : 'opacity-65 pointer-events-none'} px-4 py-2 w-40 rounded-full bg-black text-white hover:bg-gray-800 transition-colors`}
               >
-                Include Booking
+                Book
               </button>
-            )}
           </div>
         </div>
 
