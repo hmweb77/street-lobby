@@ -28,7 +28,10 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
   try {
     // Base collection reference
-    let roomsQuery = query(collection(firestore, "room"), where("status", "==" , "published"));
+    let roomsQuery = query(
+      collection(firestore, "room"),
+      where("status", "==", "published")
+    );
     console.log(roomsQuery);
 
     // If no filters are provided, fetch all available and remaining rooms
@@ -99,22 +102,21 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           // });
 
           // Extract remaining available semesters for the specified year
-          const roomsWithAvailableSemesters = roomsWithProperties.map((room) => {
-            const remainingSemesters = getRemainingAvailableSemesters(
-              room,
-              year
-            );
-            return {
-              ...room,
-              remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
-            };
-          });
+          const roomsWithAvailableSemesters = roomsWithProperties.map(
+            (room) => {
+              const remainingSemesters = getRemainingAvailableSemesters(room);
+              return {
+                ...room,
+                remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
+              };
+            }
+          );
 
           onSnapshotCallback(roomsWithAvailableSemesters);
         } catch (error) {
           console.error("Error processing rooms:", error);
           onSnapshotCallback([]); // Fallback in case of error
-          return (() => {});
+          return () => {};
         }
       });
 
@@ -135,7 +137,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
         roomsQuery = query(
           roomsQuery,
           where("priceWinter", ">=", minPrice || 0),
-          where("priceWinter", "<=", maxPrice || Infinity),
+          where("priceWinter", "<=", maxPrice || Infinity)
         );
       } else if (semester === "Summer") {
         if (minPrice !== undefined)
@@ -190,7 +192,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           })
         );
 
-
         // Apply property-related filters
         const filteredRooms = roomsWithProperties.filter((room) => {
           if (!room.propertyDetails) return false;
@@ -211,7 +212,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
         // Extract remaining available semesters for the specified year
         const roomsWithAvailableSemesters = filteredRooms.map((room) => {
-          const remainingSemesters = getRemainingAvailableSemesters(room, year);
+          const remainingSemesters = getRemainingAvailableSemesters(room);
           return {
             ...room,
             remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
@@ -225,14 +226,13 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
       }
     });
 
-    return unsubscribe ??  (() => {}); // Return a no-op function if an error occurs;
+    return unsubscribe ?? (() => {}); // Return a no-op function if an error occurs;
   } catch (error) {
     console.error("Initial error:", error);
     onSnapshotCallback([]);
     return () => {};
   }
 };
-
 
 export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
   try {
@@ -241,7 +241,7 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
     let roomsQuery = query(
       collection(firestore, "room"),
       where("slug.current", "==", slug),
-      where("status", "==" , "published")
+      where("status", "==", "published")
     );
 
     // Listen for real-time updates
@@ -285,9 +285,7 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
         );
 
         const roomsWithAvailableSemesters = roomsWithProperties.map((room) => {
-          const remainingSemesters = getRemainingAvailableSemesters(
-            room
-          );
+          const remainingSemesters = getRemainingAvailableSemesters(room);
           return {
             ...room,
             remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
@@ -301,14 +299,13 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
       }
     });
 
-    return unsubscribe ??  (() => {}); // Return a no-op function if an error occurs;
+    return unsubscribe ?? (() => {}); // Return a no-op function if an error occurs;
   } catch (error) {
     console.error("Initial error:", error);
     onSnapshotCallback([]);
     return () => {}; // Return a no-op function if an error occurs
   }
 };
-
 
 export const fetchAllLocations = async () => {
   try {
@@ -333,8 +330,6 @@ export const fetchAllLocations = async () => {
   }
 };
 
-
-
 // ✅ Function to fetch Sanity image URL
 // const getSanityImageUrl = async (imageRef) => {
 //   try {
@@ -348,5 +343,3 @@ export const fetchAllLocations = async () => {
 // };
 
 // Helper function to get remaining available semesters for a specific year
-
-

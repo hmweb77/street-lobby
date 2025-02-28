@@ -209,7 +209,7 @@ const RoomCard = ({ room, isReversed = false }) => {
 
   return (
     <div
-      className={`${isReversed ? "flex flex-col" : ""} flex flex-col md:flex-row md:justify-center gap-4 bg-white rounded-lg `}
+      className={`${isReversed ? "flex flex-col" : ""} flex flex-col md:flex-row md:justify-center gap-4 bg-white rounded-lg py-5`}
     >
       <div>
         {localState.roomDetails.imageUrl && (
@@ -220,11 +220,11 @@ const RoomCard = ({ room, isReversed = false }) => {
           />
         )}
       </div>
-      <div className="flex items-center">
-        <div className="p-4 md:w-96">
-          <div className="flex justify-between gap-10 items-center mb-4">
+      <div className="flex md:w-96 items-center">
+        <div className="p-4 w-full">
+          <div className="w-full flex flex-row gap-4 justify-between items-center mb-4">
             <div>
-              <h3 className="font-semibold">
+              <h3 className="font-bold text-2xl">
                 {localState.roomDetails.propertyTitle}, Room{" "}
                 {localState.roomDetails.title}
               </h3>
@@ -233,18 +233,10 @@ const RoomCard = ({ room, isReversed = false }) => {
                 {localState.roomDetails.priceWinter}/Both semester
               </p>
             </div>
-            <div className="flex h-20 flex-col gap-2">
-              {/* {!propertySlug && (
-              <Link
-                href={`/rooms/${room.slug.current}`}
-                className="px-4 py-2 w-40 text-center rounded-full text-black border border-black hover:bg-black hover:text-white  transition-colors"
-              >
-                Details
-              </Link>
-            )} */}
+            <div>
               <button
                 onClick={handleIncludeBooking}
-                className={`${showIncludeButton ? "cursor-pointer" : "opacity-65 pointer-events-none"} px-4 py-2 w-40 rounded-full bg-black text-white hover:bg-gray-800 transition-colors`}
+                className={`ml-auto hidden md:block ${showIncludeButton ? "cursor-pointer" : "opacity-65 pointer-events-none"} px-8 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors`}
               >
                 Book
               </button>
@@ -255,10 +247,26 @@ const RoomCard = ({ room, isReversed = false }) => {
             // open={localState.roomDetails.id === room.id ?? false}
             className="mb-3"
           >
-            <summary className="cursor-pointer font-medium">
-              Availability
+            <summary className="cursor-pointer font-medium text-xl">
+              About this property
             </summary>
             <div className="mt-2 pl-4">
+              <p className="text-gray-600 text-sm">
+                {room?.propertyDetails?.propertyDescriptions
+                  ? room?.propertyDetails?.propertyDescriptions
+                  : "No description available"}
+              </p>
+            </div>
+          </details>
+
+          <details
+            // open={localState.roomDetails.id === room.id ?? false}
+            className="mb-3"
+          >
+            <summary className="cursor-pointer font-medium text-xl">
+              Availability
+            </summary>
+            <div className="mt-2 pl-4 opacity-65">
               {Object.keys(groupedByYear)
                 .sort((a, b) => a.split("/")[0] - b.split("/")[0])
                 .map((yearKey) => (
@@ -304,11 +312,11 @@ const RoomCard = ({ room, isReversed = false }) => {
             </div>
           </details>
 
-          <details 
+          <details
           // open={localState.roomDetails.id === room.id}
           >
-            <summary className="cursor-pointer font-medium">Services</summary>
-            <div className="mt-2 pl-4">
+            <summary className="cursor-pointer font-medium text-xl">Services</summary>
+            <div className="mt-2 pl-4 opacity-65">
               {(room.services || ["Weekly room cleaning"])
                 .filter(
                   (service) =>
@@ -339,6 +347,23 @@ const RoomCard = ({ room, isReversed = false }) => {
             </div>
           </details>
         </div>
+      </div>
+
+      <div className=" md:hidden h-20">
+        {/* {!propertySlug && (
+              <Link
+                href={`/rooms/${room.slug.current}`}
+                className="px-4 py-2 w-40 text-center rounded-full text-black border border-black hover:bg-black hover:text-white  transition-colors"
+              >
+                Details
+              </Link>
+            )} */}
+        <button
+          onClick={handleIncludeBooking}
+          className={`${showIncludeButton ? "cursor-pointer" : "opacity-65 pointer-events-none"} mx-3 px-5 py-3 rounded-full bg-black text-white hover:bg-gray-800 transition-colors`}
+        >
+          Include in Booking
+        </button>
       </div>
     </div>
   );
