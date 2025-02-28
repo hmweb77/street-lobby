@@ -1,14 +1,11 @@
+"use client";
+import PageTitle from "@/components/PageTitle";
 import { Phone, Instagram } from "lucide-react";
 
 export default function ContactInfo() {
   return (
     <div className="min-h-screen">
-      <div className=" my-10 flex justify-center">
-        <h1 className="relative text-4xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">CONTACT</span>
-          <span className="relative text-black z-10">CONTACT</span>
-        </h1>
-      </div>
+      <PageTitle title={"Contact"} />
       <div className="max-w-md mx-auto p-6 font-sans">
         <div className="mb-6">
           <p className="font-medium">
@@ -21,19 +18,27 @@ export default function ContactInfo() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 mb-4">
+        <a
+          href="tel:+351924109781"
+          className="flex items-center gap-3 mb-4 hover:opacity-70 transition-opacity"
+        >
           <div className="flex items-center justify-center w-8 h-8">
             <Phone className="w-5 h-5" />
           </div>
           <span className="font-medium">+351 924109781</span>
-        </div>
+        </a>
 
-        <div className="flex items-center gap-3">
+        <a
+          href="https://instagram.com/streetlobbylisbon"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 hover:opacity-70 transition-opacity"
+        >
           <div className="flex items-center justify-center w-8 h-8">
             <Instagram className="w-5 h-5" />
           </div>
           <span className="font-medium">@streetlobbylisbon</span>
-        </div>
+        </a>
       </div>
     </div>
   );

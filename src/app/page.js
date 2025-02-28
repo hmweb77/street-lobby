@@ -6,6 +6,7 @@ import properties from "@/lib/properties";
 import { useRouter } from 'next/navigation';
 import { fetchAllLocations } from "@/lib/fireStoreQuery/filterQuery";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
+import PriceSlider from "@/components/PriceSlider";
 
 const LandingPage = () => {
   const [expandedFilters, setExpandedFilters] = useState([]);
@@ -84,8 +85,8 @@ const LandingPage = () => {
       id: "monthlyPrice",
       label: "Monthly Price",
       type: "range",
-      min: 100,
-      max: 1000,
+      min: 500,
+      max: 1500 ,
       value: priceValue,
       onChange: (value) => setPriceValue(value),
     },
@@ -120,7 +121,7 @@ const LandingPage = () => {
 
   return (
     <main className="py-8">
-      <div className="max-w-lg mx-auto">
+      <div className="">
         <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
             <span className="absolute -right-1 text-[#4AE54A] z-0">BOOK NOW</span>
@@ -148,7 +149,7 @@ const LandingPage = () => {
           />
         </div>
 
-        <div className="relative w-full mb-8 px-4">
+        <div className="relative max-w-lg mx-auto mb-8 px-4">
           <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
             <button
               onClick={() => document.getElementById('yearScroller').scrollBy({ left: -document.getElementById('yearScroller').offsetWidth, behavior: 'smooth' })}
@@ -192,7 +193,7 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <div className="space-y-4 px-12 text-sm">
+        <div className="space-y-4 max-w-lg mx-auto px-12 text-sm">
           {filters.map((filter) => {
             const hasSelection = selectedFilters[filter.id] !== null;
             const isExpanded = expandedFilters.includes(filter.id);
@@ -211,17 +212,12 @@ const LandingPage = () => {
                 {isExpanded && (
                   <div className="mt-4 space-y-3 pl-4">
                     {filter.type === "range" ? (
-                      <div>
-                        <input
-                          type="range"
-                          min={filter.min}
-                          max={filter.max}
-                          value={filter.value}
-                          onChange={(e) => filter.onChange(e.target.value)}
-                          className="w-full"
-                        />
-                        <div className="text-center mt-2">€{priceValue}</div>
-                      </div>
+                      <PriceSlider 
+                        min={filter.min}
+                        max={filter.max}
+                        defaultValue={filter.value}
+                        onChange={filter.onChange}
+                      />
                     ) : (
                       filter.options.map((option) => (
                         <label key={option.value} className="flex items-center gap-2">

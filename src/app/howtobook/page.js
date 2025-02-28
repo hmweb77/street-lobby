@@ -1,5 +1,7 @@
 "use client"
 
+import PageTitle from "@/components/PageTitle"
+import { ChevronLeft } from "lucide-react"
 import { useState } from "react"
 
 export default function BookingProcessAccordion() {
@@ -13,7 +15,7 @@ export default function BookingProcessAccordion() {
     {
       title: "1.Search",
       content: (
-        <div className="mt-4 text-sm">
+        <div className="mt-4 text-md">
           <p>
             On the landing page select the academic year that you would like to start your booking. Proceed to filter
             your search with specific requirements such as the period, location, type of room, monthly price, coliving
@@ -75,7 +77,7 @@ export default function BookingProcessAccordion() {
     {
       title: "2. Eligibility Check",
       content: (
-        <div className="mt-4 text-sm">
+        <div className="mt-4 text-md">
           <p>
             After selecting a room, and before the payment, we ask you to fill a form with your details. This will be
             compared to previous bookings in the same residence in order to match your profile to bookings alike,
@@ -93,7 +95,7 @@ export default function BookingProcessAccordion() {
     {
       title: "3.Payment",
       content: (
-        <div className="mt-4 text-sm">
+        <div className="mt-4 text-md">
           <p>
             After you have gone through the eligibility check, if your request is accepted, you will be able to pay a
             deposit for each booking equivalent to one month. This means, one deposit per period.
@@ -117,13 +119,9 @@ export default function BookingProcessAccordion() {
 
   return (
     <div className="max-w-2xl mx-auto p-8 min-h-screen">
-      <div className=" my-10 flex justify-center">
-        <h1 className="relative text-4xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">HOW TO BOOK</span>
-          <span className="relative text-black z-10">HOW TO BOOK</span>
-        </h1>
-      </div>
-      <div className=" mb-2">
+      <PageTitle title={"HOW TO BOOK"} />
+      
+      <div className=" mb-10">
         <p className="text-base">
           We have designed a <strong>3 step booking process</strong>, which consists of a search
         </p>
@@ -135,7 +133,7 @@ export default function BookingProcessAccordion() {
           <div key={index} className="cursor-pointer" onClick={() => toggleItem(index)}>
             <div className="flex items-center gap-2">
               <span className="text-base font-medium">{expandedItem === index ? "-" : "+"}</span>
-              <p className="font-bold">{step.title}</p>
+              <p className="font-bold text-3xl">{step.title}</p>
             </div>
             <div
               className={`transition-all duration-300 ease-in-out overflow-hidden ${

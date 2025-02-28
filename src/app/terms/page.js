@@ -1,14 +1,11 @@
+"use client";
+import PageTitle from "@/components/PageTitle";
 import Link from "next/link";
 
 const page = () => {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 bg-white">
-        <div className=" flex justify-center">
-        <h1 className="relative text-2xl  font-black mb-2 tracking-wide">
-          <span className="absolute -left-1 text-[#4AE54A] z-0">TERMS & CONDITIONS</span>
-          <span className="relative text-black z-10">TERMS & CONDITIONS</span>
-        </h1>
-      </div>
+        <PageTitle title={"TERMS & CONDITIONS"} />
         <div className="space-y-4">
           <div className="space-y-2">
             <h3 className="font-semibold">Booking method:</h3>

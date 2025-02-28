@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronLeft, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 import Image from "next/image";
+import PageTitle from "./PageTitle";
 
 const BookingSummary = () => {
   const { state, removeBooking, clearAllBookings } = useBookingState();
@@ -15,25 +16,10 @@ const BookingSummary = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 bg-white">
+    <div className="max-w-6xl mx-auto px-4 py-6 min-h-screen bg-white">
       {/* Header - Simplified */}
       {/* Header */}
-      <div className="w-full relative flex justify-center gap-1">
-        <ChevronLeft
-          onClick={handleKeepBooking}
-          className="cursor-pointer absolute left-[-35px] top-1/2 -translate-y-1/2 text-black"
-          size={60}
-        />
-
-        <div className="flex-1 flex justify-center">
-          <h1 className="relative text-4xl md:text-5xl font-black  mb-2 tracking-wide">
-            <span className="absolute -right-1 text-[#4AE54A] z-0">
-              BOOKING SUMMARY
-            </span>
-            <span className="relative text-black z-10">BOOKING SUMMARY</span>
-          </h1>
-        </div>
-      </div>
+      <PageTitle title={"BOOKING SUMMARY"} />
 
       {/* Bookings List */}
       <div className="space-y-4 mb-8 mt-10">
@@ -43,7 +29,7 @@ const BookingSummary = () => {
           state.bookingPeriods.map((booking) => (
             <div
               key={`${booking.roomId}-${booking.year}-${booking.semester}`}
-              className="bg-white p-4 rounded-md border border-gray-100 relative shadow-sm"
+              className="bg-white max-w-xl mx-auto p-4 rounded-md border border-gray-100 relative"
             >
               <div className="flex gap-4">
                 {/* Room Image */}
@@ -110,7 +96,7 @@ const BookingSummary = () => {
       </div>
 
       {/* Action Buttons - Styled to match the design */}
-      <div className="flex justify-between gap-4 mt-8">
+      <div className="flex justify-between gap-4 max-w-xl mx-auto mt-8">
         <button
           onClick={handleKeepBooking}
           className="flex-1 px-6 py-3 border border-gray-300 rounded-full text-gray-800 font-medium hover:bg-gray-50 transition-colors"

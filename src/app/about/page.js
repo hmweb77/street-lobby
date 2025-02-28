@@ -1,4 +1,5 @@
 "use client";
+import PageTitle from "@/components/PageTitle";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -11,19 +12,7 @@ function page() {
   };
   return (
     <main className="px-4 py-8 max-w-7xl mx-auto">
-      <div className="w-auto max-w-5xl mx-auto my-14  flex justify-center gap-1">
-        <div className="relative flex-1 flex justify-center">
-          <ChevronLeft
-            onClick={handleKeepBooking}
-            className="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 text-black"
-            size={60}
-          />
-          <h1 className="relative text-5xl  font-black mb-2 tracking-wide">
-            <span className="absolute -left-1 text-[#4AE54A] z-0">ABOUT</span>
-            <span className="relative text-black z-10">ABOUT</span>
-          </h1>
-        </div>
-      </div>
+      <PageTitle title={"ABOUT"} />
 
       <div className="max-w-5xl mx-auto px-4 py-8 font-sans">
         <div className="space-y-4">

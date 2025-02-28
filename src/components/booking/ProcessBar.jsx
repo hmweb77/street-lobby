@@ -5,13 +5,13 @@ import { Check } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
 const StepProcessBar = ({ currentStep, handleLeft , showPrev = true }) => {
   const steps = [
-    { number: 1, label: "Bookings" },
+    { number: 1, label: "Selection" },
     { number: 2, label: "Eligibility check" },
     { number: 3, label: "Payment" }
   ];
   
   return (
-    <nav className=" py-4 px-2 ml-5" aria-label="Booking process">
+    <nav className=" py-10 px-2 ml-5" aria-label="Booking process">
       <div className="flex">
         <ChevronLeft
           className={`${showPrev ? "" : "hidden"} relative top-1 right-2 hover:cursor-pointer`}

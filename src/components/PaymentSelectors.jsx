@@ -124,22 +124,22 @@ export default function PaymentSelector({onSuccess}) {
 
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 space-y-8">
-      <h2 className="text-2xl font-semibold">Select Payment Method</h2>
+    <div className="w-full max-w-4xl mx-auto min-h-screen p-6 space-y-8">
+      <h2 className="text-2xl font-semibold">Select Your Payment Method</h2>
 
       <RadioGroup 
         defaultValue="card"
         onValueChange={setSelectedPayment}
-        className="grid grid-cols-2 gap-4"
+        className="grid grid-cols-2 md:grid-cols-5 gap-4 py-20"
       >
         {[
-          { value: 'apple', label: 'Apple Pay', icon: Smartphone },
-          { value: 'card', label: 'Credit Card', icon: CreditCard },
-          { value: 'bank', label: 'Bank Transfer', icon: Landmark },
-          { value: 'paypal', label: 'PayPal', icon: Wallet },
-          { value: 'later', label: 'Pay Later', icon: Clock , active : true },
+          { value: 'apple', label: 'Apple Pay', img: "/applepay.png" },
+          { value: 'card', label: 'Credit Card', img: "/creditcard.png" },
+          { value: 'bank', label: 'Bank Transfer', img: "/banktransfer.png" },
+          { value: 'paypal', label: 'PayPal', img: "/paypal.png" },
+          { value: 'later', label: 'Pay Later', img:  "/pay-later.png" , active : true },
         ].map((method) => (
-          <div  key={method.value} className={`relative ${method.active ? "" : "opacity-45 pointer-events-none cursor-not-allowed"}`}>
+          <div onClick={() => setSelectedPayment(method.value)}  key={method.value} className={`relative ${method.active ? "" : "opacity-45 pointer-events-none cursor-not-allowed"}`}>
             <RadioGroupItem 
               value={method.value} 
               id={method.value} 
@@ -147,9 +147,9 @@ export default function PaymentSelector({onSuccess}) {
             />
             <label
               htmlFor={method.value}
-              className="flex flex-col items-center justify-center h-24 rounded-lg border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-checked:border-blue-500 cursor-pointer"
+              className={`${selectedPayment === method.value ? "border-blue-500" : ""}  flex flex-col items-center justify-center h-24 rounded-lg border-2 border-gray-200 bg-white p-4 hover:bg-gray-50  cursor-pointer`}
             >
-              <method.icon className="h-6 w-6 mb-2 text-gray-700" />
+              <img src={method.img} className="h-6 w-6 mb-2 text-gray-700" />
               <span className="text-sm font-medium">{method.label}</span>
             </label>
           </div>

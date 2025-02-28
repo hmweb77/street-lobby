@@ -136,8 +136,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           roomsQuery,
           where("priceWinter", ">=", minPrice || 0),
           where("priceWinter", "<=", maxPrice || Infinity),
-          where("priceSummer", ">=", minPrice || 0),
-          where("priceSummer", "<=", maxPrice || Infinity)
         );
       } else if (semester === "Summer") {
         if (minPrice !== undefined)
@@ -146,9 +144,9 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
       } else {
         if (minPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceWinter", ">=", minPrice));
+          roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
         if (maxPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceWinter", "<=", maxPrice));
+          roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
       }
     }
 

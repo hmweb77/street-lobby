@@ -25,8 +25,11 @@ function page() {
     }
 
   return (
-    <main className="max-w-2xl mx-auto">
-        <StepProcessBar currentStep={step} handleLeft={handleLeft} />
+    <main className="max-w-4xl mx-auto">
+       <div className="max-w-2xl mx-auto">
+       <StepProcessBar currentStep={step} handleLeft={handleLeft} />
+       </div>
+        
         { step === 2 && (
           <EligibilityCheck isEligible={isEligible} setIsEligible={setIsEligible}  onNext={() => setStep(3)} />
         ) }

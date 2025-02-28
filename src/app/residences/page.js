@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { sanityClient } from "@/lib/sanity";
+import PageTitle from "@/components/PageTitle";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -19,7 +20,9 @@ function MapPlaceholder() {
           <div
             key={i}
             className={`${
-              (Math.floor(i / 8) + (i % 8)) % 2 === 0 ? "bg-gray-100" : "bg-white"
+              (Math.floor(i / 8) + (i % 8)) % 2 === 0
+                ? "bg-gray-100"
+                : "bg-white"
             }`}
           />
         ))}
@@ -76,9 +79,9 @@ export default function PropertyMap() {
           },
           slug
         }`;
-        
+
         const result = await sanityClient.fetch(query);
-        
+
         if (!result.length) {
           setError("No properties found");
           setLoading(false);
@@ -86,14 +89,14 @@ export default function PropertyMap() {
         }
 
         const formattedProperties = result
-          .filter(prop => prop.location?.coordinates)
-          .map(prop => ({
+          .filter((prop) => prop.location?.coordinates)
+          .map((prop) => ({
             id: prop._id,
             address: prop.propertyName,
             lat: prop.location.coordinates.lat,
             lng: prop.location.coordinates.lng,
             description: prop.propertyDescriptions,
-            slug: prop.slug?.current
+            slug: prop.slug?.current,
           }));
 
         setProperties(formattedProperties);
@@ -128,41 +131,27 @@ export default function PropertyMap() {
 
   return (
     <div className="px-4 py-8">
-      <div className="w-auto max-w-5xl mx-auto my-14 flex justify-center gap-1">
-        <div className="relative flex-1 flex justify-center">
-          <ChevronLeft
-            onClick={handleKeepBooking}
-            className="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 text-black"
-            size={60}
-          />
-          <h1 className="relative text-5xl font-black mb-2 tracking-wide">
-            <span className="absolute -left-1 text-[#4AE54A] z-0">RESIDENCES</span>
-            <span className="relative text-black z-10">RESIDENCES</span>
-          </h1>
-        </div>
-      </div>
+      <PageTitle title={"RESIDENCES"} />
 
       <div className="mb-6 mx-auto w-full max-w-5xl flex flex-col items-center space-y-2">
         {properties.map((property) => (
           <div key={property.id}>
-          <button
-            key={property.id}
-            onClick={() => setSelectedProperty(property.id)}
-            className={`w-full text-center text-base transition-colors ${
-              selectedProperty === property.id 
-                ? "font-medium text-[#4AE54A]"
-                : "font-normal text-black hover:text-[#4AE54A]"
-            }`}
-          >
-            {property.address}
-          </button>
-          {
-            selectedProperty === property.id && (
+            <button
+              key={property.id}
+              onClick={() => setSelectedProperty(property.id)}
+              className={`w-full text-center text-base transition-colors ${
+                selectedProperty === property.id
+                  ? "font-medium text-[#4AE54A]"
+                  : "font-normal text-black hover:text-[#4AE54A]"
+              }`}
+            >
+              {property.address}
+            </button>
+            {selectedProperty === property.id && (
               <p className="text-gray-600 text-sm w-60 text-center">
                 {property.description}
               </p>
-            )
-          }
+            )}
           </div>
         ))}
       </div>
