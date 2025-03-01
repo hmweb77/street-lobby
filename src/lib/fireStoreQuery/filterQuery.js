@@ -32,7 +32,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
       collection(firestore, "room"),
       where("status", "==", "published")
     );
-    console.log(roomsQuery);
 
     // If no filters are provided, fetch all available and remaining rooms
     if (
@@ -159,7 +158,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Rooms:", rooms);
 
         // Fetch and merge property details
         const roomsWithProperties = await Promise.all(
@@ -237,7 +235,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
   try {
     // Base collection reference with slug filter
-    console.log(slug);
     let roomsQuery = query(
       collection(firestore, "room"),
       where("slug.current", "==", slug),
@@ -251,7 +248,6 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Rooms:", rooms);
 
         // Fetch and merge property details
         const roomsWithProperties = await Promise.all(
@@ -321,7 +317,6 @@ export const fetchAllLocations = async () => {
       label: doc.data().title,
     }));
 
-    console.log("Fetched locations:", locations);
 
     return locations;
   } catch (error) {

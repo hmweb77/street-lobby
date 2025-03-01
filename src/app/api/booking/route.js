@@ -16,7 +16,6 @@ export async function POST(req) {
       paymentStatus
     } = body;
 
-    console.log(JSON.stringify(body));
 
     if (!bookingPeriods || bookingPeriods.length <= 0 || !commonUserDetails || totalPrice === undefined) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
@@ -104,7 +103,6 @@ export async function POST(req) {
         userRef = user._id;
       }
 
-      console.log("Here!");
 
       // Prepare booked period data
       const periodKey = uuidv4();
@@ -115,7 +113,13 @@ export async function POST(req) {
         semester: period.semester,
         price: period.price,
         year: period.year,
-        services: period.services?.join(',') || ""
+        services: JSON.stringify(
+          Array.isArray(period?.services)
+            ? period.services.every(item => typeof item === "object" && item !== null)
+              ? period.services.map(item => item?.name).join(", ")
+              : period.services.join(", ")
+            : period?.services
+        ),
       });
 
       // Track room updates
@@ -132,7 +136,13 @@ export async function POST(req) {
         _key: `${bookingTrackerId}__^^__${periodKey}`,
         semester: period.semester,
         year: period.year,
-        services: period.services?.join(',') || ""
+        services: JSON.stringify(
+          Array.isArray(period?.services)
+            ? period.services.every(item => typeof item === "object" && item !== null)
+              ? period.services.map(item => item?.name).join(", ")
+              : period.services.join(", ")
+            : period?.services
+        ),
       });
     }
 

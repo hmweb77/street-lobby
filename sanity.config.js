@@ -8,7 +8,6 @@
 import { visionTool } from '@sanity/vision'
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
-// import {deskTool} from 'sanity/desk'
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import { apiVersion, dataset, projectId } from './src/sanity/env'
@@ -24,10 +23,18 @@ export default defineConfig({
     structureTool({ structure }),
     visionTool({ defaultApiVersion: '2025-02-04' }),
   ],
-  // document: {
-  //   actions: (prev, context) => {
-  //     // Only add the action for documents of type "booking"
-  //     return context.schemaType === 'booking' ? prev.filter(originalActions => originalActions.action !== 'delete' && originalActions.action !== 'unpublish' && originalActions.action !== 'duplicate') : prev;
-  //   },
-  // },
+  document: {
+    actions: (prev, context) => {
+      const isAdmin = context.currentUser?.roles.some(role => role.name === 'administrator');
+  
+      // If the user is an admin, return all actions
+      if (isAdmin) return prev.filter(action => action.action !== 'duplicate');
+  
+      // Otherwise, remove "delete", "unpublish", and "duplicate"
+      return context.schemaType === 'booking'
+        ? prev.filter(action => !['delete', 'unpublish', 'duplicate'].includes(action.action))
+        : prev;
+    },
+  }
+  
 })

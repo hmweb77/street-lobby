@@ -312,6 +312,20 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             <p className="text-red-500 text-sm">{errors["common-idNumber"]}</p>
           )}
         </div>
+        {/* Profession */}
+        <div className="space-y-2 col-span-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Current Profession*
+          </label>
+          <input
+            type="text"
+            name="currentProfession"
+            value={state.commonUserDetails.currentProfession || ""}
+            onChange={handleCommonChange}
+            className="w-full p-2 border rounded-md"
+            placeholder="Studying? Working? Where?*"
+          />
+        </div>
       </div>
     </div>
   );

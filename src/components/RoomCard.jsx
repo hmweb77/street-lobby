@@ -15,7 +15,6 @@ const RoomCard = ({ room, isReversed = false }) => {
   const params = useParams();
   const propertySlug = params.slug;
 
-  console.log(room);
   const {
     state: globalState,
     setBooking,

@@ -6,7 +6,6 @@ const builder = imageUrlBuilder(client);
 
 
 export async function getSanityImageUrl(imageRef) {
-  console.log("Sanity Image Ref:", imageRef); // Debugging
   if (!imageRef?.asset?._ref) {
     console.warn("Invalid image reference:", imageRef);
     return null;

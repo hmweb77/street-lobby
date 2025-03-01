@@ -57,7 +57,7 @@ export const userSchema = {
       name: "currentProfession",
       title: "Current Profession",
       type: "text",
-      validation: (Rule) => Rule.required(),
+      // validation: (Rule) => Rule.required(),
     },
     {
       name: "currentLocation",

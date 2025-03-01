@@ -45,13 +45,13 @@ export const bookingSchema = {
               name: "year",
               title: "Year",
               type: "string",
-              options: {
-                list: Array.from(
-                  { length: 3 },
-                  (_, i) =>
-                    `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
-                ),
-              },
+              // options: {
+              //   list: Array.from(
+              //     { length: 3 },
+              //     (_, i) =>
+              //       `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
+              //   ),
+              // },
               validation: (Rule) => Rule.required(),
             },
             {
@@ -169,26 +169,16 @@ export const bookingSchema = {
     },
     {
       name: "status",
-      title: "Status",
+      title: "Status (admin only & Can't be changed after cancellations)",
       type: "string",
       options: {
         list: ["pending", "confirmed", "cancelled"],
         layout: "dropdown",
       },
-      readOnly: ({ document }) =>
-        document?.cancellationKey?.startsWith("cancelled+"),
+      
+      readOnly: ({ document , currentUser  }) =>
+        document?.cancellationKey?.startsWith("cancelled+") || !currentUser?.roles.some(role => role.name === 'administrator'),
       initialValue: "pending",
-
-      preview: {
-        select: {
-          status: "status",
-        },
-        prepare({ status }) {
-          return {
-            title: `Status: (Can't be changed) after cancellation`,
-          };
-        },
-      },
     },
     {
       name: "cancellationKey",

@@ -73,7 +73,6 @@ export default function RoomList() {
       // if (unsubscribe) unsubscribe();
     };
   }, [filters]);
-  console.log(filters);
 
   const handleLeft = () => router.push("/");
 
