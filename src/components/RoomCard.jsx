@@ -228,7 +228,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                 {localState.roomDetails.title}
               </h3>
               <p className="text-sm text-gray-500">
-                {localState.roomDetails.roomType} - $
+                {localState.roomDetails.roomType} - €
                 {localState.roomDetails.priceWinter}/Both semester
               </p>
             </div>
@@ -300,7 +300,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                               className="mr-2"
                             />
                             <span className={disabled ? "line-through" : ""}>
-                              {semester} - $
+                              {semester} - €
                               {calculatePrice(semester).toFixed(2)}
                             </span>
                           </label>

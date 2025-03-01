@@ -60,7 +60,7 @@ const LandingPage = () => {
         { label: "2nd semester (Feb - Jun)", value: "2nd Semester" },
         { label: "Both (1st and 2nd semester)", value: "1st Semester,2nd Semester" },
         { label: "Summer", value: "Summer" },
-        { label: "All (1st, 2nd semester and summer)", value: false },
+        { label: "All (1st, 2nd semester and summer)", value: "1st Semester,2nd Semester,Summer" },
       ],
     },
     {
@@ -85,7 +85,7 @@ const LandingPage = () => {
       id: "monthlyPrice",
       label: "Monthly Price",
       type: "range",
-      min: 500,
+      min: 100,
       max: 1500 ,
       value: priceValue,
       onChange: (value) => setPriceValue(value),

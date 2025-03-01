@@ -1,34 +1,53 @@
-export const getRemainingAvailableSemesters = (room, year) => {
-  const { availableSemesters = [], bookedPeriods = [] } = room;
-
-  // 1. Handle case where year is NOT provided
-  if (!year) {
-    // Return all available semesters that aren't booked in THEIR OWN YEAR
-    return availableSemesters.filter((available) => {
-      return !bookedPeriods.some(
-        (booked) =>
-          booked.year === available.year && // Match the available semester's year
-          booked.semester === available.semester
-      );
-    });
+export const getRemainingAvailableSemesters = (
+  room,
+  prices,
+  periodFiltered,
+  year
+) => {
+  // 1. Validate periodFiltered as array
+  if (!Array.isArray(periodFiltered) || periodFiltered.length === 0) {
+    periodFiltered = ["1st Semester", "2nd Semester", "Summer"];
   }
 
-  // 2. Handle case where year IS provided
-  const availableForYear = availableSemesters.filter(
-    (available) => available.year === year
-  );
+  const { availableSemesters = [], bookedPeriods = [] } = room;
+  const { minPrice, maxPrice } = prices || {};
+  const min = minPrice !== undefined ? minPrice : 0;
+  const max = maxPrice !== undefined ? maxPrice : Infinity;
 
-  const bookedForYear = bookedPeriods.filter((booked) => booked.year === year);
+  // Convert prices to numbers safely
+  const priceSummer = Number(room.priceSummer) || 0;
+  const priceWinter = Number(room.priceWinter) || 0;
+  const priceWinterHalf = priceWinter / 2;
 
-  return availableForYear.filter((available) => {
-    return !bookedForYear.some(
-      (booked) => booked.semester === available.semester
+  const filterSemester = (available) => {
+    // 2. Match exact semester names
+    const isPeriodFiltered = periodFiltered.includes(available.semester);
+
+    // 3. Get correct price for semester type
+    const semesterPrice =
+      available.semester === "Summer" ? priceSummer : priceWinterHalf;
+
+    // Price validation
+    const priceValid = semesterPrice >= min && semesterPrice <= max;
+
+    // Booking check
+    const isBooked = bookedPeriods.some(
+      (booked) =>
+        booked.year === available.year && booked.semester === available.semester
     );
-  });
+
+    return isPeriodFiltered && priceValid && !isBooked;
+  };
+
+  // Year filtering
+  return availableSemesters.filter(
+    (available) =>
+      (!year || available.year === year) && filterSemester(available)
+  );
 };
 
 // Helper function to calculate price based on semester(s)
-export  const calculatePrice = (roomData, semester) => {
+export const calculatePrice = (roomData, semester) => {
   if (!semester) {
     // If no semester is provided, return both prices
     return {

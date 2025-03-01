@@ -26,6 +26,8 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
     colivingCapacity,
   } = filters;
 
+  console.log( "Filters:" ,semester);
+
   try {
     // Base collection reference
     let roomsQuery = query(
@@ -131,25 +133,25 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
     }
 
     // Handle pricing filters
-    if (semester) {
-      if (Array.isArray(semester)) {
-        roomsQuery = query(
-          roomsQuery,
-          where("priceWinter", ">=", minPrice || 0),
-          where("priceWinter", "<=", maxPrice || Infinity)
-        );
-      } else if (semester === "Summer") {
-        if (minPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
-        if (maxPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
-      } else {
-        if (minPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
-        if (maxPrice !== undefined)
-          roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
-      }
-    }
+    // if (semester) {
+    //   if (Array.isArray(semester)) {
+    //     roomsQuery = query(
+    //       roomsQuery,
+    //       where("priceWinter", ">=", minPrice || 0),
+    //       where("priceWinter", "<=", maxPrice || Infinity)
+    //     );
+    //   } else if (semester === "Summer") {
+    //     if (minPrice !== undefined)
+    //       roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
+    //     if (maxPrice !== undefined)
+    //       roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
+    //   } else {
+    //     if (minPrice !== undefined)
+    //       roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
+    //     if (maxPrice !== undefined)
+    //       roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
+    //   }
+    // }
 
     // Listen for real-time updates
     const unsubscribe = onSnapshot(roomsQuery, async (snapshot) => {
@@ -210,7 +212,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
         // Extract remaining available semesters for the specified year
         const roomsWithAvailableSemesters = filteredRooms.map((room) => {
-          const remainingSemesters = getRemainingAvailableSemesters(room);
+          const remainingSemesters = getRemainingAvailableSemesters(room , {maxPrice , minPrice} , semester);
           return {
             ...room,
             remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
