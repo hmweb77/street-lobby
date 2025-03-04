@@ -300,7 +300,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                               className="mr-2"
                             />
                             <span className={disabled ? "line-through" : ""}>
-                              {semester} - €
+                              {semester} - $
                               {calculatePrice(semester).toFixed(2)}
                             </span>
                           </label>
