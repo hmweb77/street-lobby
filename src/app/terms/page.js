@@ -71,12 +71,13 @@ const page = () => {
             <p className="text-gray-600">Service provided under the Decree Law No. 128/2014, of August 29, which determines the legal terms for local lodging in Portugal. We provide temporary lodging services, and it is not considered a hotel. Due to this law, it is required from the guest to pay a tourist fee which is 2€/night, until 7 nights to the city Council.</p>
           </div>
         </div>
-  <Link href="/properties" >
-  
-        <button className="w-full bg-black text-white py-4 rounded-lg mt-6 hover:bg-gray-800 transition-colors">
+        <div className="flex justify-center my-12">
+  <Link href="/residences" >
+        <button className="bg-black text-white rounded-full px-8 py-2 text-sm">
           Rent a property
         </button>
   </Link>
+  </div>
       </div>
     );
   };
