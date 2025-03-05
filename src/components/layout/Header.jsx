@@ -24,7 +24,7 @@ const Navbar = () => {
   const menuItems = [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Our homes", href: "/residences" },
+    { label: "Residences", href: "/residences" },
     { label: "How to book", href: "/howtobook" },
     { label: "Rooms for rent", href: "/rooms" },
     { label: "Terms & conditions", href: "/terms" },
