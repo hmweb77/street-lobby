@@ -9,8 +9,8 @@ export const locationSchema = {
         type: "string",
       },
       {
-        name: "address",
-        title: "Address",
+        name: "descriptions",
+        title: "Descriptions",
         type: "string",
       },
       {

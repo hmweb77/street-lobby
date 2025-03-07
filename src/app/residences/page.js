@@ -75,7 +75,8 @@ export default function PropertyMap() {
           propertyName,
           propertyDescriptions,
           "location": location->{
-            coordinates
+            coordinates,
+            descriptions,
           },
           slug
         }`;
@@ -92,7 +93,9 @@ export default function PropertyMap() {
           .filter((prop) => prop.location?.coordinates)
           .map((prop) => ({
             id: prop._id,
+            propertyName: prop.propertyName,
             address: prop.propertyName,
+            addressDescription: prop.location.descriptions,
             lat: prop.location.coordinates.lat,
             lng: prop.location.coordinates.lng,
             description: prop.propertyDescriptions,
@@ -145,11 +148,11 @@ export default function PropertyMap() {
                   : "font-normal text-black hover:text-[#4AE54A]"
               }`}
             >
-              {property.address}
+              {property.propertyName}
             </button>
             {selectedProperty === property.id && (
               <p className="text-gray-600 text-sm w-60 text-center">
-                {property.description}
+                {property?.addressDescription ? property?.addressDescription : ""}
               </p>
             )}
           </div>
