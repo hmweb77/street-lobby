@@ -9,6 +9,11 @@ export const locationSchema = {
         type: "string",
       },
       {
+        name: "address",
+        title: "Address",
+        type: "string",
+      },
+      {
         name: "coordinates",
         title: "Coordinates",
         type: "geopoint",

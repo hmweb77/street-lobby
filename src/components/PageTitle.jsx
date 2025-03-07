@@ -6,7 +6,7 @@ const PageTitle = ({title}) => {
   const router = useRouter();
   const handleKeepBooking = () => router.push("/");
   return (
-    <div className="w-auto max-w-5xl mx-auto my-14 flex justify-center gap-1">
+    <div className="w-auto max-w-5xl mx-auto my-2 md:my-8 flex justify-center gap-1">
         <div className="relative flex-1 flex justify-center">
           <ChevronLeft
             onClick={handleKeepBooking}

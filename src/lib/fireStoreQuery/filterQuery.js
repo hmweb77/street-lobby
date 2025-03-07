@@ -26,7 +26,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
     colivingCapacity,
   } = filters;
 
-  console.log( "Filters:" ,semester);
+  console.log("Filters:", semester);
 
   try {
     // Base collection reference
@@ -68,9 +68,9 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
                   : null;
 
                 // Fetch Image URL from Sanity
-                const imageUrl = await getSanityImageUrl(
-                  propertyDetails?.images?.[0]
-                );
+                const imageUrl = room.images?.[0]
+                  ? await getSanityImageUrl(room.images?.[0])
+                  : await getSanityImageUrl(propertyDetails?.images?.[0]);
 
                 return {
                   ...room,
@@ -176,9 +176,9 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
                 : null;
 
               // Fetch Image URL from Sanity
-              const imageUrl = await getSanityImageUrl(
-                propertyDetails?.images?.[0]
-              );
+              const imageUrl = room.images?.[0]
+                  ? await getSanityImageUrl(room.images?.[0])
+                  : await getSanityImageUrl(propertyDetails?.images?.[0]);
 
               return {
                 ...room,
@@ -212,7 +212,11 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
         // Extract remaining available semesters for the specified year
         const roomsWithAvailableSemesters = filteredRooms.map((room) => {
-          const remainingSemesters = getRemainingAvailableSemesters(room , {maxPrice , minPrice} , semester);
+          const remainingSemesters = getRemainingAvailableSemesters(
+            room,
+            { maxPrice, minPrice },
+            semester
+          );
           return {
             ...room,
             remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
@@ -318,7 +322,6 @@ export const fetchAllLocations = async () => {
       value: doc.id,
       label: doc.data().title,
     }));
-
 
     return locations;
   } catch (error) {

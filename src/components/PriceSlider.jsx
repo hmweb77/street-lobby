@@ -2,83 +2,139 @@
 
 import { useState, useEffect } from "react"
 
-export default function PriceSlider({ min = 0, max = 100, defaultValue, onChange }) {
-  // Ensure we have a valid initial value
-  const initialValue = typeof defaultValue === "number" ? defaultValue : min
-  const [value, setValue] = useState(initialValue)
+export default function PriceRangeSlider({ min = 0, max = 2000, defaultMinValue, defaultMaxValue, onChange }) {
+  // Ensure we have valid initial values
+  const initialMinValue = typeof defaultMinValue === "number" ? defaultMinValue : min
+  const initialMaxValue = typeof defaultMaxValue === "number" ? defaultMaxValue : max
 
-  // Ensure percentage calculation is always valid
-  const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
+  const [minValue, setMinValue] = useState(initialMinValue)
+  const [maxValue, setMaxValue] = useState(initialMaxValue)
+
+  // Calculate percentages for the track fill
+  const minPercentage = Math.max(0, Math.min(100, ((minValue - min) / (max - min)) * 100))
+  const maxPercentage = Math.max(0, Math.min(100, ((maxValue - min) / (max - min)) * 100))
 
   useEffect(() => {
-    if (onChange && typeof value === "number") {
-      onChange(value)
+    if (onChange && typeof minValue === "number" && typeof maxValue === "number") {
+      onChange({ min: minValue, max: maxValue })
     }
-  }, [value, onChange])
+  }, [minValue, maxValue, onChange])
 
-  const handleChange = (e) => {
-    const newValue = Number(e.target.value)
-    if (!isNaN(newValue)) {
-      setValue(newValue)
+  // Handle slider changes
+  const handleMinChange = (e) => {
+    const newMinValue = Number(e.target.value)
+    if (!isNaN(newMinValue) && newMinValue <= maxValue) {
+      setMinValue(newMinValue)
+    }
+  }
+
+  const handleMaxChange = (e) => {
+    const newMaxValue = Number(e.target.value)
+    if (!isNaN(newMaxValue) && newMaxValue >= minValue) {
+      setMaxValue(newMaxValue)
+    }
+  }
+
+  // Handle input box changes
+  const handleMinInputChange = (e) => {
+    const newMinValue = Number(e.target.value)
+    if (!isNaN(newMinValue) && newMinValue <= maxValue) {
+      setMinValue(newMinValue)
+    }
+  }
+
+  const handleMaxInputChange = (e) => {
+    const newMaxValue = Number(e.target.value)
+    if (!isNaN(newMaxValue) && newMaxValue >= minValue) {
+      setMaxValue(newMaxValue)
     }
   }
 
   return (
     <div className="w-full max-w-md mx-auto px-4 py-6">
-      {/* Value bubble */}
-      <div className="relative mb-2">
-        <div
-          className="absolute -top-8 transform -translate-x-1/2 bg-black text-white text-sm font-medium rounded-sm py-1 px-2"
-          style={{ left: `${percentage}%` }}
-        >
-          {`${value}`}€
-        </div>
-      </div>
+      {/* Custom range slider */}
+      <div className="relative h-6 flex items-center">
+        {/* Track background */}
+        <div className="absolute w-full h-1 bg-gray-200 rounded-full"></div>
 
-      {/* Custom slider */}
-      <div className="relative">
+        {/* Track fill */}
+        <div
+          className="absolute h-1 bg-black rounded-full"
+          style={{
+            left: `${minPercentage}%`,
+            right: `${100 - maxPercentage}%`,
+            background: "black",
+          }}
+        ></div>
+
+        {/* Min handle */}
         <input
           type="range"
           min={min}
           max={max}
-          value={value}
-          onChange={handleChange}
-          className="w-full h-1 appearance-none bg-gray-200 rounded-full outline-none"
-          style={{
-            background: `linear-gradient(to right, black 0%, black ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`,
-            WebkitAppearance: "none",
-          }}
+          value={minValue}
+          onChange={handleMinChange}
+          className="absolute w-full h-1 appearance-none bg-transparent pointer-events-none"
         />
-        <style jsx>{`
-          input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: black;
-            cursor: pointer;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-          }
-          
-          input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: black;
-            cursor: pointer;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-          }
-        `}</style>
+
+        {/* Max handle */}
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={maxValue}
+          onChange={handleMaxChange}
+          className="absolute w-full h-1 appearance-none bg-transparent pointer-events-none"
+        />
       </div>
 
-      {/* Min and max labels */}
-      <div className="flex justify-between mt-2 text-sm text-gray-600">
-        <span>{min}€</span>
-        <span>{max}€</span>
+      {/* Input boxes */}
+      <div className="flex justify-between mt-4">
+        <input
+          type="text"
+          value={minValue}
+          onChange={handleMinInputChange}
+          className="w-24 h-10 px-2 border border-gray-300 text-center"
+        />
+        <input
+          type="text"
+          value={maxValue}
+          onChange={handleMaxInputChange}
+          className="w-24 h-10 px-2 border border-gray-300 text-center"
+        />
       </div>
+
+      {/* Custom styling for range inputs */}
+      <style jsx>{`
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: black;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          pointer-events: auto;
+          position: relative;
+          z-index: 10;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: black;
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          pointer-events: auto;
+          position: relative;
+          z-index: 10;
+        }
+      `}</style>
     </div>
   )
 }
+

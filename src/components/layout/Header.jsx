@@ -127,7 +127,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Dropdown */}
         {menuOpen && (
-          <div className="absolute top-14 left-6 w-64 bg-white shadow-lg rounded-b-lg overflow-hidden animate-slideDown md:hidden">
+          <div className="absolute top-14 left-6 w-64 bg-white shadow-lg rounded-b-lg overflow-hidden animate-slideDown lg:hidden">
             <div className="py-2">
               {menuItems.map((item, index) => (
                 <Link

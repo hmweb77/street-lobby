@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, X } from "lucide-react";
 import Image from "next/image";
 import properties from "@/lib/properties";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { fetchAllLocations } from "@/lib/fireStoreQuery/filterQuery";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 import PriceSlider from "@/components/PriceSlider";
@@ -11,7 +11,7 @@ import PriceSlider from "@/components/PriceSlider";
 const LandingPage = () => {
   const [expandedFilters, setExpandedFilters] = useState([]);
   const [selectedYear, setSelectedYear] = useState("2024/2025");
-  const [priceValue, setPriceValue] = useState(650);
+  const [priceValue, setPriceValue] = useState({ min: null, max: null });
   const [locations, setLocations] = useState([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -22,22 +22,28 @@ const LandingPage = () => {
     propertyType: null,
   });
 
-  const { setParams }  = useUrlSearchParams();
+  const { setParams } = useUrlSearchParams();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     params.set("year", selectedYear);
-    params.set("price", priceValue);
+    if (priceValue.min !== null && priceValue.max !== null) {
+      params.set("priceMax", priceValue.max);
+      params.set("priceMin", priceValue.min);
+    }
     Object.entries(selectedFilters).forEach(([key, value]) => {
-      if (value !== null && value !== false && value !== "false") params.set(key, value);
+      if (value !== null && value !== false && value !== "false")
+        params.set(key, value);
     });
     setParams(`/rooms?${params.toString()}`);
     router.push(`/rooms?${params.toString()}`);
   };
 
   const router = useRouter();
-  const years = Array.from({ length: 3 }, (_, i) => 
-    `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
+  const years = Array.from(
+    { length: 3 },
+    (_, i) =>
+      `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
   );
 
   useEffect(() => {
@@ -58,9 +64,15 @@ const LandingPage = () => {
       options: [
         { label: "1st semester (Sep - Jan)", value: "1st Semester" },
         { label: "2nd semester (Feb - Jun)", value: "2nd Semester" },
-        { label: "Both (1st and 2nd semester)", value: "1st Semester,2nd Semester" },
+        {
+          label: "Both (1st and 2nd semester)",
+          value: "1st Semester,2nd Semester",
+        },
         { label: "Summer", value: "Summer" },
-        { label: "All (1st, 2nd semester and summer)", value: "1st Semester,2nd Semester,Summer" },
+        {
+          label: "All (1st, 2nd semester and summer)",
+          value: "1st Semester,2nd Semester,Summer",
+        },
       ],
     },
     {
@@ -85,10 +97,8 @@ const LandingPage = () => {
       id: "monthlyPrice",
       label: "Monthly Price",
       type: "range",
-      min: 100,
-      max: 1500 ,
-      value: priceValue,
-      onChange: (value) => setPriceValue(value),
+      min: 0,
+      max: 2000,
     },
     {
       id: "colivingCapacity",
@@ -111,10 +121,15 @@ const LandingPage = () => {
     },
   ];
 
+  const handleClearPriceFilter = () => {
+    setExpandedFilters((prev) => prev.filter((id) => id !== "monthlyPrice"));
+    setPriceValue({ min: null, max: null });
+  };
+
   const handleFilterToggle = (filterId) => {
-    setExpandedFilters(prev => 
-      prev.includes(filterId) 
-        ? prev.filter(id => id !== filterId) 
+    setExpandedFilters((prev) =>
+      prev.includes(filterId)
+        ? prev.filter((id) => id !== filterId)
         : [...prev, filterId]
     );
   };
@@ -124,12 +139,16 @@ const LandingPage = () => {
       <div className="">
         <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
-            <span className="absolute -right-1 text-[#4AE54A] z-0">BOOK NOW</span>
+            <span className="absolute -right-1 text-[#4AE54A] z-0">
+              BOOK NOW
+            </span>
             <span className="relative text-black z-10">BOOK NOW</span>
           </h1>
         </div>
         <div className="mb-4 text-center">
-          <p className="text-base font-normal">your next staycation in Lisbon</p>
+          <p className="text-base font-normal">
+            your next staycation in Lisbon
+          </p>
         </div>
 
         <div className="mb-8 flex justify-center items-center">
@@ -152,14 +171,21 @@ const LandingPage = () => {
         <div className="relative max-w-lg mx-auto mb-8 px-4">
           <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
             <button
-              onClick={() => document.getElementById('yearScroller').scrollBy({ left: -document.getElementById('yearScroller').offsetWidth, behavior: 'smooth' })}
+              onClick={() =>
+                document
+                  .getElementById("yearScroller")
+                  .scrollBy({
+                    left: -document.getElementById("yearScroller").offsetWidth,
+                    behavior: "smooth",
+                  })
+              }
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === 0}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div 
+            <div
               id="yearScroller"
               className="flex flex-1 overflow-x-auto snap-x snap-mandatory scrollbar-hide mx-4"
               onScroll={(e) => {
@@ -170,13 +196,15 @@ const LandingPage = () => {
               }}
             >
               {years.map((year) => (
-                <div 
+                <div
                   key={year}
                   className="flex-none w-full snap-center flex justify-center items-center"
                 >
-                  <span className={`text-lg font-bold transition-all duration-300 ${
-                    selectedYear === year ? 'scale-110' : ''
-                  }`}>
+                  <span
+                    className={`text-lg font-bold transition-all duration-300 ${
+                      selectedYear === year ? "scale-110" : ""
+                    }`}
+                  >
                     {year}
                   </span>
                 </div>
@@ -184,7 +212,14 @@ const LandingPage = () => {
             </div>
 
             <button
-              onClick={() => document.getElementById('yearScroller').scrollBy({ left: document.getElementById('yearScroller').offsetWidth, behavior: 'smooth' })}
+              onClick={() =>
+                document
+                  .getElementById("yearScroller")
+                  .scrollBy({
+                    left: document.getElementById("yearScroller").offsetWidth,
+                    behavior: "smooth",
+                  })
+              }
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === years.length - 1}
             >
@@ -206,35 +241,52 @@ const LandingPage = () => {
                 >
                   <span className="text-sm font-semibold">
                     {isExpanded ? "−" : "+"} {filter.label}
-                    {filter.id === 'monthlyPrice' && ` (€${priceValue})`}
+                    {filter.id === "monthlyPrice" &&
+                      ` (€ ${priceValue.min ? priceValue.min : 0} -  ${priceValue.max ? priceValue.max : "infinity"})`}
                   </span>
                 </button>
                 {isExpanded && (
                   <div className="mt-4 space-y-3 pl-4">
                     {filter.type === "range" ? (
-                      <PriceSlider 
-                        min={filter.min}
-                        max={filter.max}
-                        defaultValue={filter.value}
-                        onChange={filter.onChange}
-                      />
+                      <div className="relative">
+                        <button
+                          onClick={handleClearPriceFilter}
+                          className="absolute -top-10 right-0  flex items-center gap-1 text-red-500"
+                        >
+                          <X /> Clear{" "}
+                        </button>
+                        <PriceSlider
+                          min={filter.min}
+                          max={filter.max}
+                          defaultMaxValue={filter.max}
+                          defaultMinValue={filter.min}
+                          onChange={setPriceValue}
+                        />
+                      </div>
                     ) : (
                       filter.options.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2">
+                        <label
+                          key={option.value}
+                          className="flex items-center gap-2"
+                        >
                           <input
                             type="radio"
                             name={filter.id}
                             value={option.value}
-                            checked={selectedFilters[filter.id] === option.value}
+                            checked={
+                              selectedFilters[filter.id] === option.value
+                            }
                             onChange={() => {
-                              setSelectedFilters(prev => ({
+                              setSelectedFilters((prev) => ({
                                 ...prev,
-                                [filter.id]: option.value
+                                [filter.id]: option.value,
                               }));
                             }}
                             disabled={option.disabled}
                           />
-                          <span className={`${option.disabled ? 'text-gray-300' : 'text-gray-400'}`}>
+                          <span
+                            className={`${option.disabled ? "text-gray-300" : "text-gray-400"}`}
+                          >
                             {option.label}
                           </span>
                         </label>
@@ -248,7 +300,7 @@ const LandingPage = () => {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <button 
+          <button
             className="bg-black text-white py-3 px-8 rounded-full font-medium"
             onClick={handleSearch}
           >
