@@ -241,8 +241,7 @@ const LandingPage = () => {
                 >
                   <span className="text-sm font-semibold">
                     {isExpanded ? "−" : "+"} {filter.label}
-                    {filter.id === "monthlyPrice" &&
-                      ` (€ ${priceValue.min ? priceValue.min : 0} -  ${priceValue.max ? priceValue.max : "infinity"})`}
+                    {filter.id === "monthlyPrice" }
                   </span>
                 </button>
                 {isExpanded && (
