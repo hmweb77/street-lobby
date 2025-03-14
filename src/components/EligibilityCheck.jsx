@@ -171,7 +171,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
               {period.propertyTitle}, {period.roomTitle}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              {period.year} | {period.semester} - €{period.price.toFixed(2)}
+              {period.year} | {period.semester} - €{period.price.toFixed(2)} {period.semester === "Summer" ? "- Total" : "/ Month"}
             </p>
           </div>
         ))}
@@ -179,12 +179,12 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
 
       {/* Total Price */}
       <div className="border-t border-gray-200 pt-4 mb-6">
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <span className="font-bold text-gray-700">Total Price:</span>
           <span className="font-bold text-lg text-gray-800">
             €{state.totalPrice.toFixed(2)}
           </span>
-        </div>
+        </div> */}
       </div>
 
       {/* Common Form Fields */}
@@ -338,7 +338,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
       <div className="mb-4 border-b pb-2">
         <h3 className="font-bold text-lg">
           {period.propertyTitle}, {period.roomTitle} | {period.year} |{" "}
-          {period.semester} | €{period.price.toFixed(2)}
+          {period.semester} | €{period.price.toFixed(2)} {period.semester === "Summer" ? "- Total" : "/ Month"}
         </h3>
       </div>
 
@@ -588,12 +588,12 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           {state.bookingPeriods.map(renderIndividualFields)}
           {/* Total Price */}
           <div className="border-t border-gray-200 pt-4 mb-6">
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <span className="font-bold text-gray-700">Total Price:</span>
               <span className="font-bold text-lg text-gray-800">
                 €{state.totalPrice.toFixed(2)}
               </span>
-            </div>
+            </div> */}
           </div>
         </>
       )}

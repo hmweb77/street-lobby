@@ -52,13 +52,13 @@ export const roomSchema = {
     },
     {
       name: "priceWinter",
-      title: "Price (Winter)",
+      title: "Price (Winter) Per Month",
       type: "number",
       validation: (Rule) => Rule.required().min(0),
     },
     {
       name: "priceSummer",
-      title: "Price (Summer)",
+      title: "Price (Summer) Total",
       type: "number",
       validation: (Rule) => Rule.required().min(0),
     },

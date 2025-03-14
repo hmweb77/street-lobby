@@ -11,6 +11,7 @@ import {
 import { app } from "../firebase"; // Ensure Firebase is initialized
 import { getSanityImageUrl } from "@/sanity/lib/image";
 import { getRemainingAvailableSemesters } from "./utils";
+import { listenToValidProposedPeriods } from "@/utils/proposedBookingPeriods";
 
 const firestore = getFirestore(app); // Get Firestore instance
 
@@ -113,7 +114,8 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             }
           );
 
-          onSnapshotCallback(roomsWithAvailableSemesters);
+          listenToValidProposedPeriods(roomsWithAvailableSemesters,
+            onSnapshotCallback);
         } catch (error) {
           console.error("Error processing rooms:", error);
           onSnapshotCallback([]); // Fallback in case of error
@@ -293,7 +295,10 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
             remainingSemesters: remainingSemesters, // Add remaining available semesters to the room object
           };
         });
-        onSnapshotCallback(roomsWithAvailableSemesters);
+
+        listenToValidProposedPeriods(roomsWithAvailableSemesters,
+          onSnapshotCallback);
+          
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);

@@ -17,7 +17,6 @@ export const getRemainingAvailableSemesters = (
   // Convert prices to numbers safely
   const priceSummer = Number(room.priceSummer) || 0;
   const priceWinter = Number(room.priceWinter) || 0;
-  const priceWinterHalf = priceWinter / 2;
 
   const filterSemester = (available) => {
     // 2. Match exact semester names
@@ -25,7 +24,7 @@ export const getRemainingAvailableSemesters = (
 
     // 3. Get correct price for semester type
     const semesterPrice =
-      available.semester === "Summer" ? priceSummer : priceWinterHalf;
+      available.semester === "Summer" ? priceSummer : priceWinter;
 
     // Price validation
     const priceValid = semesterPrice >= min && semesterPrice <= max;

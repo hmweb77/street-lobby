@@ -122,7 +122,7 @@ const RoomCard = ({ room, isReversed = false }) => {
         return room.priceWinter;
       case "1st Semester":
       case "2nd Semester":
-        return room.priceWinter / 2;
+        return room.priceWinter;
       case "Summer":
         return room.priceSummer;
       default:
@@ -229,7 +229,9 @@ const RoomCard = ({ room, isReversed = false }) => {
               </h3>
               <p className="text-sm text-gray-500">
                 {localState.roomDetails.roomType} - €
-                {localState.roomDetails.priceWinter}/Both semester
+                {localState.roomDetails.priceWinter}/Month (Winter) , € 
+                {localState.roomDetails.priceSummer}-Total (Summer)
+
               </p>
             </div>
             <div>
@@ -300,8 +302,8 @@ const RoomCard = ({ room, isReversed = false }) => {
                               className="mr-2"
                             />
                             <span className={disabled ? "line-through" : ""}>
-                              {semester} - $
-                              {calculatePrice(semester).toFixed(2)}
+                              {semester} - €
+                              {calculatePrice(semester).toFixed(2)} {semester === "Summer" ? " - Total" : "/ Month"}
                             </span>
                           </label>
                         );
