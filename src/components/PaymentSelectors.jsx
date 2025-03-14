@@ -69,7 +69,7 @@ export default function PaymentSelector({onSuccess}) {
         paymentStatus: selectedPayment === 'later' ? 'pending' : 'completed'
       }
 
-      const response = await fetch('/api/booking', {
+      const response = await fetch('/api/stripe-pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookingData),
@@ -134,7 +134,7 @@ export default function PaymentSelector({onSuccess}) {
       >
         {[
           { value: 'apple', label: 'Apple Pay', img: "/applepay.png" },
-          { value: 'card', label: 'Credit Card', img: "/creditcard.png" },
+          { value: 'card', label: 'Credit Card', img: "/creditcard.png" ,  active : true },
           { value: 'bank', label: 'Bank Transfer', img: "/banktransfer.png" },
           { value: 'paypal', label: 'PayPal', img: "/paypal.png" },
           { value: 'later', label: 'Pay Later', img:  "/pay-later.png" , active : true },

@@ -1,116 +1,84 @@
-import { adminAccessDb as firestore } from "@/lib/firebase-admin"; // Import Firestore instance
-import {
-  doc,
-  setDoc,
-  serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs,
-  deleteDoc,
-  writeBatch
-} from "firebase/firestore";
+import { adminAccessDb } from "@/lib/firebase-admin";
 
-export async function storeProposedPeriod(roomId, semester, year) {
-  const docId = `${roomId}_${semester}_${year}`; // Unique ID
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins from now
+export async function storeProposedPeriodsBatch(addedDocsIds) {
+  if (!addedDocsIds.length) return;
 
-  await setDoc(doc(firestore, "proposedBookedPeriods", docId), {
-    roomId,
-    semester,
-    year,
-    expiresAt,
+  console.log(`Storing ${addedDocsIds.length} proposed periods`);
+
+  const batch = adminAccessDb.batch();
+  const collectionRef = adminAccessDb.collection("proposedBookedPeriods");
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+
+  addedDocsIds.forEach(doc => {
+    // Extract components from document ID format: roomId_semester_year
+    const {docId , roomId, semester, year} = doc;
+    
+    if (!roomId || !semester || !year) {
+      console.warn(`Skipping invalid document ID: ${docId}`);
+      return;
+    }
+
+
+    const docRef = collectionRef.doc();
+    batch.set(docRef, {
+      roomId,
+      semester,
+      year,
+      expiresAt,
+    });
   });
 
-  console.log(
-    `Stored temporary period for Room ${roomId}, Expires at: ${expiresAt}`
-  );
+
+  await batch.commit();
+  console.log(`Batch stored ${addedDocsIds.length} proposed periods`);
 }
 
-export async function getValidProposedPeriods() {
-  const now = new Date();
-  const q = query(
-    collection(firestore, "proposedBookedPeriods"),
-    where("expiresAt", ">", now)
-  );
-  const snapshot = await getDocs(q);
 
-  const periods = snapshot.docs.map((doc) => doc.data());
-  return periods;
+export async function getValidProposedPeriods() {
+  await cleanupExpiredPeriods();
+  const now = new Date();
+  const snapshot = await adminAccessDb
+    .collection("proposedBookedPeriods")
+    .where("expiresAt", ">", now)
+    .get();
+
+  console.log(
+    `Fetched ${snapshot.docs.length} valid proposed periods from Firestore`
+  );
+
+  return snapshot.docs.map((doc) => doc.data());
 }
 
 export async function cleanupExpiredPeriods() {
   const now = new Date();
+  const snapshot = await adminAccessDb
+    .collection("proposedBookedPeriods")
+    .where("expiresAt", "<", now)
+    .get();
 
-  // Query expired periods
-  const q = query(
-    collection(firestore, "proposedBookedPeriods"),
-    where("expiresAt", "<", now)
-  );
-  const snapshot = await getDocs(q);
+  if (snapshot.empty) return;
 
-  if (snapshot.empty) return; // No expired periods to delete
-
-  // Initialize a Firestore batch
-  const batch = writeBatch(firestore);
-
-  // Add delete operations to the batch
+  const batch = adminAccessDb.batch();
   snapshot.docs.forEach((docSnap) => {
-    batch.delete(doc(firestore, "proposedBookedPeriods", docSnap.id));
+    const docRef = adminAccessDb
+      .collection("proposedBookedPeriods")
+      .doc(docSnap.id);
+    batch.delete(docRef);
   });
 
-  // Commit all deletions in a single request
   await batch.commit();
 }
 
 export async function deleteAddedDocs(addedDocsIds) {
-  if (addedDocsIds.size === 0) return; // No documents to delete
+  if (addedDocsIds.size === 0) return;
 
-  // Initialize a Firestore batch
-  const batch = writeBatch(firestore);
-
-  // Add delete operations to the batch
+  const batch = adminAccessDb.batch();
   addedDocsIds.forEach((docId) => {
-    batch.delete(doc(firestore, "proposedBookedPeriods", docId));
+    const docRef = adminAccessDb
+      .collection("proposedBookedPeriods")
+      .doc(docId);
+    batch.delete(docRef);
   });
 
-  // Commit all deletions in a single request
   await batch.commit();
-
 }
-
-
-
-
-// Step 2: Listen to Firestore updates and filter remainingSemesters
-export function listenToValidProposedPeriods(roomsWithAvailableSemesters, onSnapshotCallback) {
-  const now = new Date();
-
-  // Firestore query to get only non-expired proposed periods
-  const q = query(
-    collection(firestore, "proposedBookedPeriods"),
-    where("expiresAt", ">", now)
-  );
-
-  // Real-time listener
-  return onSnapshot(q, (snapshot) => {
-    const proposedPeriods = snapshot.docs.map((doc) => doc.data());
-
-    const updatedRooms = roomsWithAvailableSemesters.map((room) => {
-      const filteredSemesters = room.remainingSemesters.filter(
-        (semesterObj) =>
-          !proposedPeriods.some(
-            (period) =>
-              period.roomId === room.id &&
-              period.semester === semesterObj.semester &&
-              period.year === semesterObj.year
-          )
-      );
-
-      return { ...room, remainingSemesters: filteredSemesters };
-    });
-
-    onSnapshotCallback(updatedRooms); // Call the provided callback with updated data
-  });
-}
-

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanityAdminClient } from "@/lib/sanityAdmin";
-import { deleteAddedDocs, getValidProposedPeriods, storeProposedPeriod } from "@/utils/proposedBookingPeriods";
+import { deleteAddedDocs, getValidProposedPeriods, storeProposedPeriodsBatch } from "@/utils/proposedBookingPeriods";
 
 export async function POST(req) {
   try {
@@ -15,8 +15,9 @@ export async function POST(req) {
     }
 
     const proposedBookedPeriods = await getValidProposedPeriods(); // Get valid stored periods
-    const addedDocsIds = new Set();
+    const addedDocsIds = [];
     const validationErrors = [];
+
 
     // Convert proposedBookedPeriods into a Set for quick lookup
     const existingPeriodKeys = new Set(
@@ -40,9 +41,13 @@ export async function POST(req) {
         continue; // Skip adding this period
       }
 
+
       // If not already booked, store it in Firestore and track added documents
-      await storeProposedPeriod(roomId, period.semester, period.year);
-      addedDocsIds.add(docId);
+      // await storeProposedPeriod(roomId, period.semester, period.year);
+
+
+      addedDocsIds.push({docId , roomId, semester: period.semester, year: period.year });
+
 
       // Grouping proposed periods by room ID
       if (!proposedPeriodsByRoom.has(roomId)) {
@@ -53,6 +58,8 @@ export async function POST(req) {
         year: period.year,
       });
     }
+
+
 
     // Validate each room's availability
     for (const [roomId, proposedPeriods] of proposedPeriodsByRoom) {
@@ -74,6 +81,7 @@ export async function POST(req) {
         })),
       ];
 
+
       // Validate combined periods
       const errors = validateBookingPeriods(combinedPeriods);
       if (errors.length > 0) {
@@ -82,7 +90,6 @@ export async function POST(req) {
     }
 
     if (validationErrors.length > 0) {
-      await deleteAddedDocs(addedDocsIds);
 
       return NextResponse.json(
         {
@@ -94,6 +101,9 @@ export async function POST(req) {
       );
     }
 
+
+    await storeProposedPeriodsBatch(addedDocsIds);
+
     return NextResponse.json(
       {
         message: "No conflicts detected",
@@ -102,7 +112,7 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error checking eligibility:", error);
+    console.log("Error checking eligibility:", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 }

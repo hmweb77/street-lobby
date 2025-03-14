@@ -11,7 +11,6 @@ import {
 import { app } from "../firebase"; // Ensure Firebase is initialized
 import { getSanityImageUrl } from "@/sanity/lib/image";
 import { getRemainingAvailableSemesters } from "./utils";
-import { listenToValidProposedPeriods } from "@/utils/proposedBookingPeriods";
 
 const firestore = getFirestore(app); // Get Firestore instance
 
@@ -116,6 +115,7 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
 
           listenToValidProposedPeriods(roomsWithAvailableSemesters,
             onSnapshotCallback);
+          // onSnapshotCallback(roomsWithAvailableSemesters);
         } catch (error) {
           console.error("Error processing rooms:", error);
           onSnapshotCallback([]); // Fallback in case of error
@@ -225,7 +225,10 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           };
         });
 
-        onSnapshotCallback(roomsWithAvailableSemesters);
+        listenToValidProposedPeriods(roomsWithAvailableSemesters,
+          onSnapshotCallback);
+
+        // onSnapshotCallback(roomsWithAvailableSemesters);
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);
@@ -298,7 +301,7 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
 
         listenToValidProposedPeriods(roomsWithAvailableSemesters,
           onSnapshotCallback);
-          
+          // onSnapshotCallback(roomsWithAvailableSemesters);
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);
@@ -348,3 +351,38 @@ export const fetchAllLocations = async () => {
 // };
 
 // Helper function to get remaining available semesters for a specific year
+
+
+
+
+export function listenToValidProposedPeriods(roomsWithAvailableSemesters, onSnapshotCallback) {
+  const now = new Date();
+
+  // Firestore query to get only non-expired proposed periods
+  const q = query(
+    collection(firestore, "proposedBookedPeriods"),
+    where("expiresAt", ">", now)
+  );
+
+  // Real-time listener
+  return onSnapshot(q, (snapshot) => {
+    const proposedPeriods = snapshot.docs.map((doc) => doc.data());
+
+    const updatedRooms = roomsWithAvailableSemesters.map((room) => {
+      const filteredSemesters = room.remainingSemesters.filter(
+        (semesterObj) =>
+          !proposedPeriods.some(
+            (period) =>
+              period.roomId === room.id &&
+              period.semester === semesterObj.semester &&
+              period.year === semesterObj.year
+          )
+      );
+
+      return { ...room, remainingSemesters: filteredSemesters };
+    });
+
+    onSnapshotCallback(updatedRooms); // Call the provided callback with updated data
+  });
+}
+
