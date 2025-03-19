@@ -31,12 +31,12 @@ export const orderSchema = {
   preview: {
     select: {
       userName: "orderBy.name",
-      bookingCount: "bookings.length",
+      bookingCount: "bookings",
     },
     prepare(selection) {
       const { userName, bookingCount, notes } = selection;
       return {
-        title: `${userName || "Unknown user"} | ${bookingCount || 0} Bookings`,
+        title: `${userName || "Unknown user"} | ${bookingCount.length || 0} Bookings`,
       };
     },
   },

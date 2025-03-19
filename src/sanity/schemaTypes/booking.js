@@ -13,7 +13,7 @@ export const bookingSchema = {
     },
     {
       name: "bookedFor",
-      title: "Booked By",
+      title: "Booked For",
       type: "reference",
       to: [{ type: "user" }],
       validation: (Rule) => Rule.required(),
@@ -247,10 +247,10 @@ export const bookingSchema = {
       return {
         title: `${userName || "Unknown user"} | ${roomTitle || "No room"} | ${status}`,
         subtitle: [
-          email && `Email: ${email}`,
-          date && `Booked: ${date}`,
           semester && `Semester: ${semester}`,
           year && `Year: ${year}`,
+          email && `Email: ${email}`,
+          date && `Booked: ${date}`,
         ]
           .filter(Boolean)
           .join(" | "),

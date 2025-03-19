@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 const { v4: uuidv4 } = require("uuid");
 import { adminAccessDb as db } from '@/lib/firebase-admin'
+import { cancelSubscriptionImmediately } from "../stripe-webhook/route";
 
 export async function POST(req) {
   try {
@@ -33,8 +34,8 @@ export async function POST(req) {
     }
 
     const operation = req.headers.get("sanity-operation");
-
     const sanityProjectId = req.headers.get("sanity-project-id");
+    
     if (sanityProjectId !== process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) {
       return NextResponse.json(
         { error: "Unauthorized project/dataset" },
@@ -44,62 +45,56 @@ export async function POST(req) {
 
     // Process booking data
     const booking = await req.json();
-    const { bookedPeriod, status, _id, tracker, cancellationKey } = booking;
+    const { semester, year, status, _id, cancellationKey , paymentMethod   } = booking;
 
-    if (_id.includes("draft")) {
-      return NextResponse.json(
-        { error: "Make to a published booking" },
-        { status: 200, headers }
-      );
-    }
 
-    // Validate booked periods
-    if (!booking || !bookedPeriod || !bookedPeriod.length) {
+    // Validate required fields
+    if (!semester || !year) {
       return NextResponse.json(
-        { error: "Invalid booking data" },
+        { error: "Missing semester or year in booking data" },
         { status: 400, headers }
       );
     }
 
-    // Get unique room IDs from all booked periods
-    const roomIds = Array.from(new Set(
-      bookedPeriod.map(period => period.room?._ref).filter(Boolean)
-    ));
-
-    if (roomIds.length === 0) {
+    // Get room reference from booking
+    const roomId = booking.room?._ref;
+    if (!roomId) {
       return NextResponse.json(
-        { error: "No valid room references found" },
+        { error: "No valid room reference found" },
         { status: 400, headers }
       );
     }
 
     // Handle cancellation/deletion
     if (status === "cancelled" || operation === "delete") {
-      // Process each room in booked periods
-      for (const roomId of roomIds) {
-        const roomData = await sanityAdminClient.getDocument(roomId);
-        if (!roomData) {
-          console.error(`Room ${roomId} not found`);
-          continue;
-        }
-
-        // Filter out periods linked to this booking
-        let updatedBookedPeriods = (roomData.bookedPeriods || []).filter(
-          period => period._key.split("__^^__")[0] !== tracker
-        );
-
-        // Update Sanity
-        await sanityAdminClient
-          .patch(roomId)
-          .set({ bookedPeriods: updatedBookedPeriods })
-          .commit();
-
-        // Update Firestore
-        await db.collection("room").doc(roomId).set(
-          { bookedPeriods: updatedBookedPeriods }, 
-          { merge: true }
+      const roomData = await sanityAdminClient.getDocument(roomId);
+      if (!roomData) {
+        return NextResponse.json(
+          { error: "Room not found" },
+          { status: 404, headers }
         );
       }
+
+      if(paymentMethod == "Stripe") {
+        cancelSubscriptionImmediately(_id);
+      }
+
+      // Filter out periods matching the semester and year
+      const updatedBookedPeriods = (roomData.bookedPeriods || []).filter(
+        period => !(period.semester === semester && period.year === year)
+      );
+
+      // Update Sanity
+      await sanityAdminClient
+        .patch(roomId)
+        .set({ bookedPeriods: updatedBookedPeriods })
+        .commit();
+
+      // Update Firestore
+      await db.collection("room").doc(roomId).set(
+        { bookedPeriods: updatedBookedPeriods },
+        { merge: true }
+      );
 
       // Update cancellation key if needed
       if (status === "cancelled" && !cancellationKey?.startsWith("cancelled+")) {
@@ -111,7 +106,7 @@ export async function POST(req) {
     }
 
     return NextResponse.json(
-      { message: "Rooms updated successfully" },
+      { message: "Room updated successfully" },
       { status: 200, headers }
     );
   } catch (error) {

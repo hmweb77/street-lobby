@@ -1,3 +1,5 @@
+import { validateBookingDeadline } from "@/apiServices/bookings-services";
+
 export const getRemainingAvailableSemesters = (
   room,
   prices,
@@ -35,7 +37,9 @@ export const getRemainingAvailableSemesters = (
         booked.year === available.year && booked.semester === available.semester
     );
 
-    return isPeriodFiltered && priceValid && !isBooked;
+    const isDeadlineValid = validateBookingDeadline(available.year, available.semester);
+
+    return isPeriodFiltered && priceValid && !isBooked && isDeadlineValid;
   };
 
   // Year filtering
