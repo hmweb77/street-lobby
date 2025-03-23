@@ -7,7 +7,7 @@ export async function storeProposedPeriodsBatch(addedDocsIds) {
 
   const batch = adminAccessDb.batch();
   const collectionRef = adminAccessDb.collection("proposedBookedPeriods");
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 5 minutes expiration
 
   addedDocsIds.forEach(doc => {
     // Extract components from document ID format: roomId_semester_year

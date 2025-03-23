@@ -79,6 +79,13 @@ export async function POST(req) {
         cancelSubscriptionImmediately(_id);
       }
 
+      if(paymentMethod == "PayPal") {
+        const paymentInfo = await getPaypalPaymentInfoByBookingId(_id);
+        if (paymentInfo) {
+          await cancelPaypalSubscription(paymentInfo.subscriptionId, "cancelled by admin dashboard");
+        }
+      }
+
       // Filter out periods matching the semester and year
       const updatedBookedPeriods = (roomData.bookedPeriods || []).filter(
         period => !(period.semester === semester && period.year === year)
@@ -127,3 +134,66 @@ export async function OPTIONS() {
     },
   });
 }
+
+
+
+
+import fetch from 'node-fetch';
+import { getPaypalPaymentInfoByBookingId } from "@/utils/StorePaypalPaymentsInfo";
+
+export async function getPaypalAccessToken() {
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    const baseUrl = process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';
+
+    try {
+        const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'grant_type=client_credentials',
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error_description || 'Failed to fetch access token');
+
+        return data.access_token;
+    } catch (error) {
+        console.error('Error getting PayPal access token:', error.message);
+        throw error;
+    }
+}
+
+export async function cancelPaypalSubscription(subscriptionId, reason = '') {
+    const baseUrl = process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';
+
+    try {
+        const accessToken = await getPaypalAccessToken();
+        const cancelUrl = `${baseUrl}/v1/billing/subscriptions/${subscriptionId}/cancel`;
+
+        const response = await fetch(cancelUrl, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                reason: reason,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error canceling subscription');
+        }
+
+        console.log(`Subscription ${subscriptionId} canceled successfully.`);
+        return { success: true, message: 'Subscription canceled successfully' };
+    } catch (error) {
+        console.error(`Error canceling subscription ${subscriptionId}:`, error.message);
+        return { success: false, message: error.message };
+    }
+}
+

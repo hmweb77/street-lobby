@@ -117,7 +117,11 @@ export async function POST(req) {
     }
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: [
+        'card',           // Includes Apple Pay & Google Pay
+        // 'paypal',         // PayPal (enable in Stripe Dashboard)
+        'link',           // Stripe’s fast checkout
+      ],
       line_items: paymentIntents.map((intent) => ({
         price_data: {
           currency: "eur",
@@ -150,7 +154,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         message: "Payment initiated successfully",
-        redirectUrl: session.url,
+        paymentDetails: [{approvalUrl : session.url}] ,
       },
       {
         status: 200,

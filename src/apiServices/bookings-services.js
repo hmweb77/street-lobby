@@ -89,6 +89,7 @@ export const processBookingPeriods = async (bookingPeriods, useCommonDetails, co
       _key: periodKey,
       bookedByUser: { _type: "reference", _ref: commonUser._id },
       bookedForUser: { _type: "reference", _ref: userRef },
+      bookedByUserEmail: bookingPeriods[0].userDetails.email,
       userDetailsInOneLine: useCommonDetails ? JSON.stringify(commonUser): JSON.stringify(period.userDetails.name),
       room: { _type: "reference", _ref: roomId },
       roomId: roomId,

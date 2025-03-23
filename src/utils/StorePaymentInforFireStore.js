@@ -3,21 +3,23 @@ import { adminAccessDb } from "@/lib/firebase-admin";
 const COLLECTION_NAME = "ShortTimePaymentInfo";
 
 export async function storePaymentInfo(bookingInformation, roomUpdatesMap , customerId ,paymentSessionId) {
-  if (!bookingInformation || !roomUpdatesMap || !paymentSessionId) return;
 
-  console.log(bookingInformation, roomUpdatesMap, paymentSessionId);
   try {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 1); // Set expiration time to 1 day from now
 
     const docRef = adminAccessDb.collection(COLLECTION_NAME).doc();
     await docRef.set({
-      paymentSessionId: paymentSessionId,
+      paymentSessionId: paymentSessionId ?? null,
       bookingInformation: bookingInformation,
       roomUpdatesMap : JSON.stringify([...roomUpdatesMap]),
-      stripeCustomerId: customerId,
+      stripeCustomerId: customerId ?? null,
       expiresAt: expiresAt,
     });
+
+    console.log("Stored payment info with document ID:", docRef.id);
+
+    return docRef.id;
   } catch (error) {
     console.error("Error storing payment info:", error);
   }
@@ -46,6 +48,28 @@ export async function getPaymentInfo(paymentSessionId) {
 }
 
 
+export async function getPaymentInfoById(docId) {
+  if (!docId) return null;
+
+  try {
+    const docRef = adminAccessDb.collection(COLLECTION_NAME).doc(docId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      console.log("No payment info found with the given ID.");
+      return null;
+    }
+
+    return doc.data();
+  } catch (error) {
+    console.error("Error retrieving payment info by ID:", error);
+    return null;
+  }
+}
+
+
+
+
 export async function deletePaymentInfo(paymentSessionId) {
   if (!paymentSessionId) return;
 
@@ -68,6 +92,28 @@ export async function deletePaymentInfo(paymentSessionId) {
     console.error("Error deleting payment info:", error);
   }
 }
+
+
+
+export async function deletePaymentInfoById(docId) {
+  if (!docId) return;
+
+  try {
+    const docRef = adminAccessDb.collection(COLLECTION_NAME).doc(docId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      console.log("No payment info found with the given ID to delete.");
+      return;
+    }
+
+    await docRef.delete();
+    console.log(`Deleted payment info with document ID: ${docId}`);
+  } catch (error) {
+    console.error("Error deleting payment info by ID:", error);
+  }
+}
+
 
 
 

@@ -9,7 +9,8 @@ import {
 } from "@/utils/proposedBookingPeriods";
 import { adminAccessDb as db } from "@/lib/firebase-admin";
 
-const endpointSecret = "whsec_LdyO0R2FT1jJGYk9gRsyK7r3UV5HSRjs";
+const endpointSecret =
+  process.env.STRIPE_WEBHOOK_SECRET || "whsec_LdyO0R2FT1jJGYk9gRsyK7r3UV5HSRjs";
 import Stripe from "stripe";
 import {
   deletePaymentInfo,
@@ -62,11 +63,6 @@ export async function POST(req) {
           const { semester, winterPriceMonthly, roomId, roomTitle, year } =
             period;
 
-            console.log( "🚀😊" , roomTitle);
-
-          const bookingId = await createBooking(period);
-          bookingIds.push(bookingId);
-
           if (semester === "1st Semester" || semester === "2nd Semester") {
             // Original date calculations
             let startDate =
@@ -99,7 +95,8 @@ export async function POST(req) {
                 0,
                 0
               );
-              startDate = new Date(now.getTime() + 3600000); // Add 1 hour
+              startDate = new Date(now.getTime() + 300); // Add 1 hour
+              
             } else {
               billingAnchorDate = startDate;
             }
@@ -108,6 +105,15 @@ export async function POST(req) {
             if (startDate >= endDate) {
               continue;
             }
+
+            const isSameMonthAndYear =
+                startDate.getFullYear() === endDate.getFullYear() &&
+                startDate.getMonth() === endDate.getMonth();
+              
+
+
+            const bookingId = await createBooking(period);
+            bookingIds.push(bookingId);
 
             const cancelAt = Math.floor(endDate.getTime() / 1000);
 
@@ -144,6 +150,8 @@ export async function POST(req) {
                 0,
                 0
               );
+
+              if(isSameMonthAndYear) nextBillingAnchorDate = startDate;
             }
 
             // Convert to Unix timestamp
@@ -169,7 +177,7 @@ export async function POST(req) {
             };
 
             // Conditional logic for billing cycle
-            if (billingAnchor > currentTimestamp) {
+            if (billingAnchor > currentTimestamp && !isSameMonthAndYear) {
               subscriptionParams.trial_end = billingAnchor;
             } else {
               subscriptionParams.billing_cycle_anchor = Math.floor(
@@ -183,7 +191,7 @@ export async function POST(req) {
         }
 
         await addBookingToRoom(roomUpdatesMap);
-        await createOrder(orderedByUserId, bookingIds);
+        // await createOrder(orderedByUserId, bookingIds);
         deletePaymentInfo(sessionId);
         cleanupExpiredPeriods();
 
@@ -257,7 +265,7 @@ export async function getOrCreateProduct(roomId, semester, title) {
   }
 }
 
-async function createOrder(userId, bookingIds, notes = "") {
+export async function createOrder(userId, bookingIds, notes = "") {
   try {
     const newOrder = {
       _type: "order",
@@ -329,11 +337,11 @@ export async function createBooking(bookingData) {
   }
 }
 
-function generateCancellationKey() {
+export function generateCancellationKey() {
   return `${Math.random().toString(36).substr(2, 9)}-${Date.now()}`;
 }
 
-async function addBookingToRoom(roomUpdatesMap) {
+export async function addBookingToRoom(roomUpdatesMap) {
   for (const [roomId, { currentPeriods, newPeriods }] of roomUpdatesMap) {
     const updatedPeriods = [...currentPeriods, ...newPeriods];
 
@@ -349,7 +357,7 @@ async function addBookingToRoom(roomUpdatesMap) {
   }
 }
 
-async function updateBookingPayment(metadata, period) {
+export async function updateBookingPayment(metadata, period) {
   if (metadata.type !== "recurring") return;
 
   const bookingId = metadata.bookingId;
@@ -377,10 +385,10 @@ async function updateBookingPayment(metadata, period) {
     timeZone: "Europe/Paris",
   });
 
-  console.log("🚀");
-  console.log(bookingPeriod);
-  console.log(adjustedDate.toLocaleString());
-  console.log(monthName);
+  // console.log("🚀");
+  // console.log(bookingPeriod);
+  // console.log(adjustedDate.toLocaleString());
+  // console.log(monthName);
 
   const allowedMonths = {
     "1st Semester": ["September", "October", "November", "December"],
@@ -423,31 +431,28 @@ async function updateBookingPayment(metadata, period) {
   }
 }
 
-
-
-
 export async function cancelSubscriptionImmediately(bookingId) {
   try {
-      // Search for the subscription with the given bookingId in metadata
-      const subscriptions = await stripe.subscriptions.search({
-          query: `metadata['bookingId']:'${bookingId}'`
-      });
+    // Search for the subscription with the given bookingId in metadata
+    const subscriptions = await stripe.subscriptions.search({
+      query: `metadata['bookingId']:'${bookingId}'`,
+    });
 
-      if (subscriptions.data.length === 0) {
-          console.log("No active subscription found for the given bookingId.");
-          return;
-      }
+    if (subscriptions.data.length === 0) {
+      console.log("No active subscription found for the given bookingId.");
+      return;
+    }
 
-      // Get the first matching subscription (assuming unique bookingId)
-      const subscriptionId = subscriptions.data[0].id;
+    // Get the first matching subscription (assuming unique bookingId)
+    const subscriptionId = subscriptions.data[0].id;
 
-      // Cancel the subscription immediately
-      const canceledSubscription = await stripe.subscriptions.cancel(subscriptionId);
+    // Cancel the subscription immediately
+    const canceledSubscription =
+      await stripe.subscriptions.cancel(subscriptionId);
 
-      console.log("Subscription canceled immediately:", canceledSubscription.id);
-      return canceledSubscription;
+    console.log("Subscription canceled immediately:", canceledSubscription.id);
+    return canceledSubscription;
   } catch (error) {
-      console.error("Error canceling subscription:", error.message);
+    console.error("Error canceling subscription:", error.message);
   }
 }
-

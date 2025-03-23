@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import { useState, useContext, createContext, useEffect, useCallback } from "react";
 import {
   CreditCard,
   Landmark,
@@ -56,7 +56,6 @@ export const RadioGroupItem = ({ value, id, className }) => {
   );
 };
 
-// Timer Component
 const Timer = ({ initialSeconds, onExpire }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
 
@@ -89,14 +88,48 @@ const Timer = ({ initialSeconds, onExpire }) => {
   );
 };
 
+
+
+const TimeLimitNotice = ({handleTimerExpire}) => (
+  <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-8">
+    <div className="flex items-center gap-4">
+      <div className="flex-shrink-0">
+        <Clock className="w-6 h-6 text-amber-600" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-amber-800 mb-1">
+          Complete your booking within
+        </h3>
+        <div className="flex items-center gap-3">
+          <Timer initialSeconds={1800} onExpire={handleTimerExpire} />
+          <p className="text-sm text-amber-700">
+            Your selected rooms are reserved temporarily. Please complete your
+            booking before time runs out to guarantee your reservation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Timer Component
+
+
 const PaymentApi = {
   card: {
     api: "/api/stripe-pay",
     redirectOnSuccess: true,
   },
+  paypal: {
+    api: "/api/paypal-pay",
+    redirectOnSuccess: true,
+  },
+  later: {
+    api: "/api/later-pay",
+    redirectOnSuccess: false,
+  },
 };
 
-// Payment Selector Component
 export default function PaymentSelector({ onSuccess }) {
   const router = useRouter();
   const { state, clearAllBookings } = useBookingState();
@@ -104,11 +137,22 @@ export default function PaymentSelector({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState("card");
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [paypalApprovals, setPaypalApprovals] = useState(null);
+
+  const [approvedIndices, setApprovedIndices] = useState([]);
+
+// Add useEffect for redirection
+useEffect(() => {
+  if (paypalApprovals && approvedIndices.length === paypalApprovals.length) {
+    router.push('/payment-success');
+  }
+}, [approvedIndices, paypalApprovals, router]);
+
 
   const handleBooking = async () => {
     if (state.bookingPeriods.length <= 0) {
-      setMessage("Somethings went wrongs.");
+      setMessage("Something went wrong.");
       return false;
     }
     setLoading(true);
@@ -135,17 +179,30 @@ export default function PaymentSelector({ onSuccess }) {
       const responseData = await response.json();
 
       if (PaymentApi[selectedPayment].redirectOnSuccess) {
-        console.log(responseData);
+        if (selectedPayment === "paypal" && responseData.paymentDetails?.length > 1) {
+          setPaypalApprovals(responseData.paymentDetails);
+          clearAllBookings();
+          clearParams();
+          console.log("Here is the details");
+          return;
+        }
+        if (responseData.paymentDetails?.length === 1) {
+          window.location.replace(responseData.paymentDetails[0].approvalUrl);
+          return;
+        }
         window.location.replace(responseData.redirectUrl);
         return;
       }
+
       setMessage("Booking successful! Redirecting...");
       setSuccess(true);
       clearAllBookings();
       clearParams();
       onSuccess();
 
-      // setTimeout(() => { ; setSuccess(false) } , 1000)
+      setTimeout(() => {
+        setSuccess(false);
+      }, 1000);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Payment processing failed"
@@ -155,6 +212,14 @@ export default function PaymentSelector({ onSuccess }) {
       setLoading(false);
     }
   };
+
+  const handleTimerExpire = useCallback(() => {
+    setTimerExpired(true);
+    clearAllBookings();
+    clearParams();
+  }, [clearAllBookings, clearParams]);
+
+  const [timerExpired, setTimerExpired] = useState(false);
 
   if (success) {
     return (
@@ -196,16 +261,6 @@ export default function PaymentSelector({ onSuccess }) {
     );
   }
 
-  // Add timer expired state
-  const [timerExpired, setTimerExpired] = useState(false);
-
-  const handleTimerExpire = useCallback(() => {
-    setTimerExpired(true);
-    clearAllBookings();
-    clearParams();
-  }, [clearAllBookings, clearParams
-  ]);
-
   if (timerExpired) {
     return (
       <div className="w-full max-w-md mx-auto p-6 space-y-6 text-center">
@@ -228,32 +283,66 @@ export default function PaymentSelector({ onSuccess }) {
     );
   }
 
-  // Add this section before the payment methods
-  const TimeLimitNotice = () => (
-    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-8">
-      <div className="flex items-center gap-4">
-        <div className="flex-shrink-0">
-          <Clock className="w-6 h-6 text-amber-600" />
+  if (paypalApprovals) {
+    return (
+      <div className="w-full max-w-4xl mx-auto min-h-screen p-6 space-y-8">
+        <TimeLimitNotice handleTimerExpire={handleTimerExpire} />
+        
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-700">
+            For the PayPal payment policies, you need to approve the payments one by one. 
+            After confirming all payments, your booking will be finalized.
+          </p>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-amber-800 mb-1">
-            Complete your booking within
-          </h3>
-          <div className="flex items-center gap-3">
-            <Timer initialSeconds={300} onExpire={handleTimerExpire} />
-            <p className="text-sm text-amber-700">
-              Your selected rooms are reserved temporarily. Please complete your
-              booking before time runs out to guarantee your reservation.
-            </p>
+  
+        {paypalApprovals.map((detail, index) => {
+          const isApproved = approvedIndices.includes(index);
+          return (
+            <div key={index} className="border rounded-lg p-4 space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">{detail.planData.name}</h3>
+                <p className="text-sm text-gray-600">{detail.planData.description}</p>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="font-medium">
+                  {detail.customDetails.semester === 'Summer' ? 'Total' : 'Monthly'} Amount:
+                </span>
+                <span className="text-xl font-bold">
+                  €{detail.customDetails.amount.toFixed(2)}
+                </span>
+              </div>
+  
+              <button
+                onClick={() => {
+                  setApprovedIndices(prev => [...prev, index]);
+                  window.open(detail.approvalUrl, '_blank');
+                }}
+                disabled={isApproved}
+                className={`w-full bg-gray-900 text-white py-3 px-6 rounded-lg transition-colors font-medium ${
+                  isApproved ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+                }`}
+              >
+                {isApproved ? 'Approval Started' : `Approve ${detail.customDetails.semester === 'Summer' ? 'Total' : 'Monthly'} Payment`}
+              </button>
+            </div>
+          );
+        })}
+  
+        <div className="pt-4 border-t">
+          <div className="text-center text-sm text-gray-500">
+            {approvedIndices.length} of {paypalApprovals.length} payments approved
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+
 
   return (
     <div className="w-full max-w-4xl mx-auto min-h-screen p-6 space-y-8">
-      <TimeLimitNotice />
+      <TimeLimitNotice handleTimerExpire={handleTimerExpire} />
       <h2 className="text-2xl font-semibold">Select Your Payment Method</h2>
 
       <RadioGroup
@@ -271,13 +360,13 @@ export default function PaymentSelector({ onSuccess }) {
             active: true,
           },
           { value: "bank", label: "Bank Transfer", img: "/banktransfer.png" },
-          { value: "paypal", label: "PayPal", img: "/paypal.png" },
+          { value: "paypal", label: "PayPal", img: "/paypal.png" , active: true},
           { value: "later", label: "Pay Later", img: "/pay-later.png" },
         ].map((method) => (
           <div
             onClick={() => setSelectedPayment(method.value)}
             key={method.value}
-            className={`relative ${method.active ? "" : "opacity-45 pointer-events-none cursor-not-allowed"}`}
+            className={`relative ${selectedPayment === method.value ? "border-2 border-blue-500 rounded-lg" : ""}  ${method.active ? "" : "opacity-45 pointer-events-none cursor-not-allowed"}`}
           >
             <RadioGroupItem
               value={method.value}
@@ -286,7 +375,7 @@ export default function PaymentSelector({ onSuccess }) {
             />
             <label
               htmlFor={method.value}
-              className={`${selectedPayment === method.value ? "border-blue-500" : ""}  flex flex-col items-center justify-center h-24 rounded-lg border-2 border-gray-200 bg-white p-4 hover:bg-gray-50  cursor-pointer`}
+              className={`  flex flex-col items-center justify-center h-24 rounded-lg border-2 border-gray-200 bg-white p-4 hover:bg-gray-50  cursor-pointer`}
             >
               <img src={method.img} className="h-6 w-6 mb-2 text-gray-700" />
               <span className="text-sm font-medium">{method.label}</span>
@@ -305,7 +394,7 @@ export default function PaymentSelector({ onSuccess }) {
 
         <button
           onClick={handleBooking}
-          disabled={loading}
+          disabled={loading || !selectedPayment}
           className="w-full bg-gray-800 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
