@@ -137,7 +137,7 @@ export async function POST(req) {
               renewUrl: renewLink,
             });
 
-             sendEmail({
+            sendEmail({
               to: paymentDetails.email,
               subject: "Payment Failed - Action Required",
               htmlContent: failedEmailHtml,
