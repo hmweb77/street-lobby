@@ -10,10 +10,14 @@
     "initialSync": "node ./initialSync.js"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^2.2.0",
     "@paypal/checkout-server-sdk": "^1.0.3",
+    "@react-email/components": "^0.0.34",
+    "@react-email/render": "^1.0.5",
     "@sanity/client": "^6.27.2",
     "@sanity/image-url": "^1.1.0",
     "@sanity/vision": "^3.74.0",
+    "@sendinblue/client": "^3.3.1",
     "@tailwindcss/typography": "^0.5.16",
     "dotenv": "^16.4.7",
     "firebase": "^11.3.1",
@@ -28,6 +32,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "sanity": "^3.74.0",
+    "sib-api-v3-sdk": "^8.5.0",
     "stripe": "^17.7.0",
     "styled-components": "^6.1.14",
     "tailwindcss-animate": "^1.0.7",

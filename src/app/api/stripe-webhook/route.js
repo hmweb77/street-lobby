@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanityAdminClient } from "@/lib/sanityAdmin";
 import { v4 as uuidv4 } from "uuid";
-import {
-  cleanupExpiredPeriods,
-  deleteAddedDocs,
-  getValidProposedPeriods,
-  storeProposedPeriodsBatch,
-} from "@/utils/proposedBookingPeriods";
+import { cleanupExpiredPeriods } from "@/utils/proposedBookingPeriods";
 import { adminAccessDb as db } from "@/lib/firebase-admin";
 
 const endpointSecret =
@@ -17,6 +12,13 @@ import {
   getPaymentInfo,
 } from "@/utils/StorePaymentInforFireStore";
 import { updatePaymentMethodAndSetDefault } from "../stripe-pay/route";
+import {
+  BookingConfirmationEmail,
+  PaymentUpdateConfirmationEmail,
+  PaymentUpdateEmail,
+  RecurringPaymentEmail,
+} from "@/emailSendingService/stripeBookingLinkEmail";
+import { sendEmail } from "@/emailSendingService/emailSender";
 
 // Load your secret key from an environment variable
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -37,13 +39,65 @@ export async function POST(req) {
 
     switch (event.type) {
       case "checkout.session.completed":
+        // Handle payment method updates
+        let session = event.data.object;
+        const paymentType = session.metadata?.paymentType;
+        if (paymentType === "update_payment_method") {
+          try {
+            const setupIntent = await stripe.setupIntents.retrieve(
+              session.setup_intent
+            );
+            const paymentMethodId = setupIntent.payment_method;
+
+            // Update customer's default payment method
+            await stripe.customers.update(session.customer, {
+              invoice_settings: {
+                default_payment_method: paymentMethodId,
+              },
+            });
+
+            // Retry failed invoice if exists
+            if (session.metadata.invoiceId) {
+              await stripe.invoices.pay(session.metadata.invoiceId);
+            }
+
+            // Send confirmation email
+            const customer = await stripe.customers.retrieve(session.customer);
+            const confirmContent = PaymentUpdateConfirmationEmail({
+              customerName: customer.name,
+            });
+
+            sendEmail({
+              to: customer.email,
+              subject: "Payment Method Updated Successfully",
+              htmlContent: confirmContent,
+              senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+              senderName: process.env.BREVO_OWNER_SENDER_NAME,
+            });
+
+            sendEmail({
+              to: process.env.BREVO_OWNER_SENDER_EMAIL,
+              subject: "Payment Method Updated Successfully",
+              htmlContent: confirmContent,
+              senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+              senderName: process.env.BREVO_OWNER_SENDER_NAME,
+            });
+          } catch (error) {
+            console.error("Error processing payment update:", error);
+          }
+          return NextResponse.json({ received: true });
+        }
+
         const sessionId = event.data.object.id;
-        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        session = await stripe.checkout.sessions.retrieve(sessionId, {
           expand: ["payment_intent"],
         });
+        const customerEmail = session.customer_details?.email;
+        const customerName = session.customer_details?.name;
 
         const paymentIntent = session.payment_intent;
         const paymentMethodId = paymentIntent.payment_method;
+
         const paymentInfo = await getPaymentInfo(sessionId);
         if (!paymentInfo) {
           break;
@@ -96,7 +150,6 @@ export async function POST(req) {
                 0
               );
               startDate = new Date(now.getTime() + 300); // Add 1 hour
-              
             } else {
               billingAnchorDate = startDate;
             }
@@ -107,10 +160,8 @@ export async function POST(req) {
             }
 
             const isSameMonthAndYear =
-                startDate.getFullYear() === endDate.getFullYear() &&
-                startDate.getMonth() === endDate.getMonth();
-              
-
+              startDate.getFullYear() === endDate.getFullYear() &&
+              startDate.getMonth() === endDate.getMonth();
 
             const bookingId = await createBooking(period);
             bookingIds.push(bookingId);
@@ -151,7 +202,7 @@ export async function POST(req) {
                 0
               );
 
-              if(isSameMonthAndYear) nextBillingAnchorDate = startDate;
+              if (isSameMonthAndYear) nextBillingAnchorDate = startDate;
             }
 
             // Convert to Unix timestamp
@@ -190,7 +241,43 @@ export async function POST(req) {
           }
         }
 
-        await addBookingToRoom(roomUpdatesMap);
+        const paymentDetails = bookingPeriods.map((period) => ({
+          description: `${period.roomTitle} - ${period.semester} ${period.year}`,
+          amount: period.winterPriceMonthly * 100,
+        }));
+
+        const totalPaid = paymentDetails.reduce(
+          (sum, item) => sum + item.amount,
+          0
+        );
+
+        (async () => {
+          const emailContent = BookingConfirmationEmail({
+            userName: customerName,
+            paymentIntents: paymentDetails,
+            totalPaid: totalPaid,
+            bookingDate: new Date().toISOString(),
+            bookingId: sessionId, // or your custom booking ID
+          });
+
+          await sendEmail({
+            to: customerEmail,
+            subject: `Booking Confirmation #${sessionId.slice(-6)}`,
+            htmlContent: emailContent,
+            senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+            senderName: process.env.BREVO_OWNER_SENDER_NAME,
+          });
+
+          await sendEmail({
+            to: process.env.BREVO_OWNER_SENDER_EMAIL,
+            subject: `New Booking #${sessionId.slice(-6)}`,
+            htmlContent: emailContent,
+            senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+            senderName: process.env.BREVO_OWNER_SENDER_NAME,
+          });
+        })();
+
+        addBookingToRoom(roomUpdatesMap);
         // await createOrder(orderedByUserId, bookingIds);
         deletePaymentInfo(sessionId);
         cleanupExpiredPeriods();
@@ -198,21 +285,131 @@ export async function POST(req) {
         // console.log("Checkout session completed:", event.data.object);
         break;
       case "invoice.paid":
-        // console.log(JSON.stringify(event.data.object));
-        for (const lineItem of event.data.object.lines.data) {
-          if (lineItem.price.type === "recurring") {
-            // Retrieve the subscription to get metadata
-            const subscription = await stripe.subscriptions.retrieve(
-              lineItem.subscription
-            );
-            console.log(subscription.metadata);
-            await updateBookingPayment(subscription.metadata, lineItem.period);
+        try {
+          const invoice = event.data.object;
+          const customer = await stripe.customers.retrieve(invoice.customer);
+
+          // Maintain existing metadata collection pattern
+          const paymentUpdates = [];
+          const paymentItems = [];
+
+          for (const lineItem of invoice.lines.data) {
+            if (lineItem.price.type === "recurring") {
+              const subscription = await stripe.subscriptions.retrieve(
+                lineItem.subscription
+              );
+
+              // Keep existing metadata handling
+              const metadata = subscription.metadata;
+              const period = {
+                start: lineItem.period.start,
+                end: lineItem.period.end,
+              };
+
+              // Preserve original update pattern
+              paymentUpdates.push(
+                updateBookingPayment(metadata, lineItem.period)
+              );
+
+              // Collect items for email
+              paymentItems.push({
+                description:
+                  metadata.description ||
+                  `Booking ${metadata.bookingId || "N/A"}`,
+                amount: lineItem.amount,
+                periodStart: lineItem.period.start * 1000,
+                periodEnd: lineItem.period.end * 1000,
+                currency: invoice.currency.toUpperCase(),
+              });
+            }
           }
+
+          // Wait for all updates to complete first (preserve original flow)
+          await Promise.all(paymentUpdates);
+
+          // Send single email after all updates
+          if (customer.email && paymentItems.length > 0) {
+            const totalAmount = paymentItems.reduce(
+              (sum, item) => sum + item.amount,
+              0
+            );
+
+            const emailContent = RecurringPaymentEmail({
+              customerName: customer.name || "Valued Customer",
+              paymentItems,
+              totalAmount,
+              invoiceId: invoice.id,
+              currency: invoice.currency.toUpperCase(),
+            });
+
+            sendEmail({
+              to: customer.email,
+              subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
+              htmlContent: emailContent,
+              senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+              senderName: process.env.BREVO_OWNER_SENDER_NAME,
+            });
+
+            sendEmail({
+              to: process.env.BREVO_OWNER_SENDER_EMAIL,
+              subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
+              htmlContent: emailContent,
+              senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+              senderName: process.env.BREVO_OWNER_SENDER_NAME,
+            });
+          }
+        } catch (error) {
+          console.error("Error processing invoice payment:", error);
         }
-        console.log("Subscription payment successful!");
         break;
+
       case "invoice.payment_failed":
-        console.log("Subscription payment failed!");
+        try {
+          const invoice = event.data.object;
+          const customerId = invoice.customer;
+          const invoiceId = invoice.id;
+
+          // Retrieve customer details
+          const customer = await stripe.customers.retrieve(customerId);
+
+          // Create Checkout Session for payment method update
+          const updateSession = await stripe.checkout.sessions.create({
+            mode: "setup",
+            customer: customerId,
+            payment_method_types: ["card"],
+            success_url: `${process.env.NEXTAUTH_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXTAUTH_URL}/payment-canceled`,
+            metadata: {
+              paymentType: "update_payment_method",
+              invoiceId: invoiceId,
+              customerId: customerId,
+            },
+          });
+
+          // Send payment method update email
+          const emailContent = PaymentUpdateEmail({
+            customerName: customer.name || "Valued Customer",
+            updateUrl: updateSession.url,
+          });
+
+          sendEmail({
+            to: customer.email,
+            subject: "Action Required: Update Payment Method",
+            htmlContent: emailContent,
+            senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+            senderName: process.env.BREVO_OWNER_SENDER_NAME,
+          });
+
+          sendEmail({
+            to: process.env.BREVO_OWNER_SENDER_EMAIL,
+            subject: "Action Required: Update Payment Method",
+            htmlContent: emailContent,
+            senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+            senderName: process.env.BREVO_OWNER_SENDER_NAME,
+          });
+        } catch (error) {
+          console.error("Error handling payment failure:", error);
+        }
         break;
     }
 

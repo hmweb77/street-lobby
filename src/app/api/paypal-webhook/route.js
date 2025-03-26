@@ -9,6 +9,12 @@ import {
   getPaypalPaymentInfoById,
 } from "@/utils/StorePaypalPaymentsInfo";
 import { generateCancellationKey } from "../stripe-webhook/route";
+import {
+  createPaymentCompletedEmail,
+  createPaymentFailedEmail,
+  createSubscriptionActivatedEmail,
+} from "@/emailSendingService/paypalEmail";
+import { sendEmail } from "@/emailSendingService/emailSender";
 
 // Initialize PayPal client
 const createPayPalClient = () => {
@@ -26,42 +32,10 @@ const createPayPalClient = () => {
   return new paypal.core.PayPalHttpClient(environment);
 };
 
-// Webhook verification
-const verifyWebhook = async (req, rawBody) => {
-  try {
-    const client = createPayPalClient();
-    const request = new paypal.core.VerifyWebhookSignatureRequest();
-
-    request.requestBody({
-      auth_algo: req.headers.get("paypal-auth-algo"),
-      transmission_id: req.headers.get("paypal-transmission-id"),
-      cert_url: req.headers.get("paypal-cert-url"),
-      transmission_sig: req.headers.get("paypal-transmission-sig"),
-      transmission_time: req.headers.get("paypal-transmission-time"),
-      webhook_id: process.env.PAYPAL_WEBHOOK_ID,
-      webhook_event: JSON.parse(rawBody),
-    });
-
-    const response = await client.execute(request);
-    return response.result.verification_status === "SUCCESS";
-  } catch (error) {
-    console.error("Webhook verification failed:", error);
-    return false;
-  }
-};
-
 export async function POST(req) {
   const rawBody = await req.text();
 
   try {
-    // Verify webhook signature
-    // if (!(await verifyWebhook(req, rawBody))) {
-    //   return NextResponse.json(
-    //     { error: "Invalid webhook signature" },
-    //     { status: 401 }
-    //   );
-    // }
-
     const body = JSON.parse(rawBody);
     console.log("Received PayPal event:", body.event_type);
     console.log(body.resource);
@@ -73,6 +47,7 @@ export async function POST(req) {
         const paymentInfo = await getPaypalPaymentInfoById(paymentInfoId);
         const bookingId = await createBooking(paymentInfo);
 
+        console.log(paymentInfo);
         addBookingToRoom(paymentInfo.roomId, {
           semester: paymentInfo.semester,
           year: paymentInfo.year,
@@ -85,6 +60,34 @@ export async function POST(req) {
           cancelUrl: body.resource.links.filter(
             (link) => link.rel === "cancel"
           )[0].href,
+        });
+
+        const activationEmailHtml = createSubscriptionActivatedEmail({
+          userName: paymentInfo.name,
+          roomDetails: paymentInfo.roomTitle,
+          paymentDetails: paymentInfo,
+        });
+
+        sendEmail({
+          to: paymentInfo.email,
+          subject: "Subscription Activated",
+          htmlContent: activationEmailHtml,
+          params: {
+            userName: paymentInfo.name,
+            roomName: paymentInfo.roomTitle,
+            amount: paymentInfo.amount,
+          },
+        });
+
+        sendEmail({
+          to: process.env.BREVO_OWNER_SENDER_EMAIL,
+          subject: "Subscription Activated",
+          htmlContent: activationEmailHtml,
+          params: {
+            userName: paymentInfo.name,
+            roomName: paymentInfo.roomTitle,
+            amount: paymentInfo.amount,
+          },
         });
 
         break;
@@ -111,10 +114,60 @@ export async function POST(req) {
         // await handleSubscriptionCancelled(body.resource);
         break;
 
-      case "PAYMENT.CAPTURE.DENIED":
-        // await handlePaymentDenied(body.resource);
-        break;
+      case "PAYMENT.SALE.DENIED":
+      case "PAYMENT.SALE.FAILED": {
+        if (body.resource.billing_agreement_id) {
+          const subscription = await getSubscriptionDetails(
+            body.resource.billing_agreement_id
+          );
+          const paymentDetails = await getPaypalPaymentInfoById(
+            subscription.custom_id
+          );
 
+          // Get renew approval link
+          const renewLink = subscription.links.find(
+            (link) => link.rel === "approve"
+          )?.href;
+
+          if (renewLink) {
+            const failedEmailHtml = createPaymentFailedEmail({
+              userName: paymentDetails.name,
+              amount: parseFloat(body.resource.amount.total) * 100,
+              description: `Payment for ${paymentDetails.roomTitle}`,
+              renewUrl: renewLink,
+            });
+
+             sendEmail({
+              to: paymentDetails.email,
+              subject: "Payment Failed - Action Required",
+              htmlContent: failedEmailHtml,
+              params: {
+                userName: paymentDetails.name,
+                amount: body.resource.amount.total,
+                renewUrl: renewLink,
+              },
+            });
+
+            sendEmail({
+              to: process.env.BREVO_OWNER_SENDER_EMAIL,
+              subject: "Payment Failed - Action Required",
+              htmlContent: failedEmailHtml,
+              params: {
+                userName: paymentDetails.name,
+                amount: body.resource.amount.total,
+                renewUrl: renewLink,
+              },
+            });
+
+            // Update payment info with new renew link
+            await addFieldsToPaypalPaymentInfo(subscription.custom_id, {
+              renewUrl: renewLink,
+              lastFailure: new Date().toISOString(),
+            });
+          }
+        }
+        break;
+      }
       default:
         console.warn("Unhandled event type:", body.event_type);
         break;
@@ -138,6 +191,24 @@ const handleSubscriptionPayment = async (custom_id) => {
     const roomId = paymentDetails.roomId;
     await updateSemesterPayment(bookingId, paymentDetails.semester, new Date());
   }
+
+  const paymentEmailHtml = createPaymentCompletedEmail({
+    userName: paymentDetails.bookedForUser.name,
+    amount: parseFloat(body.resource.amount.total) * 100,
+    paymentDate: body.resource.create_time,
+    description: `Monthly payment for ${paymentDetails.room.name}`,
+  });
+
+  sendEmail({
+    to: paymentDetails.bookedForUser.email,
+    subject: "Payment Processed",
+    htmlContent: paymentEmailHtml,
+    params: {
+      userName: paymentDetails.bookedForUser.name,
+      amount: body.resource.amount.total,
+      date: new Date(body.resource.create_time).toLocaleDateString(),
+    },
+  });
 };
 
 export async function addBookingToRoom(roomId, { semester, year, services }) {
@@ -327,5 +398,3 @@ async function getSubscriptionDetails(billingAgreementId) {
 
   return await subscriptionResponse.json();
 }
-
-

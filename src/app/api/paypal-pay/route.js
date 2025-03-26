@@ -5,7 +5,11 @@ import {
 import { NextResponse } from "next/server";
 import fetch from "node-fetch";
 import { sanityAdminClient } from "@/lib/sanityAdmin";
-import { addFieldsToPaypalPaymentInfo, storePaypalPaymentInfo } from "@/utils/StorePaypalPaymentsInfo";
+import {
+  addFieldsToPaypalPaymentInfo,
+  storePaypalPaymentInfo,
+} from "@/utils/StorePaypalPaymentsInfo";
+import { sendPaypalApprovalEmail } from "@/emailSendingService/paypalEmail";
 
 export async function POST(req) {
   try {
@@ -19,9 +23,6 @@ export async function POST(req) {
       bookingPeriods,
       commonUserDetails,
       useCommonDetails,
-      totalPrice,
-      paymentMethod,
-      paymentStatus,
     } = body;
 
     if (!bookingPeriods || bookingPeriods.length <= 0 || !commonUserDetails) {
@@ -183,7 +184,7 @@ export async function POST(req) {
           bookedByUser,
           bookedForUser,
           bookedByUserEmail: commonUserDetails.email,
-          roomId
+          roomId,
         }
       );
 
@@ -203,6 +204,8 @@ export async function POST(req) {
         productId: paypalProduct.id,
         room: period.room,
         services: period.services,
+        email: commonUserDetails.email,
+        name: commonUserDetails.name
       });
 
       const subscriptionResponse = await fetch(
@@ -265,6 +268,11 @@ export async function POST(req) {
         customDetails,
       });
     }
+
+    const customerEmail = commonUserDetails.email;
+    const customerName = commonUserDetails.name || customerEmail.split("@")[0];
+
+    sendPaypalApprovalEmail(customerEmail, customerName, approvedUrlAndDetails);
 
     // Return approval URL for frontend redirection
     return NextResponse.json(

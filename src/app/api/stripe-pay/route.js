@@ -9,6 +9,7 @@ import {
   processBookingPeriods,
 } from "@/apiServices/bookings-services";
 import { storePaymentInfo } from "@/utils/StorePaymentInforFireStore";
+import { sendBookingEmails } from "@/emailSendingService/stripeBookingLinkEmail";
 
 // Load your secret key from an environment variable
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -20,9 +21,6 @@ export async function POST(req) {
       bookingPeriods,
       commonUserDetails,
       useCommonDetails,
-      totalPrice,
-      paymentMethod,
-      paymentStatus,
     } = body;
 
     if (!bookingPeriods || bookingPeriods.length <= 0 || !commonUserDetails) {
@@ -149,6 +147,9 @@ export async function POST(req) {
 
     await storePaymentInfo(bookedPeriods, roomUpdatesMap , stripeCustomer.id , session.id);
 
+    console.log("Here!!!- 150");
+    console.log(commonUserDetails.email);
+    await sendBookingEmails({userName: commonUserDetails.name, customerEmail: commonUserDetails.email, paymentIntents: paymentIntents, sessionUrl: session.url});
 
 
     return NextResponse.json(
