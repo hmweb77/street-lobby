@@ -1,0 +1,10 @@
+version: "3"
+
+tunnels:
+  street-lobby:
+    addr: 3000
+    proto: http
+    hostname: gnat-quality-dragon.ngrok-free.app
+
+agent:
+    authtoken: 2tGh7kCy96bW8jzyacsrQ3grgX1_6Yt1UfXtmAi93KQWLW2fT

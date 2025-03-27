@@ -65,11 +65,33 @@ function prepareDocument(data) {
 async function storeDocumentsInFirestore(documents) {
   console.log("Storing documents in Firestore...");
   const batch = adminAccessDb.batch();
+  
   documents.forEach((doc) => {
-    const preparedDoc = prepareDocument(doc);
-    batch.set(adminAccessDb.collection("sanity_data").doc(doc._id), preparedDoc);
-    console.log(`Prepared and queued document: ${doc._id}`);
+    // Destructure metadata fields from the document
+    const { _id, _type, _createdAt, _updatedAt, _rev, ...documentData } = doc;
+    
+    // Create the modified document payload
+    const documentPayload = {
+      ...documentData,
+      status: _id.includes('draft') ? 'draft' : 'published',
+      sanityMetadata: {
+        _type,
+        _id,
+        createdAt: _createdAt,
+        updatedAt: _updatedAt,
+        revision: _rev
+      }
+    };
+
+    // Get reference to the appropriate collection and document
+    const docRef = adminAccessDb.collection(_type).doc(_id);
+    
+    // Queue the document for batch write with merge option
+    batch.set(docRef, documentPayload, { merge: true });
+    console.log(`Prepared and queued document ${_id} in collection '${_type}'`);
   });
+
+  // Commit the batch write
   await batch.commit();
   console.log("All documents have been stored in Firestore successfully.");
 }

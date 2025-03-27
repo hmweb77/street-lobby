@@ -116,7 +116,8 @@ export async function POST(req) {
         for (const period of bookingPeriods) {
           const { semester, winterPriceMonthly, roomId, roomTitle, year } =
             period;
-
+            const bookingId = await createBooking(period);
+            
           if (semester === "1st Semester" || semester === "2nd Semester") {
             // Original date calculations
             let startDate =
@@ -163,7 +164,7 @@ export async function POST(req) {
               startDate.getFullYear() === endDate.getFullYear() &&
               startDate.getMonth() === endDate.getMonth();
 
-            const bookingId = await createBooking(period);
+
             bookingIds.push(bookingId);
 
             const cancelAt = Math.floor(endDate.getTime() / 1000);
@@ -492,6 +493,7 @@ export async function createBooking(bookingData) {
       _type: "booking",
       bookedBy: bookingData.bookedByUser,
       bookedFor: bookingData.bookedForUser,
+      roomTitle: bookingData.roomTitle,
       room: bookingData.room,
       status: "confirmed", // Default status for admin-created bookings
       semester: bookingData.semester,

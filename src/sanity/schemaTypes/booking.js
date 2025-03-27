@@ -5,6 +5,11 @@ export const bookingSchema = {
   type: "document",
   fields: [
     {
+      name: "roomTitle",
+      title: "Room Title",
+      type: "string",
+    },
+    {
       name: "bookedBy",
       title: "Booked By",
       type: "reference",
@@ -88,6 +93,7 @@ export const bookingSchema = {
       options: {
         list: ["Stripe", "PayPal", "Bank Transfer", "Cash"],
       },
+      readOnly: true,
     },
 
     {
@@ -251,9 +257,21 @@ export const bookingSchema = {
           year && `Year: ${year}`,
           email && `Email: ${email}`,
           date && `Booked: ${date}`,
+          status && `Status: ${status}`,
+          userName && `Name: ${userName}`,
+          roomTitle && `Room: ${roomTitle}`,
         ]
           .filter(Boolean)
           .join(" | "),
+          description: [
+            semester ,
+            year,
+            email,
+            date,
+            status ,
+            userName,
+            roomTitle,
+          ].filter(Boolean).join(" | "),
       };
     },
   },

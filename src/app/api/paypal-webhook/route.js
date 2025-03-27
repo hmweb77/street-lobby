@@ -251,6 +251,7 @@ export async function createBooking(bookingData) {
       bookedBy: bookingData.bookedByUser,
       bookedFor: bookingData.bookedForUser,
       room: bookingData.room,
+      roomTitle: bookingData.roomTitle ?? bookingData.room.name,
       status: "confirmed",
       semester: bookingData.semester,
       year: bookingData.year,
