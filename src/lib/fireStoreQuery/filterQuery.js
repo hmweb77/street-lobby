@@ -329,6 +329,8 @@ export const fetchAllLocations = async () => {
     const locations = snapshot.docs.map((doc) => ({
       value: doc.id,
       label: doc.data().title,
+      descriptions: doc.data()?.descriptions,
+      additionalAddresses: doc.data()?.additionalAddresses,
     }));
 
     return locations;

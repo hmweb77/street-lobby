@@ -10,8 +10,14 @@ export const locationSchema = {
       },
       {
         name: "descriptions",
-        title: "Descriptions",
+        title: "Address Descriptions",
         type: "string",
+      },
+      {
+        name: "additionalAddresses",
+        title: "Additional Addresses",
+        type: "array",
+        of: [{ type: "string" }]
       },
       {
         name: "coordinates",

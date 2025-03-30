@@ -23,6 +23,7 @@ const LandingPage = () => {
   });
 
   const { setParams } = useUrlSearchParams();
+  const router = useRouter();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -39,7 +40,6 @@ const LandingPage = () => {
     router.push(`/rooms?${params.toString()}`);
   };
 
-  const router = useRouter();
   const years = Array.from(
     { length: 3 },
     (_, i) =>
@@ -172,12 +172,10 @@ const LandingPage = () => {
           <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
             <button
               onClick={() =>
-                document
-                  .getElementById("yearScroller")
-                  .scrollBy({
-                    left: -document.getElementById("yearScroller").offsetWidth,
-                    behavior: "smooth",
-                  })
+                document.getElementById("yearScroller").scrollBy({
+                  left: -document.getElementById("yearScroller").offsetWidth,
+                  behavior: "smooth",
+                })
               }
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === 0}
@@ -213,12 +211,10 @@ const LandingPage = () => {
 
             <button
               onClick={() =>
-                document
-                  .getElementById("yearScroller")
-                  .scrollBy({
-                    left: document.getElementById("yearScroller").offsetWidth,
-                    behavior: "smooth",
-                  })
+                document.getElementById("yearScroller").scrollBy({
+                  left: document.getElementById("yearScroller").offsetWidth,
+                  behavior: "smooth",
+                })
               }
               className="p-2 hover:bg-gray-100 rounded-full flex-none"
               disabled={years.indexOf(selectedYear) === years.length - 1}
@@ -230,7 +226,6 @@ const LandingPage = () => {
 
         <div className="space-y-4 max-w-lg mx-auto px-12 text-sm">
           {filters.map((filter) => {
-            const hasSelection = selectedFilters[filter.id] !== null;
             const isExpanded = expandedFilters.includes(filter.id);
 
             return (
@@ -241,7 +236,7 @@ const LandingPage = () => {
                 >
                   <span className="text-sm font-semibold">
                     {isExpanded ? "−" : "+"} {filter.label}
-                    {filter.id === "monthlyPrice" }
+                    {filter.id === "monthlyPrice" && ""}
                   </span>
                 </button>
                 {isExpanded && (
@@ -250,9 +245,9 @@ const LandingPage = () => {
                       <div className="relative">
                         <button
                           onClick={handleClearPriceFilter}
-                          className="absolute -top-10 right-0  flex items-center gap-1 text-red-500"
+                          className="absolute -top-10 right-0 flex items-center gap-1 text-red-500"
                         >
-                          <X /> Clear{" "}
+                          <X /> Clear
                         </button>
                         <PriceSlider
                           min={filter.min}
@@ -263,33 +258,68 @@ const LandingPage = () => {
                         />
                       </div>
                     ) : (
-                      filter.options.map((option) => (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2"
-                        >
-                          <input
-                            type="radio"
-                            name={filter.id}
-                            value={option.value}
-                            checked={
-                              selectedFilters[filter.id] === option.value
-                            }
-                            onChange={() => {
-                              setSelectedFilters((prev) => ({
-                                ...prev,
-                                [filter.id]: option.value,
-                              }));
-                            }}
-                            disabled={option.disabled}
-                          />
-                          <span
-                            className={`${option.disabled ? "text-gray-300" : "text-gray-400"}`}
-                          >
-                            {option.label}
-                          </span>
-                        </label>
-                      ))
+                      <div key={filter.id} className="space-y-2">
+                        {filter.options.map((option) => (
+                          <>
+                            <label
+                              key={option.value}
+                              className="flex items-center gap-2"
+                            >
+                              <input
+                                type="radio"
+                                name={filter.id}
+                                value={option.value}
+                                checked={
+                                  selectedFilters[filter.id] === option.value
+                                }
+                                onChange={() => {
+                                  setSelectedFilters((prev) => ({
+                                    ...prev,
+                                    [filter.id]: option.value,
+                                  }));
+                                }}
+                                disabled={option.disabled}
+                              />
+                              <span
+                                className={`${
+                                  option.disabled
+                                    ? "text-gray-300"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {option.label}
+                              </span>
+                            </label>
+                            {filter.id === "location" &&
+                              selectedFilters.location === option.value && (
+                                <div className="text-gray-600 text-sm mt-2">
+                                  {(() => {
+                                    const selectedLocation = locations.find(
+                                      (loc) =>
+                                        loc.value === selectedFilters.location
+                                    );
+                                    if (!selectedLocation) return null;
+                                    console.log(selectedLocation);
+                                    const parts = [];
+                                    if (selectedLocation.descriptions) {
+                                      parts.push(selectedLocation.descriptions);
+                                    }
+                                    if (
+                                      selectedLocation.additionalAddresses
+                                        ?.length
+                                    ) {
+                                      parts.push(
+                                        ...selectedLocation.additionalAddresses
+                                      );
+                                    }
+                                    console.log(parts);
+                                    return parts.join(", ");
+                                  })()}
+                                </div>
+                              )}
+                          </>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
