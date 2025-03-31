@@ -243,12 +243,12 @@ const LandingPage = () => {
                   <div className="mt-4 space-y-3 pl-4">
                     {filter.type === "range" ? (
                       <div className="relative">
-                        <button
+                        {/* <button
                           onClick={handleClearPriceFilter}
                           className="absolute -top-10 right-0 flex items-center gap-1 text-red-500"
                         >
                           <X /> Clear
-                        </button>
+                        </button> */}
                         <PriceSlider
                           min={filter.min}
                           max={filter.max}
@@ -272,6 +272,7 @@ const LandingPage = () => {
                                 checked={
                                   selectedFilters[filter.id] === option.value
                                 }
+                                className="accent-black"
                                 onChange={() => {
                                   setSelectedFilters((prev) => ({
                                     ...prev,
@@ -301,17 +302,17 @@ const LandingPage = () => {
                                     if (!selectedLocation) return null;
                                     console.log(selectedLocation);
                                     const parts = [];
-                                    if (selectedLocation.descriptions) {
-                                      parts.push(selectedLocation.descriptions);
-                                    }
-                                    if (
-                                      selectedLocation.additionalAddresses
-                                        ?.length
-                                    ) {
-                                      parts.push(
-                                        ...selectedLocation.additionalAddresses
-                                      );
-                                    }
+                                    // if (selectedLocation.descriptions) {
+                                    //   parts.push(selectedLocation.descriptions);
+                                    // }
+                                    // if (
+                                    //   selectedLocation.additionalAddresses
+                                    //     ?.length
+                                    // ) {
+                                    //   parts.push(
+                                    //     ...selectedLocation.additionalAddresses
+                                    //   );
+                                    // }
                                     console.log(parts);
                                     return parts.join(", ");
                                   })()}

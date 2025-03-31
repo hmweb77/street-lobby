@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { sanityClient } from "@/lib/sanity";
 import PageTitle from "@/components/PageTitle";
+import { IoHomeOutline } from "react-icons/io5";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -48,12 +48,12 @@ function LoadingSpinner() {
           r="10"
           stroke="currentColor"
           strokeWidth="4"
-        ></circle>
+        />
         <path
           className="opacity-75"
           fill="currentColor"
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
+        />
       </svg>
       <p className="text-gray-600 text-lg">Loading properties...</p>
     </div>
@@ -89,32 +89,30 @@ export default function PropertyMap() {
           return;
         }
 
-        const formattedProperties = result
-          .filter((prop) => prop.location?.coordinates)
-          .map((prop) => ({
-            id: prop._id,
-            propertyName: prop.propertyName,
-            address: prop.propertyName,
-            addressDescription: prop.location.descriptions,
-            lat: prop.location.coordinates.lat,
-            lng: prop.location.coordinates.lng,
-            description: prop.propertyDescriptions,
-            slug: prop.slug?.current,
+        const formatted = result
+          .filter((p) => p.location?.coordinates)
+          .map((p) => ({
+            id: p._id,
+            propertyName: p.propertyName,
+            address: p.propertyName,
+            addressDescription: p.location.descriptions,
+            lat: p.location.coordinates.lat,
+            lng: p.location.coordinates.lng,
+            description: p.propertyDescriptions,
+            slug: p.slug?.current,
           }));
 
-        setProperties(formattedProperties);
-        setLoading(false);
+        setProperties(formatted);
       } catch (err) {
         console.error("Error fetching properties:", err);
         setError("Failed to load properties");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchProperties();
   }, []);
-
-  const handleKeepBooking = () => router.push("/");
 
   if (loading) return <LoadingSpinner />;
 
@@ -134,13 +132,12 @@ export default function PropertyMap() {
 
   return (
     <div className="px-4 py-8">
-      <PageTitle title={"RESIDENCES"} />
+      <PageTitle title="RESIDENCES" />
 
       <div className="mb-6 mx-auto w-full max-w-5xl flex flex-col items-center space-y-2">
         {properties.map((property) => (
           <div key={property.id}>
             <button
-              key={property.id}
               onClick={() => setSelectedProperty(property.id)}
               className={`w-full text-center text-base transition-colors ${
                 selectedProperty === property.id
@@ -151,21 +148,13 @@ export default function PropertyMap() {
               {property.propertyName}
             </button>
             {selectedProperty === property.id && (
-              <p className="text-gray-600 text-sm w-60 text-center">
-                {property?.addressDescription ? property?.addressDescription : ""}
+              <p className="text-gray-600 text-sm mx-8 sm:mx-1 text-center">
+                {property.addressDescription || ""}
               </p>
             )}
           </div>
         ))}
       </div>
-
-      {/* {selectedProperty && (
-        <div className="max-w-2xl mx-auto mb-8 px-4 text-center">
-          <p className="text-gray-600 text-lg">
-            {properties.find(p => p.id === selectedProperty)?.description}
-          </p>
-        </div>
-      )} */}
 
       <div className="my-20 h-[350px] w-full overflow-hidden border border-blue-200">
         <MapComponent

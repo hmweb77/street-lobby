@@ -246,6 +246,7 @@ const EligibilityCheck = ({ onNext }) => {
               <label key={option} className="flex items-center gap-2">
                 <input
                   type="radio"
+                  className="text-gray-900  accent-black"
                   name="genre"
                   value={option}
                   checked={state.commonUserDetails.genre === option}
@@ -396,6 +397,7 @@ const EligibilityCheck = ({ onNext }) => {
               <label key={option} className="flex items-center gap-2">
                 <input
                   type="radio"
+                  className="text-gray-900  accent-black"
                   name={`genre-${index}`}
                   value={option}
                   checked={period.userDetails?.genre === option}
@@ -564,7 +566,7 @@ const EligibilityCheck = ({ onNext }) => {
             type="radio"
             name="guestDetailsType"
             value="common"
-            className="text-gray-900"
+            className="text-gray-900  accent-black"
             checked={useCommonDetails}
             onChange={() => setUseCommonDetails(true)}
           />
@@ -575,7 +577,7 @@ const EligibilityCheck = ({ onNext }) => {
           className={`${state.bookingPeriods.length <= 1 ? "pointer-events-none cursor-not-allowed opacity-25" : "cursor-pointer"} flex items-center gap-2`}
         >
           <input
-            className="text-gray-900"
+            className="text-gray-900  accent-black"
             type="radio"
             name="guestDetailsType"
             value="separate"

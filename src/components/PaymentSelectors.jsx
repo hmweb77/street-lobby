@@ -51,7 +51,7 @@ export const RadioGroupItem = ({ value, id, className }) => {
       value={value}
       checked={context.value === value}
       onChange={(e) => context.onChange(e.target.value)}
-      className={`peer h-4 w-4 shrink-0 rounded-full border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ""}`}
+      className={`peer accent-black h-4 w-4 shrink-0 rounded-full border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ""}`}
     />
   );
 };

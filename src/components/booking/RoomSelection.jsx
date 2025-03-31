@@ -187,6 +187,8 @@ const LandingPageEx = () => {
                           type="radio"
                           name={filter.id}
                           value={option.value}
+                          className=" accent-black"
+                         
                           onChange={() =>
                             setSelectedFilters((prev) => ({
                               ...prev,

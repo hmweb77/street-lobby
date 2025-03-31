@@ -556,7 +556,8 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             type="radio"
             name="guestDetailsType"
             value="common"
-            className="text-gray-900"
+            className="text-gray-900 accent-black"
+        
             checked={useCommonDetails}
             onChange={() => setUseCommonDetails(true)}
           />
@@ -567,7 +568,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           className={`${state.bookingPeriods.length <= 1 ? "pointer-events-none cursor-not-allowed opacity-25" : "cursor-pointer"} flex items-center gap-2`}
         >
           <input
-            className="text-gray-900"
+            className="text-gray-900 accent-black"
             type="radio"
             name="guestDetailsType"
             value="separate"

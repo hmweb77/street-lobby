@@ -32,15 +32,13 @@ function page() {
             rotation of guests, therefore, improving the coliving experience.
           </p>
 
-          <div className="my-24 md:mx-32">
-            <div className="bg-black text-white rounded-xl my-8 flex flex-col md:flex-row gap-5 px-5 md:px-16 lg:px-20 py-4 md:py-8 items-center">
-              <div className="mr-4">
-                <IoHomeOutline className="h-8 w-8 text-green-500" />
-              </div>
-              <div className="text-sm text-center md:text-left">
+          <div className="my-24 md:mx-16">
+            <div className="bg-black text-white rounded-xl  my-8 flex flex-col md:flex-row items-center justify-center gap-4 px-6 md:px-24 py-4 md:py-8 text-center md:text-left">
+              <IoHomeOutline className="h-8 w-8 text-green-500 flex-shrink-0" />
+              <p className="text-sm whitespace-nowrap">
                 You can book a room, or in the case you are a group of friends
                 or family, you can book an entire residence.
-              </div>
+              </p>
             </div>
           </div>
 

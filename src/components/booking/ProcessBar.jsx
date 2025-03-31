@@ -1,86 +1,70 @@
-// app/components/booking/StepProcessBar.tsx
 "use client";
 
-import { Check } from "lucide-react";
-import { ChevronLeft } from "lucide-react";
-const StepProcessBar = ({ currentStep, handleLeft , showPrev = true }) => {
+import { Check, ChevronLeft } from "lucide-react";
+
+const StepProcessBar = ({ currentStep, handleLeft, showPrev = true }) => {
   const steps = [
     { number: 1, label: "Selection" },
     { number: 2, label: "Eligibility check" },
-    { number: 3, label: "Payment" }
+    { number: 3, label: "Payment" },
   ];
-  
-  return (
-    <nav className=" py-10 px-2 ml-5" aria-label="Booking process">
-      <div className="flex">
-        <ChevronLeft
-          className={`${showPrev ? "" : "hidden"} relative top-1 right-2 hover:cursor-pointer`}
-          onClick={() => {
-            handleLeft();
-          }}
-        />
-        {steps.map((step, index) => (
-          <div
-            key={step.number}
-            className={`flex flex-col ${
-              step.number === 3 ? "w-14 " : "flex-1"
-            }`}
-          >
-            <div className="">
-              <div
-                className={`
-                  w-8 h-8 rounded-full flex items-center justify-center shrink-0 
-                
-                  ${
-                    currentStep > step.number
-                      ? "bg-black text-white"
-                      : currentStep === step.number
-                      ? "bg-black text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }
-                `}
-                aria-current={currentStep === step.number ? "step" : undefined}
-              >
-                {currentStep > step.number ? (
-                  <Check className="w-5 h-5" />
-                ) : (
-                  <span>{step.number}</span>
-                )}
-              </div>
-              {index < steps.length - 1 && (
-                <div className=" ">
-                  <div
-                    className={`
-                  h-0.5 mx-4 
-                  relative -top-4 left-4 
-                  ${
-                    currentStep >= step.number + 1
-                      ? "bg-black"
-                      : "bg-gray-200"
-                  }
-                `}
-                    aria-hidden="true"
-                  />
-                </div>
-              )}
-            </div>
 
-            <span
-              className={`
-                mt-2 text-sm 
-                relative  right-2
-                ${
-                  currentStep === step.number
-                    ? "text-black font-medium"
-                    : "text-gray-500"
-                }
-               
-              `}
-            >
-              {step.label}
-            </span>
-          </div>
-        ))}
+  return (
+    <nav className="py-10 px-4" aria-label="Booking process">
+      <div className="relative max-w-4xl mx-auto flex items-center justify-center">
+        {/* Back Arrow */}
+        {/* {showPrev && (
+          <button
+            onClick={handleLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2"
+          >
+            <ChevronLeft className="w-5 h-5 text-black" />
+          </button>
+        )} */}
+
+        {/* Step Wrapper */}
+        <div className="flex flex-1 justify-between items-center relative w-full">
+          {/* Connector Line Behind Steps */}
+          <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 z-0" />
+
+          {steps.map((step, index) => {
+            const isActive = currentStep === step.number;
+            const isCompleted = currentStep > step.number;
+
+            return (
+              <div
+                key={step.number}
+                className="relative z-10 flex flex-col items-center flex-1"
+              >
+                {/* Step circle */}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center
+                    ${
+                      isCompleted || isActive
+                        ? "bg-black text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }
+                  `}
+                >
+                  {isCompleted ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <span>{step.number}</span>
+                  )}
+                </div>
+
+                {/* Label */}
+                <span
+                  className={`mt-2 text-sm text-center ${
+                    isActive ? "text-black font-medium" : "text-gray-500"
+                  }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

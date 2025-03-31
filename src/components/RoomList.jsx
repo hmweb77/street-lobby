@@ -90,7 +90,7 @@ export default function RoomList() {
             {/* Always show year filter status */}
             <p className="text-center text-gray-500 mb-8 mt-4 font-medium">
               Search Results for Academic Year:{" "}
-              <span className="text-black">{filters.year ?? "Every"}</span>
+              <span className="text-black">{filters.year ?? "All"}</span>
             </p>
             <div className="space-y-6">
               <div className="flex justify-center py-8">
@@ -153,7 +153,7 @@ export default function RoomList() {
             {/* Always show year filter status */}
             <p className="text-center text-gray-500 mb-8 mt-4 font-medium">
               Search Results for Academic Year:{" "}
-              <span className="text-black">{filters.year ?? "Every"}</span>
+              <span className="text-black">{filters.year ?? "All"}</span>
             </p>
             <div className="space-y-6 my-10 max-w-6xl mx-auto">
               {filteredRooms.map((room) => (

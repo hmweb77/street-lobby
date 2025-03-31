@@ -220,7 +220,7 @@ const RoomCard = ({ room, isReversed = false }) => {
         )}
       </div>
       <div className="flex md:w-96 items-center">
-        <div className="p-4 w-full">
+        <div className="py-4 px-2 w-full">
           <div className="w-full flex flex-row gap-4 justify-between items-center mb-4">
             <div>
               <h3 className="font-bold text-2xl">
@@ -229,8 +229,7 @@ const RoomCard = ({ room, isReversed = false }) => {
               </h3>
               <p className="text-sm text-gray-500">
                 {localState.roomDetails.roomType} - €
-                {localState.roomDetails.priceWinter}/Month (Winter) , € 
-                {localState.roomDetails.priceSummer}-Total (Summer)
+                {localState.roomDetails.priceWinter}/Month
 
               </p>
             </div>
@@ -249,7 +248,7 @@ const RoomCard = ({ room, isReversed = false }) => {
             className="mb-3"
           >
             <summary className="cursor-pointer font-medium text-xl">
-              About this property
+            Details
             </summary>
             <div className="mt-2 pl-4">
               <p className="text-gray-600 text-sm">
@@ -299,11 +298,11 @@ const RoomCard = ({ room, isReversed = false }) => {
                                 handleSemesterClick(yearKey, semester)
                               }
                               disabled={disabled}
-                              className="mr-2"
+                              className="mr-2 accent-black"
                             />
                             <span className={disabled ? "line-through" : ""}>
                               {semester} - €
-                              {calculatePrice(semester).toFixed(2)} {semester === "Summer" ? " - Total" : "/ Month"}
+                              {calculatePrice(semester).toFixed(2)} {semester === "Summer" ? "/ Month" : "/ Month"}
                             </span>
                           </label>
                         );
@@ -340,7 +339,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                             : service
                         )
                       }
-                      className="mr-2"
+                      className="mr-2 accent-black"
                     />
                     {service.name || service}
                   </label>

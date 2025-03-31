@@ -13,7 +13,7 @@ export default function BookingProcessAccordion() {
 
   const bookingSteps = [
     {
-      title: "1.Search",
+      title: "Search and Selection",
       content: (
         <div className="mt-4 text-md">
           <p>
@@ -75,7 +75,7 @@ export default function BookingProcessAccordion() {
       ),
     },
     {
-      title: "2. Eligibility Check",
+      title: "Eligibility Check",
       content: (
         <div className="mt-4 text-md">
           <p>
@@ -93,7 +93,7 @@ export default function BookingProcessAccordion() {
       ),
     },
     {
-      title: "3.Payment",
+      title: "Payment",
       content: (
         <div className="mt-4 text-md">
           <p>
