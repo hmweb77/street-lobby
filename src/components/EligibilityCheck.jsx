@@ -171,7 +171,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
               {period.propertyTitle}, {period.roomTitle}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              {period.year} | {period.semester} - €{period.price.toFixed(2)} {period.semester === "Summer" ? "- Total" : "/ Month"}
+              {period.year} | {period.semester} - €{period.price.toFixed(2)} {period.semester === "Summer" ? "/ Month" : "/ Month"}
             </p>
           </div>
         ))}
@@ -338,7 +338,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
       <div className="mb-4 border-b pb-2">
         <h3 className="font-bold text-lg">
           {period.propertyTitle}, {period.roomTitle} | {period.year} |{" "}
-          {period.semester} | €{period.price.toFixed(2)} {period.semester === "Summer" ? "- Total" : "/ Month"}
+          {period.semester} | €{period.price.toFixed(2)} {period.semester === "Summer" ? "/ Month" : "/ Month"}
         </h3>
       </div>
 
@@ -507,12 +507,19 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           <h1 className="font-semibold text-2xl">OOPS...</h1>
           <h2 className="text-md">
             Unfortunately you are not eligible to proceed with this booking.
-            <br />
-            Instead, we recommend the following options to ensure the best
-            experience according to your profile:
+      
           </h2>
-
-          <div className="space-y-2 mb-6 mt-10">
+          {/* make return to rooms page */}
+          <button
+            onClick={() => {
+              setIsEligible(null);
+              setApiErrors([]);
+            }}
+            className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800"
+          >
+            Modify Booking
+          </button>
+          {/* <div className="space-y-2 mb-6 mt-10">
             {state.bookingPeriods.map((period, index) => (
               <div key={index} className="border-b pb-4 mb-4">
                 <h4 className="font-medium">
@@ -521,7 +528,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
                 </h4>
               </div>
             ))}
-          </div>
+          </div> */}
 
           <Image
             src="/oops.jpg"
@@ -532,17 +539,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           />
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg space-y-4">
-          <button
-            onClick={() => {
-              setIsEligible(null);
-              setApiErrors([]);
-            }}
-            className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800"
-          >
-            Modify Booking
-          </button>
-        </div>
       </div>
     );
   }
@@ -604,7 +600,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="bg-gray-900 text-white px-8 py-3 rounded-2xl hover:bg-blue-700 transition-colors font-medium text-lg disabled:opacity-50"
+          className="bg-gray-900 text-white px-8 py-3 rounded-2xl hover:bg-[#4AE54A] transition-colors font-medium text-lg disabled:opacity-50"
         >
           {loading ? (
             <div className="flex items-center gap-2">

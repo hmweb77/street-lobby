@@ -223,6 +223,7 @@ const RoomCard = ({ room, isReversed = false }) => {
         <div className="py-4 px-2 w-full">
           <div className="w-full flex flex-row gap-4 justify-between items-center mb-4">
             <div>
+              {/* call the room title instead of property title */}
               <h3 className="font-bold text-2xl">
                 {localState.roomDetails.propertyTitle}, Room{" "}
                 {localState.roomDetails.title}
