@@ -15,15 +15,10 @@ export async function POST(req) {
   try {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    const baseUrl =
-      process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
+    const baseUrl = process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
 
     const body = await req.json();
-    const {
-      bookingPeriods,
-      commonUserDetails,
-      useCommonDetails,
-    } = body;
+    const { bookingPeriods, commonUserDetails, useCommonDetails } = body;
 
     if (!bookingPeriods || bookingPeriods.length <= 0 || !commonUserDetails) {
       return NextResponse.json(
@@ -53,8 +48,7 @@ export async function POST(req) {
       );
     }
 
-    // auth token generation steps
-
+    // Auth token generation
     const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: "POST",
       headers: {
@@ -66,8 +60,6 @@ export async function POST(req) {
 
     const authData = await authResponse.json();
     const accessToken = authData.access_token;
-
-    // auth token generation steps end
 
     const approvedUrlAndDetails = [];
 
@@ -81,115 +73,61 @@ export async function POST(req) {
         year,
         bookedByUser,
         bookedForUser,
-        bookedByUserEmail,
       } = period;
 
-      const semesterStartYear =
-        semester === "1st Semester" ? period.startYear : period.endYear;
+      // Determine payment type
+      const isSummerMonth = semester === "July" || semester === "August";
+      const amount = isSummerMonth ? Number(summerPrice) : Number(winterPriceMonthly);
 
-      const name = roomTitle;
-      const description = `Product of - ${semester} -  ${year}`;
-      const isSemester = semester.includes("Semester");
-      const amount = isSemester
-        ? Number(winterPriceMonthly)
-        : Number(summerPrice);
-
-      let billingAnchorDate;
-      let billingEndDate;
-
-      let startDate =
-        semester === "1st Semester"
+      // Date calculations
+      let startDate, endDate;
+      if (isSummerMonth) {
+        const yearNumber = parseInt(year.split('/')[1]);
+        const month = semester === "July" ? 6 : 7; // JS months are 0-based
+        startDate = new Date(yearNumber, month, 1);
+        endDate = new Date(yearNumber, month + 1, 0);
+      } else {
+        startDate = semester === "1st Semester" 
           ? new Date(period.startYear, 8, 1) // September 1st
           : new Date(period.endYear, 1, 1); // February 1st
-
-      const endDate =
-        semester === "1st Semester"
-          ? new Date(period.startYear, 11, 31, 23, 59, 59, 999) // December 31st
-          : new Date(period.endYear, 4, 31, 23, 59, 59, 999); // May 31st
-
-      const now = new Date();
-
-      // Skip if end date has already passed
-      if (endDate <= now) {
-        console.log("Skipping: End date has already passed.");
-        if (semester !== "Summer") continue;
-      } else {
-        // Adjust start date to 1 hour from now if it's in the past
-        if (startDate <= now) {
-          billingAnchorDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1,
-            0,
-            0,
-            0,
-            0
-          );
-          startDate = new Date(now.getTime() + 36000); // Add 1 hour
-        } else {
-          billingAnchorDate = startDate;
-        }
-
-        // Final validation to ensure start is before end
-        if (startDate < endDate) {
-          billingEndDate = endDate;
-        } else {
-          console.log("Skipping: Start date is after end date.");
-          if (semester !== "Summer") continue;
-        }
-
-        if (now > billingAnchorDate) {
-          billingAnchorDate = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            1,
-            0,
-            0,
-            0,
-            0
-          );
-        }
+        
+        endDate = semester === "1st Semester"
+          ? new Date(period.startYear, 11, 31) // December 31st
+          : new Date(period.endYear, 4, 31); // May 31st
       }
 
-      let isSameMonthAndYear =
-        billingAnchorDate.getFullYear() === billingEndDate.getFullYear() &&
-        billingAnchorDate.getMonth() === billingEndDate.getMonth();
+      // Skip if end date passed
+      if (endDate <= new Date()) {
+        console.log(`Skipping ${semester}: End date has passed`);
+        continue;
+      }
 
-      const isAnchorAfterEnd = billingAnchorDate > billingEndDate;
-
-      if (isSameMonthAndYear || isAnchorAfterEnd)
-        billingAnchorDate = new Date(now.getTime() + 300);
-
-      isSameMonthAndYear =
-        billingAnchorDate.getFullYear() === billingEndDate.getFullYear() &&
-        billingAnchorDate.getMonth() === billingEndDate.getMonth();
-
+      // Create PayPal product
       const paypalProduct = await createOrGetProduct(accessToken, {
-        customId: `${roomId}_${period.semester.replace(" ", "_")}`,
-        name,
-        description,
-      }); // Create Product
+        customId: `${roomId}_${semester.replace(" ", "_")}`,
+        name: `${roomTitle} - ${semester}`,
+        description: `${semester} ${year} Accommodation`,
+      });
 
+      // Create payment plan
       const { planData, customDetails } = await createPlan(
         accessToken,
         paypalProduct,
         {
-          semesterStartYear,
+          isSummerMonth,
           amount,
-          billingAnchorDate,
-          billingEndDate,
-          isSameMonthAndYear,
+          startDate,
+          endDate,
           semester,
           year,
+          roomId,
           bookedByUser,
           bookedForUser,
           bookedByUserEmail: commonUserDetails.email,
-          roomId,
         }
       );
 
-      // console.log(billingAnchorDate.toLocaleDateString());
-
+      // Store payment info
       const paymentInfoId = await storePaypalPaymentInfo({
         ...customDetails,
         roomId,
@@ -197,9 +135,8 @@ export async function POST(req) {
         semester,
         year,
         amount,
-        billingAnchorDate,
-        billingEndDate,
-        isSameMonthAndYear,
+        startDate,
+        endDate,
         planId: planData.id,
         productId: paypalProduct.id,
         room: period.room,
@@ -208,6 +145,7 @@ export async function POST(req) {
         name: commonUserDetails.name
       });
 
+      // Create subscription
       const subscriptionResponse = await fetch(
         `${baseUrl}/v1/billing/subscriptions`,
         {
@@ -219,68 +157,62 @@ export async function POST(req) {
           body: JSON.stringify({
             plan_id: planData.id,
             custom_id: paymentInfoId,
-            start_time:
-              isSameMonthAndYear || semester.includes("Summer")
-                ? new Date(Date.now() + 1000).toISOString()
-                : billingAnchorDate.toISOString(), // Start in 5 minutes
+            start_time: new Date(Date.now() + 1000).toISOString(),
             subscriber: {
               name: {
-                given_name: commonUserDetails.email.split("@")[0],
-                surname: commonUserDetails.email.split("@")[0],
+                given_name: commonUserDetails.name?.split(' ')[0] || "Customer",
+                surname: commonUserDetails.name?.split(' ')[1] || "Name",
               },
               email_address: commonUserDetails.email,
             },
             payment_source: {
               paypal: {
-                custom: JSON.stringify(customDetails),
-                item_name: `Booking for ${period.roomTitle} - ${period.semester} ${period.year}`,
-                currency: "EUR",
-              }, // This tells PayPal to use the balance if available
+                item_name: `${roomTitle} - ${semester} ${year}`,
+                currency_code: "EUR",
+              },
             },
-            return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment-success`, // Redirect URL after success
-            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`, // Redirect URL after cancellation
+            return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment-success`,
+            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
           }),
         }
       );
 
       const subscriptionData = await subscriptionResponse.json();
       if (!subscriptionResponse.ok) {
-        console.error("Error creating subscription:", subscriptionData);
-        return NextResponse.json(
-          {
-            message: subscriptionData.message || "Error creating subscription",
-          },
-          { status: 500 }
-        );
+        console.error("Subscription error:", subscriptionData);
+        continue;
       }
 
-      // addFieldsToPaypalPaymentInfo(paymentInfoId, { subscriptionId: subscriptionData.id });
-
-      // Extract approval URL
+      // Store approval URL
       const approvalUrl = subscriptionData.links.find(
         (link) => link.rel === "approve"
       ).href;
 
-      customDetails.roomTitle = period.roomTitle;
       approvedUrlAndDetails.push({
         approvalUrl,
-        planData,
-        customDetails,
+        details: {
+          roomTitle,
+          semester,
+          year,
+          amount: amount.toFixed(2),
+          currency: "EUR"
+        }
       });
     }
 
-    const customerEmail = commonUserDetails.email;
-    const customerName = commonUserDetails.name || customerEmail.split("@")[0];
+    // Send confirmation email
+    sendPaypalApprovalEmail(
+      commonUserDetails.email,
+      commonUserDetails.name,
+      approvedUrlAndDetails
+    );
 
-    sendPaypalApprovalEmail(customerEmail, customerName, approvedUrlAndDetails);
-
-    // Return approval URL for frontend redirection
     return NextResponse.json(
       { paymentDetails: approvedUrlAndDetails },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in subscription flow:", error);
+    console.error("Payment processing error:", error);
     return NextResponse.json(
       { message: error.message || "Internal Server Error" },
       { status: 500 }
@@ -288,118 +220,63 @@ export async function POST(req) {
   }
 }
 
-// Create Product Function
+// Helper functions
 export async function createOrGetProduct(accessToken, productDetails) {
-  const baseUrl =
-    process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
-
-  // Extract details from the productDetails object
-  const {
-    customId,
-    name,
-    description,
-    type = "SERVICE",
-    category = "SOFTWARE",
-  } = productDetails;
-
-  // Step 1: Check if a product with the given customId exists
-  const searchResponse = await fetch(
-    `${baseUrl}/v1/catalogs/products?page_size=50`,
-    {
+  const baseUrl = process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
+  
+  try {
+    const searchResponse = await fetch(`${baseUrl}/v1/catalogs/products?page_size=50`, {
       method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    const searchData = await searchResponse.json();
+    const existingProduct = searchData.products?.find(
+      p => p.id === productDetails.customId
+    );
+    
+    if (existingProduct) return existingProduct;
+
+    const productResponse = await fetch(`${baseUrl}/v1/catalogs/products`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
-    }
-  );
+      body: JSON.stringify({
+        id: productDetails.customId,
+        name: productDetails.name,
+        description: productDetails.description,
+        type: "SERVICE",
+        category: "ACCOMMODATION"
+      })
+    });
 
-  if (!searchResponse.ok) {
-    throw new Error("Failed to fetch existing products");
+    return await productResponse.json();
+  } catch (error) {
+    console.error("Product creation failed:", error);
+    throw error;
   }
-
-  const searchData = await searchResponse.json();
-  const existingProduct = searchData.products?.find(
-    (product) => product.id === customId
-  );
-
-  if (existingProduct) {
-    return existingProduct; // Return existing product ID
-  }
-
-  // Step 2: If not found, create a new product
-  const productResponse = await fetch(`${baseUrl}/v1/catalogs/products`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: customId, // Assign the custom ID (if PayPal allows this)
-      name,
-      description,
-      type,
-      category,
-    }),
-  });
-
-  const productData = await productResponse.json();
-
-  console.log(productData);
-  if (!productResponse.ok) {
-    throw new Error(
-      `Error creating product: ${productData.message || "Unknown error"}`
-    );
-  }
-
-  return productData; // Return newly created Product ID
 }
 
-// Create Plan Function
 export async function createPlan(
   accessToken,
   paypalProduct,
   {
-    semesterStartYear,
+    isSummerMonth,
     amount,
-    billingAnchorDate,
-    billingEndDate,
-    isSameMonthAndYear,
+    startDate,
+    endDate,
     semester,
     year,
+    roomId,
     bookedByUser,
     bookedForUser,
-    bookedByUserEmail,
-    roomId,
+    bookedByUserEmail
   }
 ) {
-  const baseUrl =
-    process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
-  let securityDeposit = Number(amount);
-  console.log(paypalProduct, "From Line 343");
-
-  let currentDate = new Date();
-  let currentYear = currentDate.getFullYear().toString(); // Get current year as a string
-  let currentMonth = currentDate.getMonth() + 1; // Get month (0-based index, so +1)
-  let currentDay = currentDate.getDate(); // Get current day
-
-  // List of months to check (February, March, ..., December)
-  const validMonths = [2, 3, 4, 5, 9, 10, 11, 12]; // February, March, ..., December
-  let totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Last day of current month
-
-  // Calculate remaining days in the current month
-  let remainingDays = totalDaysInMonth - currentDay;
-  const midCharge =
-    semesterStartYear.toString() === currentYear &&
-    validMonths.includes(currentMonth);
-
-  if (midCharge) {
-    securityDeposit =
-      Number(amount) + (Number(amount) * remainingDays) / totalDaysInMonth;
-  }
-
-  const cycles = getMonthsBetweenDates(billingAnchorDate, billingEndDate) + 1;
-
+  const baseUrl = process.env.PAYPAL_BASE_URL || "https://api-m.sandbox.paypal.com";
+  
   const customDetails = {
     roomId,
     semester,
@@ -408,78 +285,54 @@ export async function createPlan(
     bookedForUser,
     bookedByUserEmail,
     amount,
-    midCharge,
-    isSameMonthAndYear,
+    isSummerMonth
   };
+
+  const planConfig = {
+    product_id: paypalProduct.id,
+    name: `${paypalProduct.name} Payment`,
+    description: `${semester} ${year} payment for ${paypalProduct.name}`,
+    status: "ACTIVE",
+    billing_cycles: [{
+      frequency: {
+        interval_unit: isSummerMonth ? "YEAR" : "MONTH",
+        interval_count: 1
+      },
+      tenure_type: "REGULAR",
+      sequence: 1,
+      total_cycles: isSummerMonth ? 1 : calculateCycles(startDate, endDate),
+      pricing_scheme: {
+        fixed_price: {
+          value: amount.toFixed(2),
+          currency_code: "EUR"
+        }
+      }
+    }],
+    payment_preferences: {
+      auto_bill_outstanding: true,
+      setup_fee: {
+        value: "0.00",
+        currency_code: "EUR"
+      },
+      setup_fee_failure_action: "CONTINUE"
+    },
+    custom_id: JSON.stringify(customDetails)
+  };
+
   const planResponse = await fetch(`${baseUrl}/v1/billing/plans`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      product_id: paypalProduct.id, // Use the product ID from the previous step
-      name: `${paypalProduct.name} ${semester === "Summer" ? "Total" : "Monthly"} Subscription`,
-      description: `${semester === "Summer" ? "Total" : "Monthly"} subscription for ${paypalProduct.name}. If Setup fee will be count as security deposit/on going month payment.`,
-      status: "ACTIVE",
-      billing_cycles: [
-        {
-          frequency: {
-            interval_unit: "MONTH",
-            interval_count: 1,
-          },
-          tenure_type: "REGULAR",
-          sequence: 1,
-          total_cycles:
-            isSameMonthAndYear || semester === "Summer" ? 1 : cycles,
-          pricing_scheme: {
-            fixed_price: {
-              value:
-                isSameMonthAndYear && semester !== "Summer" ? "0.01" : amount,
-              currency_code: "EUR",
-            },
-          },
-        },
-      ],
-      payment_preferences: {
-        auto_bill_outstanding: true,
-        setup_fee: {
-          value:
-            semester === "Summer" ? "0.01" : Number(securityDeposit).toFixed(2),
-          currency_code: "EUR",
-        },
-        setup_fee_failure_action: "CONTINUE",
-        payment_failure_threshold: 3,
-      },
-      custom_id: JSON.stringify(customDetails),
-    }),
+    body: JSON.stringify(planConfig)
   });
 
   const planData = await planResponse.json();
-  console.log(planData);
-  if (!planResponse.ok) {
-    throw new Error(
-      `Error creating plan: ${planData.message || "Unknown error"}`
-    );
-  }
-
-  return { planData, customDetails }; // Return Plan ID for later use
+  return { planData, customDetails };
 }
 
-function getPayPalFormattedDate(date) {
-  return date.toISOString().split(".")[0] + "Z"; // Removes milliseconds for PayPal
-}
-
-function getMonthsBetweenDates(startDate, endDate) {
-  // Get the year and month of both dates
-  let startYear = startDate.getFullYear();
-  let startMonth = startDate.getMonth(); // Month is 0-indexed
-
-  let endYear = endDate.getFullYear();
-  let endMonth = endDate.getMonth(); // Month is 0-indexed
-
-  // Calculate the total months difference
-  let monthDifference = (endYear - startYear) * 12 + (endMonth - startMonth);
-
-  return monthDifference;
+function calculateCycles(start, end) {
+  const months = (end.getFullYear() - start.getFullYear()) * 12;
+  return months - start.getMonth() + end.getMonth() + 1;
 }

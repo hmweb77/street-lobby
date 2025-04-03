@@ -16,7 +16,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Redirect if no bookings
   useEffect(() => {
     if (state.bookingPeriods.length === 0 && isEligible !== false) {
       router.push("/");
@@ -67,7 +66,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (useCommonDetails) {
-      // Validate common fields including email
       const requiredFields = [
         "email",
         "age",
@@ -83,7 +81,13 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         }
       });
 
-      // Validate common email format
+      if (state.commonUserDetails.age) {
+        const age = parseInt(state.commonUserDetails.age);
+        if (age < 20 || age > 40) {
+          newErrors["common-age"] = "Age must be between 20 and 40";
+        }
+      }
+
       if (
         state.commonUserDetails.email &&
         !emailRegex.test(state.commonUserDetails.email)
@@ -91,7 +95,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         newErrors["common-email"] = "Invalid email format";
       }
     } else {
-      // Validate individual bookings
       state.bookingPeriods.forEach((period, index) => {
         const requiredFields = [
           "email",
@@ -108,7 +111,13 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           }
         });
 
-        // Validate individual email format
+        if (period.userDetails?.age) {
+          const age = parseInt(period.userDetails.age);
+          if (age < 20 || age > 40) {
+            newErrors[`${index}-age`] = "Age must be between 20 and 40";
+          }
+        }
+
         if (
           period.userDetails?.email &&
           !emailRegex.test(period.userDetails.email)
@@ -162,7 +171,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
 
   const renderCommonFields = () => (
     <div className="bg-white space-y-4">
-      {/* Bookings List */}
       <div className="mb-6 space-y-4">
         <h4 className="text-md font-semibold mb-1">Selected Bookings</h4>
         {state.bookingPeriods.map((period, index) => (
@@ -171,25 +179,16 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
               {period.propertyTitle}, {period.roomTitle}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              {period.year} | {period.semester} - €{period.price.toFixed(2)} {period.semester === "Summer" ? "/ Month" : "/ Month"}
+              {period.year} | {period.semester} - €{period.price.toFixed(2)}{" "}
+              {period.semester === "Summer" ? "/ Month" : "/ Month"}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Total Price */}
-      <div className="border-t border-gray-200 pt-4 mb-6">
-        {/* <div className="flex justify-between items-center">
-          <span className="font-bold text-gray-700">Total Price:</span>
-          <span className="font-bold text-lg text-gray-800">
-            €{state.totalPrice.toFixed(2)}
-          </span>
-        </div> */}
-      </div>
+      <div className="border-t border-gray-200 pt-4 mb-6"></div>
 
-      {/* Common Form Fields */}
       <div className="grid grid-cols-2 gap-4">
-        {/* Email */}
         <div className="space-y-2 col-span-2">
           <label className="block text-sm font-medium text-gray-700">
             Email Address*
@@ -207,10 +206,9 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Age */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Age*
+            Age* (20-40)
           </label>
           <input
             type="number"
@@ -218,13 +216,14 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             value={state.commonUserDetails.age || ""}
             onChange={handleCommonChange}
             className="w-full p-2 border rounded-md"
+            min="20"
+            max="40"
           />
           {errors["common-age"] && (
             <p className="text-red-500 text-sm">{errors["common-age"]}</p>
           )}
         </div>
 
-        {/* Name */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Full Name*
@@ -241,24 +240,26 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Genre */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Genre*
           </label>
-          <input
-            type="text"
+          <select
             name="genre"
             value={state.commonUserDetails.genre || ""}
             onChange={handleCommonChange}
             className="w-full p-2 border rounded-md"
-          />
+          >
+            <option value="">Select a genre</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
           {errors["common-genre"] && (
             <p className="text-red-500 text-sm">{errors["common-genre"]}</p>
           )}
         </div>
 
-        {/* Permanent Address */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Permanent Address*
@@ -277,7 +278,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Nationality */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Nationality*
@@ -296,7 +296,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* ID Number */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             ID Number*
@@ -312,7 +311,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             <p className="text-red-500 text-sm">{errors["common-idNumber"]}</p>
           )}
         </div>
-        {/* Profession */}
         <div className="space-y-2 col-span-2">
           <label className="block text-sm font-medium text-gray-700">
             Current Profession*
@@ -338,12 +336,12 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
       <div className="mb-4 border-b pb-2">
         <h3 className="font-bold text-lg">
           {period.propertyTitle}, {period.roomTitle} | {period.year} |{" "}
-          {period.semester} | €{period.price.toFixed(2)} {period.semester === "Summer" ? "/ Month" : "/ Month"}
+          {period.semester} | €{period.price.toFixed(2)}{" "}
+          {period.semester === "Summer" ? "/ Month" : "/ Month"}
         </h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Email */}
         <div className="space-y-2 col-span-2">
           <label className="block text-sm font-medium text-gray-700">
             Email Address*
@@ -362,10 +360,9 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Age */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Age*
+            Age* (20-40)
           </label>
           <input
             type="number"
@@ -374,13 +371,14 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
               handleIndividualChange(period, "age", e.target.value)
             }
             className="w-full p-2 border rounded-md"
+            min="20"
+            max="40"
           />
           {errors[`${index}-age`] && (
             <p className="text-red-500 text-sm">{errors[`${index}-age`]}</p>
           )}
         </div>
 
-        {/* Name */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Full Name*
@@ -398,26 +396,27 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Genre */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Genre*
           </label>
-          <input
-            type="text"
-            name={`genre-${index}`}
+          <select
             value={period.userDetails?.genre || ""}
             onChange={(e) =>
               handleIndividualChange(period, "genre", e.target.value)
             }
             className="w-full p-2 border rounded-md"
-          />
+          >
+            <option value="">Select a genre</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
           {errors[`${index}-genre`] && (
             <p className="text-red-500 text-sm">{errors[`${index}-genre`]}</p>
           )}
         </div>
 
-        {/* Permanent Address */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Permanent Address*
@@ -437,7 +436,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Nationality */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Nationality*
@@ -457,7 +455,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* ID Number */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             ID Number*
@@ -477,7 +474,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           )}
         </div>
 
-        {/* Current Profession */}
         <div className="space-y-2 col-span-2">
           <label className="block text-sm font-medium text-gray-700">
             Current Profession/Study
@@ -507,9 +503,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           <h1 className="font-semibold text-2xl">OOPS...</h1>
           <h2 className="text-md">
             Unfortunately you are not eligible to proceed with this booking.
-      
           </h2>
-          {/* make return to rooms page */}
           <button
             onClick={() => {
               setIsEligible(null);
@@ -519,16 +513,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           >
             Modify Booking
           </button>
-          {/* <div className="space-y-2 mb-6 mt-10">
-            {state.bookingPeriods.map((period, index) => (
-              <div key={index} className="border-b pb-4 mb-4">
-                <h4 className="font-medium">
-                  {period.propertyTitle} {period.roomTitle}. {period.year}{" "}
-                  {period.semester} €{period.price.toFixed(2)}{" "}
-                </h4>
-              </div>
-            ))}
-          </div> */}
 
           <Image
             src="/oops.jpg"
@@ -538,14 +522,12 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             className="mx-auto"
           />
         </div>
-
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Mode Selection - Updated to use context setters */}
       <div className="flex flex-col gap-2 mb-8">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -553,7 +535,6 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             name="guestDetailsType"
             value="common"
             className="text-gray-900 accent-black"
-        
             checked={useCommonDetails}
             onChange={() => setUseCommonDetails(true)}
           />
@@ -577,25 +558,15 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         </label>
       </div>
 
-      {/* Dynamic Form Sections */}
       {useCommonDetails ? (
         renderCommonFields()
       ) : (
         <>
           {state.bookingPeriods.map(renderIndividualFields)}
-          {/* Total Price */}
-          <div className="border-t border-gray-200 pt-4 mb-6">
-            {/* <div className="flex justify-between items-center">
-              <span className="font-bold text-gray-700">Total Price:</span>
-              <span className="font-bold text-lg text-gray-800">
-                €{state.totalPrice.toFixed(2)}
-              </span>
-            </div> */}
-          </div>
+          <div className="border-t border-gray-200 pt-4 mb-6"></div>
         </>
       )}
 
-      {/* Submit Button */}
       <div className="mt-8 flex justify-center">
         <button
           onClick={handleSubmit}

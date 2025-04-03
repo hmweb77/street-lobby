@@ -14,42 +14,31 @@ export async function POST(req) {
       );
     }
 
-    const proposedBookedPeriods = await getValidProposedPeriods(); // Get valid stored periods
+    const proposedBookedPeriods = await getValidProposedPeriods();
     const addedDocsIds = [];
     const validationErrors = [];
 
-
-    // Convert proposedBookedPeriods into a Set for quick lookup
     const existingPeriodKeys = new Set(
       proposedBookedPeriods.map(
         (period) => `${period.roomId}_${period.semester}_${period.year}`
       )
     );
 
-    // Group proposed periods by room ID
     const proposedPeriodsByRoom = new Map();
 
     for (const period of bookingPeriods) {
       const roomId = period.roomId;
       const docId = `${roomId}_${period.semester}_${period.year}`;
 
-      // Check if the period is already booked in Firestore
       if (existingPeriodKeys.has(docId)) {
         validationErrors.push(
-          `Room ${roomId} is already booked for Semester ${period.semester}, Year ${period.year}`
+          `Room ${roomId} is already booked for Period ${period.semester}, Year ${period.year}`
         );
-        continue; // Skip adding this period
+        continue;
       }
-
-
-      // If not already booked, store it in Firestore and track added documents
-      // await storeProposedPeriod(roomId, period.semester, period.year);
-
 
       addedDocsIds.push({docId , roomId, semester: period.semester, year: period.year });
 
-
-      // Grouping proposed periods by room ID
       if (!proposedPeriodsByRoom.has(roomId)) {
         proposedPeriodsByRoom.set(roomId, []);
       }
@@ -59,11 +48,7 @@ export async function POST(req) {
       });
     }
 
-
-
-    // Validate each room's availability
     for (const [roomId, proposedPeriods] of proposedPeriodsByRoom) {
-      // Get existing booked periods from Sanity
       const roomData = await sanityAdminClient.getDocument(roomId);
       if (!roomData) {
         validationErrors.push(`Room ${roomId} not found`);
@@ -72,17 +57,14 @@ export async function POST(req) {
 
       const existingPeriods = roomData.bookedPeriods || [];
 
-      // Create combined periods list (existing + proposed)
       const combinedPeriods = [
         ...existingPeriods,
         ...proposedPeriods.map((p) => ({
           ...p,
-          _key: `temp_${Math.random().toString(36).substr(2, 9)}`, // Temporary key for validation
+          _key: `temp_${Math.random().toString(36).substr(2, 9)}`,
         })),
       ];
 
-
-      // Validate combined periods
       const errors = validateBookingPeriods(combinedPeriods);
       if (errors.length > 0) {
         validationErrors.push(`Room ${roomId}: ${errors.join(", ")}`);
@@ -90,7 +72,6 @@ export async function POST(req) {
     }
 
     if (validationErrors.length > 0) {
-
       return NextResponse.json(
         {
           message: "Booking conflicts detected",
@@ -100,7 +81,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
 
     await storeProposedPeriodsBatch(addedDocsIds);
 
@@ -120,7 +100,6 @@ export async function POST(req) {
   }
 }
 
-// Reuse the existing validation function
 function validateBookingPeriods(bookedPeriods) {
   const errors = [];
   const yearMap = new Map();
@@ -131,7 +110,7 @@ function validateBookingPeriods(bookedPeriods) {
       yearMap.set(year, {
         fullYear: false,
         bothSemesters: false,
-        semesters: new Set(),
+        periods: new Set(),
       });
     }
     const yearData = yearMap.get(year);
@@ -140,25 +119,25 @@ function validateBookingPeriods(bookedPeriods) {
       if (
         yearData.fullYear ||
         yearData.bothSemesters ||
-        yearData.semesters.size > 0
+        yearData.periods.size > 0
       ) {
         errors.push(
-          `Conflict detected: "Full Year" cannot be booked with other semesters or "Both Semesters" in ${year}.`
+          `Conflict detected: "Full Year" cannot be booked with other periods in ${year}.`
         );
       }
       yearData.fullYear = true;
     } else if (semester === "Both Semesters") {
       if (yearData.bothSemesters || yearData.fullYear) {
         errors.push(
-          `Conflict detected: "Both Semesters" cannot be booked with "Full Year" or another "Both Semesters" in ${year}.`
+          `Conflict detected: "Both Semesters" cannot be booked with "Full Year" in ${year}.`
         );
       }
       if (
-        yearData.semesters.has("1st Semester") ||
-        yearData.semesters.has("2nd Semester")
+        yearData.periods.has("1st Semester") ||
+        yearData.periods.has("2nd Semester")
       ) {
         errors.push(
-          `Conflict detected: "Both Semesters" cannot be booked with "1st Semester" or "2nd Semester" in ${year}.`
+          `Conflict detected: "Both Semesters" cannot be booked with individual semesters in ${year}.`
         );
       }
       yearData.bothSemesters = true;
@@ -176,12 +155,12 @@ function validateBookingPeriods(bookedPeriods) {
           `Conflict detected: "${semester}" cannot be booked because "Both Semesters" is already booked in ${year}.`
         );
       }
-      if (yearData.semesters.has(semester)) {
+      if (yearData.periods.has(semester)) {
         errors.push(
-          `Conflict detected: "${semester}" has already been booked for ${year}.`
+          `Conflict detected: "${semester}" period has already been booked for ${year}.`
         );
       }
-      yearData.semesters.add(semester);
+      yearData.periods.add(semester);
     }
   });
 

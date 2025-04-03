@@ -7,6 +7,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--roboto)", "sans-serif"],
+      },
       animation: {
         slideDown: 'slideDown 0.3s ease-out',
         fadeIn: 'fadeIn 0.2s ease-in',

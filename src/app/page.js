@@ -68,10 +68,13 @@ const LandingPage = () => {
           label: "Both (1st and 2nd semester)",
           value: "1st Semester,2nd Semester",
         },
-        { label: "Summer", value: "Summer" },
+        // Changed Summer to July and August
+        { label: "July", value: "July" },
+        { label: "August", value: "August" },
+        // Updated "All" option to include both months
         {
-          label: "All (1st, 2nd semester and summer)",
-          value: "1st Semester,2nd Semester,Summer",
+          label: "All (1st, 2nd semester, July and August)",
+          value: "1st Semester,2nd Semester,July,August",
         },
       ],
     },

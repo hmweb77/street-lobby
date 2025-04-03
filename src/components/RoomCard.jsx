@@ -7,8 +7,9 @@ const semesterConflicts = {
   "1st Semester": ["Both Semesters", "Full Year"],
   "2nd Semester": ["Both Semesters", "Full Year"],
   "Both Semesters": ["1st Semester", "2nd Semester", "Full Year"],
-  "Full Year": ["1st Semester", "2nd Semester", "Both Semesters", "Summer"],
-  Summer: ["Full Year"],
+  "Full Year": ["1st Semester", "2nd Semester", "Both Semesters", "July", "August"],
+  "July": ["Full Year"],
+  "August": ["Full Year"],
 };
 
 const RoomCard = ({ room, isReversed = false }) => {
@@ -40,7 +41,6 @@ const RoomCard = ({ room, isReversed = false }) => {
 
   const [showIncludeButton, setShowIncludeButton] = useState(false);
 
-  // Initialize local state
   useEffect(() => {
     const globalBooking = globalState.bookingPeriods.filter(
       (bp) => bp.roomId === room.id
@@ -63,7 +63,6 @@ const RoomCard = ({ room, isReversed = false }) => {
     });
   }, [room, globalState]);
 
-  // Detect changes between local and global state
   useEffect(() => {
     const globalBookingPeriods = globalState.bookingPeriods.filter(
       (bp) => bp.roomId === room.id
@@ -123,7 +122,8 @@ const RoomCard = ({ room, isReversed = false }) => {
       case "1st Semester":
       case "2nd Semester":
         return room.priceWinter;
-      case "Summer":
+      case "July":
+      case "August":
         return room.priceSummer;
       default:
         return 0;
@@ -174,7 +174,6 @@ const RoomCard = ({ room, isReversed = false }) => {
   };
 
   const handleIncludeBooking = () => {
-    // Update global state
     localState.bookingPeriods.forEach((bp) => {
       setBooking(room.id, getRoomDetails(), bp.year, bp.semester, {
         ...bp,
@@ -183,7 +182,6 @@ const RoomCard = ({ room, isReversed = false }) => {
       });
     });
 
-    // Cleanup removed bookings
     const globalRoomBookings = globalState.bookingPeriods.filter(
       (bp) => bp.roomId === room.id
     );
@@ -223,7 +221,6 @@ const RoomCard = ({ room, isReversed = false }) => {
         <div className="py-4 px-2 w-full">
           <div className="w-full flex flex-row gap-4 justify-between items-center mb-4">
             <div>
-              {/* call the room title instead of property title */}
               <h3 className="font-bold text-2xl">
                 {localState.roomDetails.propertyTitle}, Room{" "}
                 {localState.roomDetails.title}
@@ -231,7 +228,6 @@ const RoomCard = ({ room, isReversed = false }) => {
               <p className="text-sm text-gray-500">
                 {localState.roomDetails.roomType} - €
                 {localState.roomDetails.priceWinter}/Month
-
               </p>
             </div>
             <div>
@@ -244,12 +240,9 @@ const RoomCard = ({ room, isReversed = false }) => {
             </div>
           </div>
 
-          <details
-            // open={localState.roomDetails.id === room.id ?? false}
-            className="mb-3"
-          >
+          <details className="mb-3">
             <summary className="cursor-pointer font-medium text-xl">
-            Details
+              Details
             </summary>
             <div className="mt-2 pl-4">
               <p className="text-gray-600 text-sm">
@@ -260,10 +253,7 @@ const RoomCard = ({ room, isReversed = false }) => {
             </div>
           </details>
 
-          <details
-            // open={localState.roomDetails.id === room.id ?? false}
-            className="mb-3"
-          >
+          <details className="mb-3">
             <summary className="cursor-pointer font-medium text-xl">
               Availability
             </summary>
@@ -276,10 +266,8 @@ const RoomCard = ({ room, isReversed = false }) => {
                     {groupedByYear[yearKey]
                       .sort(
                         (a, b) =>
-                          ["1st Semester", "2nd Semester", "Summer"].indexOf(
-                            a
-                          ) -
-                          ["1st Semester", "2nd Semester", "Summer"].indexOf(b)
+                          ["1st Semester", "2nd Semester", "July", "August"].indexOf(a) -
+                          ["1st Semester", "2nd Semester", "July", "August"].indexOf(b)
                       )
                       .map((semester) => {
                         const disabled = isSemesterDisabled(yearKey, semester);
@@ -303,7 +291,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                             />
                             <span className={disabled ? "line-through" : ""}>
                               {semester} - €
-                              {calculatePrice(semester).toFixed(2)} {semester === "Summer" ? "/ Month" : "/ Month"}
+                              {calculatePrice(semester).toFixed(2)} / Month
                             </span>
                           </label>
                         );
@@ -313,9 +301,7 @@ const RoomCard = ({ room, isReversed = false }) => {
             </div>
           </details>
 
-          <details
-          // open={localState.roomDetails.id === room.id}
-          >
+          <details>
             <summary className="cursor-pointer font-medium text-xl">Services</summary>
             <div className="mt-2 pl-4 opacity-65">
               {(room.services || ["Weekly room cleaning"])
@@ -351,14 +337,6 @@ const RoomCard = ({ room, isReversed = false }) => {
       </div>
 
       <div className=" md:hidden h-20">
-        {/* {!propertySlug && (
-              <Link
-                href={`/rooms/${room.slug.current}`}
-                className="px-4 py-2 w-40 text-center rounded-full text-black border border-black hover:bg-black hover:text-white  transition-colors"
-              >
-                Details
-              </Link>
-            )} */}
         <button
           onClick={handleIncludeBooking}
           className={`${showIncludeButton ? "cursor-pointer" : "opacity-65 pointer-events-none"} mx-3 px-5 py-3 rounded-full bg-black text-white hover:bg-gray-800 transition-colors`}

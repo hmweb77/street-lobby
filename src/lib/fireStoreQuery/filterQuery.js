@@ -26,7 +26,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
     colivingCapacity,
   } = filters;
 
-  console.log("Filters:", semester);
 
   try {
     // Base collection reference

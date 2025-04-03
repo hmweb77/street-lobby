@@ -1,4 +1,3 @@
-// Each semester of property should have a single booking entry because of the unique constraint
 export const bookingSchema = {
   name: "booking",
   title: "Booking",
@@ -32,25 +31,17 @@ export const bookingSchema = {
     },
     {
       name: "semester",
-      title: "Semester",
+      title: "Period",
       type: "string",
       options: {
-        list: ["1st Semester", "2nd Semester", "Summer"],
+        list: ["1st Semester", "2nd Semester", "July", "August"],
       },
       validation: (Rule) => Rule.required(),
     },
-
     {
       name: "year",
       title: "Year",
       type: "string",
-      // options: {
-      //   list: Array.from(
-      //     { length: 3 },
-      //     (_, i) =>
-      //       `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`
-      //   ),
-      // },
       validation: (Rule) => Rule.required(),
     },
     {
@@ -58,14 +49,12 @@ export const bookingSchema = {
       title: "Services",
       type: "string",
     },
-
     {
       name: "price",
-      title: "Price Monthly(Winter) / Total(summer)",
+      title: "Price Monthly(Winter) / Total(Summer)",
       type: "number",
       validation: (Rule) => Rule.required(),
     },
-
     {
       name: "bookingDate",
       title: "Booking Date",
@@ -79,12 +68,11 @@ export const bookingSchema = {
       hidden: true,
       type: "text",
     },
-
     {
       name: "cancellationKey",
       title: "Cancellation Key",
       type: "string",
-      hidden: true, // Hide this field from editors
+      hidden: true,
     },
     {
       name: "paymentMethod",
@@ -95,7 +83,6 @@ export const bookingSchema = {
       },
       readOnly: true,
     },
-
     {
       name: "status",
       title: "Status (admin only & Can't be changed after cancellations)",
@@ -104,13 +91,11 @@ export const bookingSchema = {
         list: ["pending", "confirmed", "cancelled"],
         layout: "dropdown",
       },
-
       readOnly: ({ document, currentUser }) =>
         document?.cancellationKey?.startsWith("cancelled+") ||
         !currentUser?.roles.some((role) => role.name === "administrator"),
       initialValue: "pending",
     },
-
     {
       name: "firstSemesterPayments",
       title: "1st Semester Payments",
@@ -204,8 +189,8 @@ export const bookingSchema = {
       hidden: ({ document }) => document?.semester !== "2nd Semester",
     },
     {
-      name: "summerPayment",
-      title: "Summer Payment",
+      name: "julyPayment",
+      title: "July Payment",
       type: "object",
       fields: [
         {
@@ -218,7 +203,24 @@ export const bookingSchema = {
           initialValue: "unpaid",
         },
       ],
-      hidden: ({ document }) => document?.semester !== "Summer",
+      hidden: ({ document }) => document?.semester !== "July",
+    },
+    {
+      name: "augustPayment",
+      title: "August Payment",
+      type: "object",
+      fields: [
+        {
+          name: "totalPayment",
+          title: "Total Payment",
+          type: "string",
+          options: {
+            list: ["paid", "unpaid"],
+          },
+          initialValue: "unpaid",
+        },
+      ],
+      hidden: ({ document }) => document?.semester !== "August",
     },
     {
       name: "notes",
@@ -253,7 +255,7 @@ export const bookingSchema = {
       return {
         title: `${userName || "Unknown user"} | ${roomTitle || "No room"} | ${status}`,
         subtitle: [
-          semester && `Semester: ${semester}`,
+          semester && `Period: ${semester}`,
           year && `Year: ${year}`,
           email && `Email: ${email}`,
           date && `Booked: ${date}`,
@@ -263,15 +265,15 @@ export const bookingSchema = {
         ]
           .filter(Boolean)
           .join(" | "),
-          description: [
-            semester ,
-            year,
-            email,
-            date,
-            status ,
-            userName,
-            roomTitle,
-          ].filter(Boolean).join(" | "),
+        description: [
+          semester,
+          year,
+          email,
+          date,
+          status,
+          userName,
+          roomTitle,
+        ].filter(Boolean).join(" | "),
       };
     },
   },

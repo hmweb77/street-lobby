@@ -5,6 +5,7 @@ export const validateAcademicYear = (year) => {
   return /^\d{4}\/\d{4}$/.test(year);
 };
 
+// Updated deadline validation for summer months
 export const validateBookingDeadline = (year, semester) => {
   const [, endYear] = year.split('/').map(Number);
   const now = new Date();
@@ -12,10 +13,11 @@ export const validateBookingDeadline = (year, semester) => {
   const deadlines = {
     "1st Semester": new Date(`${endYear}-01-31`),
     "2nd Semester": new Date(`${endYear}-06-30`),
-    "Summer": new Date(`${endYear}-08-31`),
+    "July": new Date(`${endYear}-07-31`),
+    "August": new Date(`${endYear}-08-31`),
   };
 
-  return now <= deadlines[semester];
+  return now <= (deadlines[semester] || new Date());
 };
 
 

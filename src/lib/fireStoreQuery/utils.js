@@ -6,9 +6,9 @@ export const getRemainingAvailableSemesters = (
   periodFiltered,
   year
 ) => {
-  // 1. Validate periodFiltered as array
-  if (!Array.isArray(periodFiltered) || periodFiltered.length === 0) {
-    periodFiltered = ["1st Semester", "2nd Semester", "Summer"];
+  // 1. Validate periodFiltered as array with new summer months
+  if (!Array.isArray(periodFiltered)) {
+    periodFiltered = ["1st Semester", "2nd Semester", "July", "August"];
   }
 
   const { availableSemesters = [], bookedPeriods = [] } = room;
@@ -21,12 +21,12 @@ export const getRemainingAvailableSemesters = (
   const priceWinter = Number(room.priceWinter) || 0;
 
   const filterSemester = (available) => {
-    // 2. Match exact semester names
+    // 2. Match exact period names (including new summer months)
     const isPeriodFiltered = periodFiltered.includes(available.semester);
 
-    // 3. Get correct price for semester type
-    const semesterPrice =
-      available.semester === "Summer" ? priceSummer : priceWinter;
+    // 3. Get correct price for period type
+    const isSummerMonth = ["July", "August"].includes(available.semester);
+    const semesterPrice = isSummerMonth ? priceSummer : priceWinter;
 
     // Price validation
     const priceValid = semesterPrice >= min && semesterPrice <= max;
@@ -49,30 +49,22 @@ export const getRemainingAvailableSemesters = (
   );
 };
 
-// Helper function to calculate price based on semester(s)
+// Updated price calculator for new summer months
 export const calculatePrice = (roomData, semester) => {
   if (!semester) {
-    // If no semester is provided, return both prices
     return {
       priceWinter: roomData.priceWinter || 0,
       priceSummer: roomData.priceSummer || 0,
     };
   } else if (Array.isArray(semester)) {
-    // If semester is an array, calculate the total price for all semesters
-    const totalPrice = semester.reduce((total, sem) => {
-      if (sem === "Summer") {
-        return total + (roomData.priceSummer || 0);
-      } else {
-        return total + (roomData.priceWinter || 0);
-      }
+    return semester.reduce((total, sem) => {
+      return total + (["July", "August"].includes(sem) 
+        ? (roomData.priceSummer || 0)
+        : (roomData.priceWinter || 0));
     }, 0);
-    return totalPrice;
   } else {
-    // If semester is a single value, return the price for that semester
-    if (semester === "Summer") {
-      return roomData.priceSummer || 0;
-    } else {
-      return roomData.priceWinter || 0;
-    }
+    return ["July", "August"].includes(semester)
+      ? (roomData.priceSummer || 0)
+      : (roomData.priceWinter || 0);
   }
 };

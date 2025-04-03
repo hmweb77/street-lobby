@@ -77,6 +77,8 @@ export default function PropertyMap() {
           "location": location->{
             coordinates,
             descriptions,
+            zipCode,
+            city
           },
           slug
         }`;
@@ -96,6 +98,8 @@ export default function PropertyMap() {
             propertyName: p.propertyName,
             address: p.propertyName,
             addressDescription: p.location.descriptions,
+            zipCode: p.location.zipCode,
+            city: p.location.city,
             lat: p.location.coordinates.lat,
             lng: p.location.coordinates.lng,
             description: p.propertyDescriptions,
@@ -148,9 +152,13 @@ export default function PropertyMap() {
               {property.propertyName}
             </button>
             {selectedProperty === property.id && (
-              <p className="text-gray-600 text-sm mx-8 sm:mx-1 text-center">
-                {property.addressDescription || ""}
-              </p>
+              <div className="text-gray-600 flex flex-col sm:flex-row gap-2 text-sm mx-8 sm:mx-1 text-center mt-2">
+                <p>{property.addressDescription || ""}</p>
+                <div className="flex justify-center gap-2">
+                  <p>{property.city || ""}</p>
+                  <p>{property.zipCode || ""}</p>
+                </div>
+              </div>
             )}
           </div>
         ))}

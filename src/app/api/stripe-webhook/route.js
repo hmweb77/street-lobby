@@ -116,8 +116,8 @@ export async function POST(req) {
         for (const period of bookingPeriods) {
           const { semester, winterPriceMonthly, roomId, roomTitle, year } =
             period;
-            const bookingId = await createBooking(period);
-            
+          const bookingId = await createBooking(period);
+
           if (semester === "1st Semester" || semester === "2nd Semester") {
             // Original date calculations
             let startDate =
@@ -163,7 +163,6 @@ export async function POST(req) {
             const isSameMonthAndYear =
               startDate.getFullYear() === endDate.getFullYear() &&
               startDate.getMonth() === endDate.getMonth();
-
 
             bookingIds.push(bookingId);
 
@@ -495,44 +494,42 @@ export async function createBooking(bookingData) {
       bookedFor: bookingData.bookedForUser,
       roomTitle: bookingData.roomTitle,
       room: bookingData.room,
-      status: "confirmed", // Default status for admin-created bookings
+      status: "confirmed",
       semester: bookingData.semester,
       year: bookingData.year,
       services: bookingData.services,
-      price:
-        bookingData.semester === "Summer"
-          ? bookingData.summerPrice
-          : bookingData.winterPriceMonthly,
+      price: ["July", "August"].includes(bookingData.semester)
+        ? bookingData.summerPrice
+        : bookingData.winterPriceMonthly,
       bookingDate: new Date().toISOString(),
       cancellationKey: generateCancellationKey(),
       paymentMethod: "Stripe",
     };
 
+    // Handle semester payments
     if (bookingData.semester === "1st Semester") {
       fullBooking.firstSemesterPayments = {
         securityDeposit: "paid",
         months: [],
       };
-    }
-
-    if (bookingData.semester === "2nd Semester") {
+    } else if (bookingData.semester === "2nd Semester") {
       fullBooking.secondSemesterPayments = {
         securityDeposit: "paid",
         months: [],
       };
     }
-
-    if (bookingData.semester === "Summer") {
-      fullBooking.summerPayment = {
-        totalPayment: "paid", // Set as 'paid' or 'unpaid'
-      };
+    // Handle summer months
+    else if (bookingData.semester === "July") {
+      fullBooking.julyPayment = { totalPayment: "paid" };
+    } else if (bookingData.semester === "August") {
+      fullBooking.augustPayment = { totalPayment: "paid" };
     }
 
     const response = await sanityAdminClient.create(fullBooking);
     return response._id;
   } catch (error) {
     console.error("Booking creation failed:", error);
-    // throw new Error(`Failed to create booking: ${error.message}`);
+    throw error;
   }
 }
 

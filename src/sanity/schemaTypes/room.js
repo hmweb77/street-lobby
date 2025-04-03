@@ -58,13 +58,13 @@ export const roomSchema = {
     },
     {
       name: "priceSummer",
-      title: "Price (Summer) Total",
+      title: "Price ( July/August ) Total",
       type: "number",
       validation: (Rule) => Rule.required().min(0),
     },
     {
       name: "availableSemesters",
-      title: "Available Semesters",
+      title: "Available Periods",
       type: "array",
       of: [
         {
@@ -72,14 +72,10 @@ export const roomSchema = {
           fields: [
             {
               name: "semester",
-              title: "Semester",
+              title: "Period",
               type: "string",
               options: {
-                list: [
-                  "1st Semester",
-                  "2nd Semester",
-                  "Summer",
-                ],
+                list: ["1st Semester", "2nd Semester", "July", "August"],
               },
               validation: (Rule) => Rule.required(),
             },
@@ -104,24 +100,23 @@ export const roomSchema = {
             },
             prepare({ semester, year }) {
               return {
-                title: `${semester} - ${year}`, // Combine semester and year
+                title: `${semester} - ${year}`,
                 subtitle: year,
               };
             },
           },
         },
       ],
-
       initialValue: Array.from({ length: 3 }, (_, i) => {
         const currentYear = `${new Date().getFullYear() + i - 1}/${new Date().getFullYear() + i}`;
         return [
           { semester: "1st Semester", year: currentYear },
           { semester: "2nd Semester", year: currentYear },
-          { semester: "Summer", year: currentYear },
+          { semester: "July", year: currentYear },
+          { semester: "August", year: currentYear },
         ];
       }).reduce((acc, val) => acc.concat(val), []),
     },
-
     {
       name: "bookedPeriods",
       title: "Booked Periods",
@@ -132,14 +127,10 @@ export const roomSchema = {
           fields: [
             {
               name: "semester",
-              title: "Semester",
+              title: "Period",
               type: "string",
               options: {
-                list: [
-                  "1st Semester",
-                  "2nd Semester",
-                  "Summer",
-                ],
+                list: ["1st Semester", "2nd Semester", "July", "August"],
               },
               validation: (Rule) => Rule.required(),
             },
@@ -169,7 +160,7 @@ export const roomSchema = {
             },
             prepare({ semester, year }) {
               return {
-                title: `${semester} - ${year}`, // Combine semester and year
+                title: `${semester} - ${year}`,
                 subtitle: year,
               };
             },
@@ -181,21 +172,19 @@ export const roomSchema = {
           if (!bookedPeriods) return true;
 
           const errors = [];
-          const yearMap = new Map(); // Tracks semesters per year
+          const yearMap = new Map();
 
-          // First Pass: Populate yearMap and check duplicates
           bookedPeriods.forEach((period, index) => {
             const { semester, year } = period;
             if (!yearMap.has(year)) {
               yearMap.set(year, {
                 fullYear: false,
                 bothSemesters: false,
-                semesters: new Set(), // Tracks "1st", "2nd", "Summer"
+                semesters: new Set(),
               });
             }
             const yearData = yearMap.get(year);
 
-            // Handle "Full Year"
             if (semester === "Full Year") {
               if (yearData.fullYear) {
                 errors.push(
@@ -203,18 +192,14 @@ export const roomSchema = {
                 );
               }
               yearData.fullYear = true;
-            }
-            // Handle "Both Semesters"
-            else if (semester === "Both Semesters") {
+            } else if (semester === "Both Semesters") {
               if (yearData.bothSemesters) {
                 errors.push(
                   `Already has booked "Both Semesters" for ${year}. Cannot book "Both Semesters" twice in ${year}.`
                 );
               }
               yearData.bothSemesters = true;
-            }
-            // Handle "1st", "2nd", "Summer"
-            else {
+            } else {
               if (yearData.semesters.has(semester)) {
                 errors.push(
                   `Already has booked "${semester}" for ${year}. Cannot book "${semester}" twice in ${year}.`
@@ -224,40 +209,37 @@ export const roomSchema = {
             }
           });
 
-          // Second Pass: Check all conflicts
           bookedPeriods.forEach((period, index) => {
             const { semester, year } = period;
             const yearData = yearMap.get(year);
 
-            // Conflict 1: "Full Year" vs. any other entry
             if (semester === "Full Year") {
               if (yearData.bothSemesters || yearData.semesters.size > 0) {
                 errors.push(
-                  `"Already has "Both Semesters" or "1st/2nd Semester" or "Summer" for ${year}. "Full Year" cannot booked with other semesters or "Both Semesters" or "1st/2nd Semester" or "Summer" in ${year}.`
+                  `Already has other periods booked for ${year}. "Full Year" cannot be booked with other periods in ${year}.`
                 );
               }
             } else {
               if (yearData.fullYear) {
                 errors.push(
-                  `Already has booked "Full Year" in ${year}. "${semester}" cannot book with "Full Year" in ${year}.`
+                  `Already has booked "Full Year" in ${year}. "${semester}" cannot be booked with "Full Year" in ${year}.`
                 );
               }
             }
 
-            // Conflict 2: "Both Semesters" vs. "1st" or "2nd"
             if (semester === "Both Semesters") {
               const hasIndividual = ["1st Semester", "2nd Semester"].some((s) =>
                 yearData.semesters.has(s)
               );
               if (hasIndividual) {
                 errors.push(
-                  `Already has booked "1st/2nd Semester" in ${year}. "Both Semesters" cannot book with "1st/2nd Semester" in ${year} .`
+                  `Already has booked semester periods in ${year}. "Both Semesters" cannot be booked with individual semesters in ${year}.`
                 );
               }
             } else if (["1st Semester", "2nd Semester"].includes(semester)) {
               if (yearData.bothSemesters) {
                 errors.push(
-                  ` Already has booked Both Semesters in ${year}. "${semester}" cannot book with "Both Semesters" in ${year}.`
+                  `Already has Both Semesters booked in ${year}. "${semester}" cannot be booked with "Both Semesters" in ${year}.`
                 );
               }
             }
