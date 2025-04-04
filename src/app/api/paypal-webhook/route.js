@@ -353,7 +353,7 @@ async function updateSemesterPayment(bookingId, semester, paymentDate) {
     .patch(bookingId)
     .insert("after", `${semesterField}.months[-1]`, [
       {
-        _key: uuidv4(),
+        _key: uuidv4() + "__^^__" + Math.random().toString(36).substr(2, 9),
         month: monthName,
         status: "paid",
       },
