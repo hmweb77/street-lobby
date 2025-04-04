@@ -116,7 +116,7 @@ export async function POST(req) {
     });
 
     await storePaymentInfo(bookedPeriods, roomUpdatesMap, stripeCustomer.id, session.id);
-    await sendBookingEmails({
+     sendBookingEmails({
       userName: commonUserDetails.name,
       customerEmail: commonUserDetails.email,
       paymentIntents: paymentIntents,
