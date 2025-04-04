@@ -28,7 +28,7 @@ export default defineConfig({
       const isAdmin = context.currentUser?.roles.some(role => role.name === 'administrator');
   
       // If the user is an admin, return all actions
-      if (isAdmin) return prev.filter(action => action.action !== 'duplicate');
+      if (isAdmin) return prev.filter(action => ![ 'unpublish', 'duplicate'].includes(action.action));
   
       // Otherwise, remove "delete", "unpublish", and "duplicate"
       return context.schemaType === 'booking'

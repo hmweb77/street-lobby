@@ -1,4 +1,10 @@
-import { useState, useContext, createContext, useEffect, useCallback } from "react";
+import {
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   CreditCard,
   Landmark,
@@ -88,9 +94,7 @@ const Timer = ({ initialSeconds, onExpire }) => {
   );
 };
 
-
-
-const TimeLimitNotice = ({handleTimerExpire}) => (
+const TimeLimitNotice = ({ handleTimerExpire }) => (
   <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-8">
     <div className="flex items-center gap-4">
       <div className="flex-shrink-0">
@@ -113,7 +117,6 @@ const TimeLimitNotice = ({handleTimerExpire}) => (
 );
 
 // Timer Component
-
 
 const PaymentApi = {
   card: {
@@ -142,13 +145,12 @@ export default function PaymentSelector({ onSuccess }) {
 
   const [approvedIndices, setApprovedIndices] = useState([]);
 
-// Add useEffect for redirection
-useEffect(() => {
-  if (paypalApprovals && approvedIndices.length === paypalApprovals.length) {
-    router.push('/payment-success');
-  }
-}, [approvedIndices, paypalApprovals, router]);
-
+  // Add useEffect for redirection
+  useEffect(() => {
+    if (paypalApprovals && approvedIndices.length === paypalApprovals.length) {
+      router.push("/payment-success");
+    }
+  }, [approvedIndices, paypalApprovals, router]);
 
   const handleBooking = async () => {
     if (state.bookingPeriods.length <= 0) {
@@ -179,7 +181,10 @@ useEffect(() => {
       const responseData = await response.json();
 
       if (PaymentApi[selectedPayment].redirectOnSuccess) {
-        if (selectedPayment === "paypal" && responseData.paymentDetails?.length > 1) {
+        if (
+          selectedPayment === "paypal" &&
+          responseData.paymentDetails?.length > 1
+        ) {
           setPaypalApprovals(responseData.paymentDetails);
           clearAllBookings();
           clearParams();
@@ -287,58 +292,87 @@ useEffect(() => {
     return (
       <div className="w-full max-w-4xl mx-auto min-h-screen p-6 space-y-8">
         <TimeLimitNotice handleTimerExpire={handleTimerExpire} />
-        
+
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-700">
-            For the PayPal payment policies, you need to approve the payments one by one. 
-            After confirming all payments, your booking will be finalized.
+            For the PayPal payment policies, you need to approve the payments
+            one by one. After confirming all payments, your booking will be
+            finalized.
           </p>
         </div>
-  
+
         {paypalApprovals.map((detail, index) => {
           const isApproved = approvedIndices.includes(index);
           return (
             <div key={index} className="border rounded-lg p-4 space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">{detail.planData.name}</h3>
-                <p className="text-sm text-gray-600">{detail.planData.description}</p>
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">
+                  {detail.customDetails.roomTitle}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Semester:</span>
+                    <span>{detail.customDetails.semester}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Academic Year:</span>
+                    <span>{detail.customDetails.year}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Payment Type:</span>
+                    <span>
+                      {detail.customDetails.semester.includes("Semester")
+                        ? "Semester/Monthly"
+                        : "Total"}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {detail.planData.description}
+                </p>
               </div>
-              
-              <div className="flex justify-between items-center">
+
+              <div className="flex justify-between items-center pt-2">
                 <span className="font-medium">
-                  {detail.customDetails.semester === 'Summer' ? 'Total' : 'Monthly'} Amount:
+                  {detail.customDetails.semester.includes("Semester")
+                    ? "Semester"
+                    : "Total"}{" "}
+                  Amount:
                 </span>
                 <span className="text-xl font-bold">
                   €{detail.customDetails.amount.toFixed(2)}
                 </span>
               </div>
-  
+
               <button
                 onClick={() => {
-                  setApprovedIndices(prev => [...prev, index]);
-                  window.open(detail.approvalUrl, '_blank');
+                  setApprovedIndices((prev) => [...prev, index]);
+                  window.open(detail.approvalUrl, "_blank");
                 }}
                 disabled={isApproved}
                 className={`w-full bg-gray-900 text-white py-3 px-6 rounded-lg transition-colors font-medium ${
-                  isApproved ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'
+                  isApproved
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-800"
                 }`}
               >
-                {isApproved ? 'Approval Started' : `Approve ${detail.customDetails.semester === 'Summer' ? 'Total' : 'Monthly'} Payment`}
+                {isApproved
+                  ? "Approval Started"
+                  : `Approve ${detail.customDetails.semester.includes("Semester") ? "Semester" : "Total"} Payment`}
               </button>
             </div>
           );
         })}
-  
+
         <div className="pt-4 border-t">
           <div className="text-center text-sm text-gray-500">
-            {approvedIndices.length} of {paypalApprovals.length} payments approved
+            {approvedIndices.length} of {paypalApprovals.length} payments
+            approved
           </div>
         </div>
       </div>
     );
   }
-
-
 
   return (
     <div className="w-full max-w-4xl mx-auto min-h-screen p-6 space-y-8">
@@ -360,7 +394,12 @@ useEffect(() => {
             active: true,
           },
           { value: "bank", label: "Bank Transfer", img: "/banktransfer.png" },
-          { value: "paypal", label: "PayPal", img: "/paypal.png" , active: true},
+          {
+            value: "paypal",
+            label: "PayPal",
+            img: "/paypal.png",
+            active: true,
+          },
           { value: "later", label: "Pay Later", img: "/pay-later.png" },
         ].map((method) => (
           <div

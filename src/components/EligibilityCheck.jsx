@@ -81,11 +81,8 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         }
       });
 
-      if (state.commonUserDetails.age) {
-        const age = parseInt(state.commonUserDetails.age);
-        if (age < 20 || age > 40) {
-          newErrors["common-age"] = "Age must be between 20 and 40";
-        }
+      if (!state.commonUserDetails.age) {
+          newErrors["common-age"] = "Age must be required";
       }
 
       if (
@@ -111,11 +108,9 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           }
         });
 
-        if (period.userDetails?.age) {
+        if (!period.userDetails?.age) {
           const age = parseInt(period.userDetails.age);
-          if (age < 20 || age > 40) {
-            newErrors[`${index}-age`] = "Age must be between 20 and 40";
-          }
+            newErrors[`${index}-age`] = "Age must be required";
         }
 
         if (
@@ -145,6 +140,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             roomId: p.roomId,
             semester: p.semester,
             year: p.year,
+            userDetails: p.userDetails,
           })),
         }),
       });
@@ -180,7 +176,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             </p>
             <p className="text-sm text-gray-600 mt-1">
               {period.year} | {period.semester} - €{period.price.toFixed(2)}{" "}
-              {period.semester === "Summer" ? "/ Month" : "/ Month"}
+              {period.semester.includes("Semester") ? "/ Month" : "/ Month (One)"}
             </p>
           </div>
         ))}
@@ -208,7 +204,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Age* (20-40)
+            Age*
           </label>
           <input
             type="number"
@@ -337,7 +333,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         <h3 className="font-bold text-lg">
           {period.propertyTitle}, {period.roomTitle} | {period.year} |{" "}
           {period.semester} | €{period.price.toFixed(2)}{" "}
-          {period.semester === "Summer" ? "/ Month" : "/ Month"}
+          {period.semester.includes("Semester") ? "/ Month" : "/ Month (One)"}
         </h3>
       </div>
 
@@ -362,7 +358,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Age* (20-40)
+            Age*
           </label>
           <input
             type="number"

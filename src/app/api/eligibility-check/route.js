@@ -27,6 +27,28 @@ export async function POST(req) {
     const proposedPeriodsByRoom = new Map();
 
     for (const period of bookingPeriods) {
+      if (!period.roomId || !period.semester || !period.year) {
+        validationErrors.push("Missing required fields");
+        continue;
+      }
+      if (!period.userDetails) {
+        validationErrors.push("Missing user details");
+        continue;
+      }
+      if (!period.userDetails.email) {
+        validationErrors.push("Missing user email");
+        continue;
+      }
+      if (!period.userDetails.name) {
+        validationErrors.push("Missing user name");
+        continue;
+      }
+
+        const userAge = Number.parseInt(period.userDetails.age);
+        if (isNaN(userAge)) validationErrors.push("Missing user age");
+        if (userAge < 20) validationErrors.push("User age must be at least 20");
+        if (userAge > 40) validationErrors.push("User age must be at most 40");
+
       const roomId = period.roomId;
       const docId = `${roomId}_${period.semester}_${period.year}`;
 
