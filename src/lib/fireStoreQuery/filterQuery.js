@@ -26,7 +26,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
     colivingCapacity,
   } = filters;
 
-
   try {
     // Base collection reference
     let roomsQuery = query(
@@ -67,10 +66,12 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
                   : null;
 
                 // Fetch Image URL from Sanity
-                const imageUrl = room.images?.[0]
-                  ? await getSanityImageUrl(room.images?.[0])
-                  : await getSanityImageUrl(propertyDetails?.images?.[0]);
+                const imageUrl =
+                  room.images?.length > 0
+                    ? room?.images
+                    : propertyDetails?.images;
 
+                // await getSanityImageUrl(room.images?.[0])
                 return {
                   ...room,
                   propertyDetails: propertyDetails,
@@ -112,8 +113,10 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             }
           );
 
-          listenToValidProposedPeriods(roomsWithAvailableSemesters,
-            onSnapshotCallback);
+          listenToValidProposedPeriods(
+            roomsWithAvailableSemesters,
+            onSnapshotCallback
+          );
           // onSnapshotCallback(roomsWithAvailableSemesters);
         } catch (error) {
           console.error("Error processing rooms:", error);
@@ -177,9 +180,10 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
                 : null;
 
               // Fetch Image URL from Sanity
-              const imageUrl = room.images?.[0]
-                  ? await getSanityImageUrl(room.images?.[0])
-                  : await getSanityImageUrl(propertyDetails?.images?.[0]);
+              const imageUrl =
+                room.images?.length > 0
+                  ? room?.images
+                  : propertyDetails?.images;
 
               return {
                 ...room,
@@ -224,8 +228,10 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           };
         });
 
-        listenToValidProposedPeriods(roomsWithAvailableSemesters,
-          onSnapshotCallback);
+        listenToValidProposedPeriods(
+          roomsWithAvailableSemesters,
+          onSnapshotCallback
+        );
 
         // onSnapshotCallback(roomsWithAvailableSemesters);
       } catch (error) {
@@ -298,9 +304,11 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
           };
         });
 
-        listenToValidProposedPeriods(roomsWithAvailableSemesters,
-          onSnapshotCallback);
-          // onSnapshotCallback(roomsWithAvailableSemesters);
+        listenToValidProposedPeriods(
+          roomsWithAvailableSemesters,
+          onSnapshotCallback
+        );
+        // onSnapshotCallback(roomsWithAvailableSemesters);
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);
@@ -353,10 +361,10 @@ export const fetchAllLocations = async () => {
 
 // Helper function to get remaining available semesters for a specific year
 
-
-
-
-export function listenToValidProposedPeriods(roomsWithAvailableSemesters, onSnapshotCallback) {
+export function listenToValidProposedPeriods(
+  roomsWithAvailableSemesters,
+  onSnapshotCallback
+) {
   const now = new Date();
 
   // Firestore query to get only non-expired proposed periods
@@ -386,4 +394,3 @@ export function listenToValidProposedPeriods(roomsWithAvailableSemesters, onSnap
     onSnapshotCallback(updatedRooms); // Call the provided callback with updated data
   });
 }
-

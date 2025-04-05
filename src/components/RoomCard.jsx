@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useBookingState } from "@/context/BookingContext";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import ImageSlider from "./Slider/image-slider";
 
 const semesterConflicts = {
   "1st Semester": ["Both Semesters", "Full Year"],
@@ -50,7 +51,7 @@ const RoomCard = ({ room, isReversed = false }) => {
     setLocalState({
       roomDetails: {
         id: room.id,
-        title: room.roomNumber,
+        title: room.title,
         propertyTitle: room.propertyDetails?.propertyName,
         imageUrl: room.imageUrl,
         roomType: room.roomType,
@@ -209,20 +210,17 @@ const RoomCard = ({ room, isReversed = false }) => {
       className={`${isReversed ? "flex flex-col" : ""} flex flex-col md:flex-row md:justify-center gap-4 bg-white rounded-lg py-5`}
     >
       <div>
-        {localState.roomDetails.imageUrl && (
-          <img
-            src={localState.roomDetails.imageUrl}
-            alt={`Room ${localState.roomDetails.title}`}
-            className="w-full md:w-[401px] h-[291px] object-cover rounded-md"
-          />
-        )}
+        <ImageSlider 
+          alt={localState.roomDetails.roomTitle}
+          images={localState.roomDetails.imageUrl}
+        />
       </div>
       <div className="flex md:w-96 items-center">
         <div className="py-4 px-2 w-full">
           <div className="w-full flex flex-row gap-4 justify-between items-center mb-4">
             <div>
               <h3 className="font-bold text-2xl">
-                {localState.roomDetails.propertyTitle}, Room{" "}
+                {/* {localState.roomDetails.propertyTitle}, Room{" "} */}
                 {localState.roomDetails.title}
               </h3>
               <p className="text-sm text-gray-500">
