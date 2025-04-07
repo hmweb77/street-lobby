@@ -176,7 +176,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
             </p>
             <p className="text-sm text-gray-600 mt-1">
               {period.year} | {period.semester} - €{period.price.toFixed(2)}{" "}
-              {period.semester.includes("Semester") ? "/ Month" : "/ Month (One)"}
+              {period.semester.includes("Semester") ? "/ Month" : ""}
             </p>
           </div>
         ))}
@@ -333,7 +333,7 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
         <h3 className="font-bold text-lg">
           {period.propertyTitle}, {period.roomTitle} | {period.year} |{" "}
           {period.semester} | €{period.price.toFixed(2)}{" "}
-          {period.semester.includes("Semester") ? "/ Month" : "/ Month (One)"}
+          {period.semester.includes("Semester") ? "/ Month" : ""}
         </h3>
       </div>
 

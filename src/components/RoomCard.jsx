@@ -289,7 +289,7 @@ const RoomCard = ({ room, isReversed = false }) => {
                             />
                             <span className={disabled ? "line-through" : ""}>
                               {semester} - €
-                              {calculatePrice(semester).toFixed(2)} / {semester.includes("Semester") ? "Month" : "Month (One)"}
+                              {calculatePrice(semester).toFixed(2)}  {semester.includes("Semester") ? "/ Month" : ""}
                             </span>
                           </label>
                         );
