@@ -33,9 +33,9 @@ function page() {
           </p>
 
           <div className="my-24 md:mx-16">
-            <div className="bg-black text-white rounded-xl  my-8 flex flex-col md:flex-row items-center justify-center gap-4 px-6 md:px-24 py-4 md:py-8 text-center md:text-left">
+            <div className="bg-black text-white rounded-xl my-8 flex flex-col md:flex-row items-center justify-center gap-4 px-6 md:px-24 py-4 md:py-8 text-center md:text-left">
               <IoHomeOutline className="h-8 w-8 text-green-500 flex-shrink-0" />
-              <p className="text-sm whitespace-nowrap">
+              <p className="text-sm md:whitespace-nowrap">
                 You can book a room, or in the case you are a group of friends
                 or family, you can book an entire residence.
               </p>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { fetchAllLocations } from "@/lib/fireStoreQuery/filterQuery";
 import { useUrlSearchParams } from "@/context/UrlSearchParamsContext";
 import PriceSlider from "@/components/PriceSlider";
+import PageTitle from "@/components/PageTitle";
 
 const LandingPage = () => {
   const [expandedFilters, setExpandedFilters] = useState([]);
@@ -140,14 +141,18 @@ const LandingPage = () => {
   return (
     <main className="py-8">
       <div className="">
-        <div className="flex justify-center">
+        <PageTitle 
+          title={"BOOK NOW"}
+          isShowBack={false}
+        />
+        {/* <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
             <span className="absolute -right-1 text-[#4AE54A] z-0">
               BOOK NOW
             </span>
             <span className="relative text-black z-10">BOOK NOW</span>
           </h1>
-        </div>
+        </div> */}
         <div className="mb-4 text-center">
           <p className="text-base font-normal">
             your next staycation in Lisbon
