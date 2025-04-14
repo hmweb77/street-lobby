@@ -139,8 +139,12 @@ const EligibilityCheck = ({ onNext, isEligible, setIsEligible }) => {
           bookingPeriods: state.bookingPeriods.map((p) => ({
             roomId: p.roomId,
             semester: p.semester,
+            propertyTitle: p.propertyTitle,
+            roomTitle: p.roomTitle,
+            price: p.price,
             year: p.year,
             userDetails: p.userDetails,
+            ...p
           })),
         }),
       });

@@ -94,8 +94,10 @@ const RoomCard = ({ room, isReversed = false }) => {
     );
   }, [localState, globalState, room.id]);
 
+  console.log(room);
+
   const getRoomDetails = () => ({
-    roomTitle: room.roomNumber,
+    roomTitle: room.title,
     propertyTitle: room.propertyDetails?.propertyName,
     imageUrl: room.imageUrl,
     roomType: room.roomType,

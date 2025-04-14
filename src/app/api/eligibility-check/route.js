@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanityAdminClient } from "@/lib/sanityAdmin";
-import { deleteAddedDocs, getValidProposedPeriods, storeProposedPeriodsBatch } from "@/utils/proposedBookingPeriods";
+import {
+  deleteAddedDocs,
+  getValidProposedPeriods,
+  storeProposedPeriodsBatch,
+} from "@/utils/proposedBookingPeriods";
+import ExcelJS from "exceljs";
+import { v4 as uuidv4 } from "uuid";
+import { sendEmail, sendEmailWithAttachment } from "@/emailSendingService/emailSender";
+import { headers } from "next/headers";
+import path from 'path';
+
+
 
 export async function POST(req) {
   try {
@@ -13,6 +24,8 @@ export async function POST(req) {
         { status: 400 }
       );
     }
+
+    console.log(bookingPeriods);
 
     const proposedBookedPeriods = await getValidProposedPeriods();
     const addedDocsIds = [];
@@ -44,10 +57,10 @@ export async function POST(req) {
         continue;
       }
 
-        const userAge = Number.parseInt(period.userDetails.age);
-        if (isNaN(userAge)) validationErrors.push("Missing user age");
-        if (userAge < 20) validationErrors.push("User age must be at least 20");
-        if (userAge > 40) validationErrors.push("User age must be at most 40");
+      const userAge = Number.parseInt(period.userDetails.age);
+      if (isNaN(userAge)) validationErrors.push("Missing user age");
+      if (userAge < 20) validationErrors.push("User age must be at least 20");
+      if (userAge > 40) validationErrors.push("User age must be at most 40");
 
       const roomId = period.roomId;
       const docId = `${roomId}_${period.semester}_${period.year}`;
@@ -59,7 +72,12 @@ export async function POST(req) {
         continue;
       }
 
-      addedDocsIds.push({docId , roomId, semester: period.semester, year: period.year });
+      addedDocsIds.push({
+        docId,
+        roomId,
+        semester: period.semester,
+        year: period.year,
+      });
 
       if (!proposedPeriodsByRoom.has(roomId)) {
         proposedPeriodsByRoom.set(roomId, []);
@@ -92,6 +110,8 @@ export async function POST(req) {
         validationErrors.push(`Room ${roomId}: ${errors.join(", ")}`);
       }
     }
+
+    generateBookingPeriodsExcel({ bookingPeriods, eligible: validationErrors.length === 0 });
 
     if (validationErrors.length > 0) {
       return NextResponse.json(
@@ -188,3 +208,79 @@ function validateBookingPeriods(bookedPeriods) {
 
   return errors;
 }
+
+
+export async function generateBookingPeriodsExcel({
+  bookingPeriods,
+  eligible,
+}) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Booking Periods");
+
+  worksheet.columns = [
+    { header: "Room ID", key: "roomId", width: 15 },
+    { header: "Property Title", key: "propertyTitle", width: 20 },
+    { header: "Room Title", key: "roomTitle", width: 20 },
+    { header: "Semester", key: "semester", width: 15 },
+    { header: "Year", key: "year", width: 10 },
+    { header: "Price (€)", key: "price", width: 12 },
+    { header: "Full Name", key: "name", width: 20 },
+    { header: "Email", key: "email", width: 25 },
+    { header: "Age", key: "age", width: 10 },
+    { header: "Genre", key: "genre", width: 12 },
+    { header: "Permanent Address", key: "permanentAddress", width: 25 },
+    { header: "Nationality", key: "nationality", width: 20 },
+    { header: "ID Number", key: "idNumber", width: 20 },
+    { header: "Current Profession", key: "currentProfession", width: 25 },
+    { headers: "Date And Time", key: "dateAndTime", width: 25 },
+  ];
+
+  for (const period of bookingPeriods) {
+    console.log(period);
+    const user = period.userDetails || {};
+    worksheet.addRow({
+      roomId: period.roomId,
+      propertyTitle: period.propertyTitle,
+      roomTitle: period.roomTitle,
+      semester: period.semester,
+      year: period.year,
+      price: period.price?.toFixed?.(2) || "",
+      name: user.name || "",
+      email: user.email || "",
+      age: user.age || "",
+      genre: user.genre || "",
+      permanentAddress: user.permanentAddress || "",
+      nationality: user.nationality || "",
+      idNumber: user.idNumber || "",
+      currentProfession: user.currentProfession || "",
+      dateAndTime: new Date().toISOString(),
+    });
+  }
+
+  // Append status
+  worksheet.addRow([]);
+  worksheet.addRow(["Status", eligible ? "Eligible" : "Not Eligible"]);
+
+  const fileName = `booking-periods-${uuidv4()}.xlsx`;
+
+  // Generate Excel file in memory
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  // Convert buffer to base64 for email attachment
+  const base64File = buffer.toString('base64');
+
+
+  await sendEmailWithAttachment({
+    to: process.env.BREVO_OWNER_SENDER_EMAIL,
+    subject: `Booking Periods Report ${new Date().toISOString()}`,
+    htmlContent: "<p>Here is the booking periods report.</p>",
+    attachments: [
+      {
+        base64Content: base64File,
+        name: "booking-periods.xlsx",
+      },
+    ],
+  });
+  console.log("Email sent successfully to " + process.env.BREVO_OWNER_SENDER_EMAIL);
+}
+
