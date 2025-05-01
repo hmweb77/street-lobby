@@ -123,7 +123,7 @@ export const sendBookingEmails = async ({
     });
 
     // Send email to Customer
-    await sendEmail({
+     sendEmail({
       to: customerEmail,
       subject: "Booking Confirmation",
       htmlContent: customerEmailHtml,
@@ -137,7 +137,7 @@ export const sendBookingEmails = async ({
     });
 
     // Send email to Owner
-    await sendEmail({
+     sendEmail({
       to: process.env.BREVO_OWNER_SENDER_EMAIL,
       subject: "New Booking Alert",
       htmlContent: ownerEmailHtml,
