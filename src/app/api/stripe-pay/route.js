@@ -156,7 +156,7 @@ export async function createOrFetchCustomer(userDetails, _id) {
     });
   } catch (error) {
     console.error("Customer handling error:", error);
-    throw error;
+    // throw error;
   }
 }
 
@@ -168,6 +168,6 @@ export async function updatePaymentMethodAndSetDefault(customerId, paymentMethod
     });
   } catch (error) {
     console.error("Payment method update error:", error);
-    throw error;
+    // throw error;
   }
 }

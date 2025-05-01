@@ -154,7 +154,7 @@ export const sendBookingEmails = async ({
   } catch (error) {
     console.log(error);
     console.error("Error sending booking emails:", error);
-    throw error;
+    // throw error;
   }
 };
 

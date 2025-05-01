@@ -57,7 +57,7 @@ export const sendEmail = async ({
     return await response.json();
   } catch (error) {
     console.error('Email sending failed:', error);
-    throw error; // Re-throw for upstream handling
+    // throw error; // Re-throw for upstream handling
   }
 };
 
@@ -123,7 +123,7 @@ export const sendEmailWithAttachment = async ({
     return await response.json();
   } catch (error) {
     console.error("Email sending failed:", error);
-    throw error;
+    // throw error;
   }
 };
 
