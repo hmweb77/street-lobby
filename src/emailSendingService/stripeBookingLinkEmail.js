@@ -34,11 +34,7 @@ export const CustomerBookingEmail = ({ userName, paymentIntents = [], sessionUrl
           </tbody>
         </table>
 
-        <p style="color: #333;">Click the link below to complete your payment:</p>
-        <a href="${sessionUrl}" 
-           style="display: inline-block; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 4px;">
-          Complete Payment
-        </a>
+     
       </div>
       
       <div style="background: #f4f4f4; padding: 10px; text-align: center;">
