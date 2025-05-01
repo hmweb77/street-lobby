@@ -139,7 +139,7 @@ const LandingPage = () => {
   };
 
   return (
-    <main className="py-8">
+    <main className="pb-8">
       <div className="">
         <PageTitle 
           title={"BOOK NOW"}

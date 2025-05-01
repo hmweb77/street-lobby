@@ -97,9 +97,9 @@ const Timer = ({ initialSeconds, onExpire }) => {
 const TimeLimitNotice = ({ handleTimerExpire }) => (
   <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-8">
     <div className="flex items-center gap-4">
-      <div className="flex-shrink-0">
+      {/* <div className="flex-shrink-0">
         <Clock className="w-6 h-6 text-amber-600" />
-      </div>
+      </div> */}
       <div>
         <h3 className="text-lg font-semibold text-amber-800 mb-1">
           Complete your booking within
@@ -383,24 +383,24 @@ export default function PaymentSelector({ onSuccess }) {
         defaultValue="card"
         disabled={loading}
         onValueChange={setSelectedPayment}
-        className="grid grid-cols-2 md:grid-cols-5 gap-4 py-20"
+        className="grid grid-cols-2 md:grid-cols-5 gap-4"
       >
         {[
-          { value: "apple", label: "Apple Pay", img: "/applepay.png" },
+          // { value: "apple", label: "Apple Pay", img: "/applepay.png" },
           {
             value: "card",
             label: "Credit Card",
             img: "/creditcard.png",
             active: true,
           },
-          { value: "bank", label: "Bank Transfer", img: "/banktransfer.png" },
-          {
-            value: "paypal",
-            label: "PayPal",
-            img: "/paypal.png",
-            active: true,
-          },
-          { value: "later", label: "Pay Later", img: "/pay-later.png" },
+          // { value: "bank", label: "Bank Transfer", img: "/banktransfer.png" },
+          // {
+          //   value: "paypal",
+          //   label: "PayPal",
+          //   img: "/paypal.png",
+          //   active: true,
+          // },
+          // { value: "later", label: "Pay Later", img: "/pay-later.png" },
         ].map((method) => (
           <div
             onClick={() => setSelectedPayment(method.value)}
