@@ -140,7 +140,7 @@ const LandingPage = () => {
 
   return (
     <main className="pb-8">
-      <div className="">
+      <div >
         <PageTitle 
           title={"BOOK NOW"}
           isShowBack={false}
@@ -154,7 +154,7 @@ const LandingPage = () => {
           </h1>
         </div> */}
         <div className="mb-4 text-center">
-          <p className="text-base font-normal">
+          <p className="tracking-tight md:tracking-widest  text-base font-normal">
             your next staycation in Lisbon
           </p>
         </div>
