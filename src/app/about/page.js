@@ -44,7 +44,7 @@ function page() {
 
           <p className="text-md">
             <span className="font-bold">
-              We use TTlock App to control the door opening system,
+              We use TTlock Ap to control the door opening system,
             </span>{" "}
             which means that you can open the door with your cellphone or with a
             code, replacing the physical key, giving you more freedom during
