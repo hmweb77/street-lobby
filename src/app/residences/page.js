@@ -152,12 +152,11 @@ export default function PropertyMap() {
               {property.propertyName}
             </button>
             {selectedProperty === property.id && (
-              <div className="text-gray-600 flex flex-col sm:flex-row gap-2 text-sm mx-8 sm:mx-1 text-center mt-2">
+              <div className="text-gray-600 flex flex-col text-sm mx-8 sm:mx-1 text-center mt-2">
                 <p>{property.addressDescription || ""}</p>
-                <div className="flex justify-center gap-2">
-                  <p>{property.city || ""}</p>
-                  <p>{property.zipCode || ""}</p>
-                </div>
+                <p>
+                  {property.zipCode || ""} {property.city || ""}
+                </p>
               </div>
             )}
           </div>
@@ -177,7 +176,7 @@ export default function PropertyMap() {
           onClick={() => router.push("/")}
           className="rounded-full bg-[#111111] px-6 py-2.5 text-sm text-white hover:bg-opacity-90 transition-opacity"
         >
-          Rent a property
+          Book Now
         </button>
       </div>
     </main>

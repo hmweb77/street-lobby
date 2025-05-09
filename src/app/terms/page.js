@@ -112,7 +112,7 @@ const page = () => {
         <div className="flex justify-center my-12">
           <Link href="/residences">
             <button className="bg-black text-white rounded-full px-8 py-2 text-sm">
-              Rent a property
+              Book Now
             </button>
           </Link>
         </div>

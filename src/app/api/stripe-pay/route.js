@@ -116,12 +116,12 @@ export async function POST(req) {
     });
 
     await storePaymentInfo(bookedPeriods, roomUpdatesMap, stripeCustomer.id, session.id);
-     sendBookingEmails({
-      userName: commonUserDetails.name,
-      customerEmail: commonUserDetails.email,
-      paymentIntents: paymentIntents,
-      sessionUrl: session.url
-    });
+    //  sendBookingEmails({
+    //   userName: commonUserDetails.name,
+    //   customerEmail: commonUserDetails.email,
+    //   paymentIntents: paymentIntents,
+    //   sessionUrl: session.url
+    // });
 
     return NextResponse.json({
       message: "Payment initiated successfully",
