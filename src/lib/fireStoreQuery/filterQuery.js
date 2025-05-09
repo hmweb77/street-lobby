@@ -197,23 +197,40 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           })
         );
 
-        // Apply property-related filters
-        const filteredRooms = roomsWithProperties.filter((room) => {
-          if (!room.propertyDetails) return false;
-          if (location && room.propertyDetails.location?._ref !== location)
-            return false;
-          if (
-            propertyType &&
-            room.propertyDetails.propertyType !== propertyType
-          )
-            return false;
-          if (
-            colivingCapacity &&
-            room.propertyDetails.colivingCapacity > colivingCapacity
-          )
-            return false;
-          return true;
-        });
+        const selectedLocations = location
+        ? Array.isArray(location)
+          ? location
+          : [location]
+        : [];
+      
+      const filteredRooms = roomsWithProperties.filter((room) => {
+        if (!room.propertyDetails) return false;
+      
+        // ✅ Location filter (OR matching)
+        if (
+          selectedLocations.length > 0 &&
+          !selectedLocations.includes(room.propertyDetails.location?._ref)
+        ) {
+          return false;
+        }
+      
+        // ✅ Property type filter
+        if (propertyType && room.propertyDetails.propertyType !== propertyType) {
+          return false;
+        }
+      
+        // ✅ Coliving capacity filter
+        if (
+          colivingCapacity &&
+          room.propertyDetails.colivingCapacity > colivingCapacity
+        ) {
+          return false;
+        }
+      
+        return true; // Keep room if all conditions pass
+      });
+      
+        
 
         // Extract remaining available semesters for the specified year
         const roomsWithAvailableSemesters = filteredRooms.map((room) => {

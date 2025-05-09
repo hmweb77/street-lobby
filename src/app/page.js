@@ -16,11 +16,11 @@ const LandingPage = () => {
   const [locations, setLocations] = useState([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState({
-    period: null,
-    location: null,
-    roomType: null,
-    colivingCapacity: null,
-    propertyType: null,
+    period: [],
+    location: [],
+    roomType: [],
+    colivingCapacity: [],
+    propertyType: [],
   });
 
   const { setParams } = useUrlSearchParams();
@@ -34,9 +34,11 @@ const LandingPage = () => {
       params.set("priceMin", priceValue.min);
     }
     Object.entries(selectedFilters).forEach(([key, value]) => {
-      if (value !== null && value !== false && value !== "false")
-        params.set(key, value);
+      if (Array.isArray(value) && value.length > 0) {
+        params.set(key, value.join(","));
+      }
     });
+    
     setParams(`/rooms?${params.toString()}`);
     router.push(`/rooms?${params.toString()}`);
   };
@@ -65,18 +67,18 @@ const LandingPage = () => {
       options: [
         { label: "1st semester (Sep - Jan)", value: "1st Semester" },
         { label: "2nd semester (Feb - Jun)", value: "2nd Semester" },
-        {
-          label: "Both (1st and 2nd semester)",
-          value: "1st Semester,2nd Semester",
-        },
+        // {
+        //   label: "Both (1st and 2nd semester)",
+        //   value: "1st Semester,2nd Semester",
+        // },
         // Changed Summer to July and August
         { label: "July", value: "July" },
         { label: "August", value: "August" },
         // Updated "All" option to include both months
-        {
-          label: "All (1st, 2nd semester, July and August)",
-          value: "1st Semester,2nd Semester,July,August",
-        },
+        // {
+        //   label: "All (1st, 2nd semester, July and August)",
+        //   value: "1st Semester,2nd Semester,July,August",
+        // },
       ],
     },
     {
@@ -140,11 +142,8 @@ const LandingPage = () => {
 
   return (
     <main className="pb-8">
-      <div >
-        <PageTitle 
-          title={"BOOK NOW"}
-          isShowBack={false}
-        />
+      <div>
+        <PageTitle title={"BOOK NOW"} isShowBack={false} />
         {/* <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
             <span className="absolute -right-1 text-[#4AE54A] z-0">
@@ -274,21 +273,37 @@ const LandingPage = () => {
                               className="flex items-center gap-2"
                             >
                               <input
-                                type="radio"
+                                type="checkbox"
                                 name={filter.id}
                                 value={option.value}
-                                checked={
-                                  selectedFilters[filter.id] === option.value
-                                }
-                                className="accent-black"
-                                onChange={() => {
-                                  setSelectedFilters((prev) => ({
-                                    ...prev,
-                                    [filter.id]: option.value,
-                                  }));
+                                checked={selectedFilters[filter.id]?.includes(
+                                  option.value
+                                )}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+                                  setSelectedFilters((prev) => {
+                                    const prevValues = prev[filter.id] || [];
+                                    if (isChecked) {
+                                      return {
+                                        ...prev,
+                                        [filter.id]: [
+                                          ...prevValues,
+                                          option.value,
+                                        ],
+                                      };
+                                    } else {
+                                      return {
+                                        ...prev,
+                                        [filter.id]: prevValues.filter(
+                                          (val) => val !== option.value
+                                        ),
+                                      };
+                                    }
+                                  });
                                 }}
                                 disabled={option.disabled}
                               />
+
                               <span
                                 className={`${
                                   option.disabled
