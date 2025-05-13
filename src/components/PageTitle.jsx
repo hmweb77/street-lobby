@@ -16,7 +16,7 @@ const PageTitle = ({ title, isShowBack = true }) => {
           />
         )}
         <h1 className="relative  text-center sm:text-5xl text-4xl font-black tracking-wide">
-          <span className={`absolute sm:-right-[4px] text-[#4AE54A] z-0 ${title.length >= 16 ? "-right-[6px]" : "-right-[4px]"}`}>
+          <span className={`absolute sm:-right-[4px] text-[#32F232] z-0 ${title.length >= 16 ? "-right-[6px]" : "-right-[4px]"}`}>
             {title}
           </span>
           <span className="relative text-black z-10">{title}</span>
