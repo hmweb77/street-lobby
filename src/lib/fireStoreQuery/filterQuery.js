@@ -84,23 +84,6 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             })
           );
 
-          // Apply property-related filters
-          // const filteredRooms = roomsWithProperties.filter((room) => {
-          //   if (!room.propertyDetails) return false;
-          //   if (location && room.propertyDetails.location?._ref !== location)
-          //     return false;
-          //   if (
-          //     propertyType &&
-          //     room.propertyDetails.propertyType !== propertyType
-          //   )
-          //     return false;
-          //   if (
-          //     colivingCapacity &&
-          //     room.propertyDetails.colivingCapacity > colivingCapacity
-          //   )
-          //     return false;
-          //   return true;
-          // });
 
           // Extract remaining available semesters for the specified year
           const roomsWithAvailableSemesters = roomsWithProperties.map(
@@ -128,34 +111,12 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
       return unsubscribe ?? (() => {});
     }
 
-    // Apply room-level filters if available
-    // if (year) {
-    //   roomsQuery = query(roomsQuery, where("year", "==", year));
-    // }
+ 
     if (roomType) {
       roomsQuery = query(roomsQuery, where("roomType", "==", roomType));
     }
 
-    // Handle pricing filters
-    // if (semester) {
-    //   if (Array.isArray(semester)) {
-    //     roomsQuery = query(
-    //       roomsQuery,
-    //       where("priceWinter", ">=", minPrice || 0),
-    //       where("priceWinter", "<=", maxPrice || Infinity)
-    //     );
-    //   } else if (semester === "Summer") {
-    //     if (minPrice !== undefined)
-    //       roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
-    //     if (maxPrice !== undefined)
-    //       roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
-    //   } else {
-    //     if (minPrice !== undefined)
-    //       roomsQuery = query(roomsQuery, where("priceSummer", ">=", minPrice));
-    //     if (maxPrice !== undefined)
-    //       roomsQuery = query(roomsQuery, where("priceSummer", "<=", maxPrice));
-    //   }
-    // }
+ 
 
     // Listen for real-time updates
     const unsubscribe = onSnapshot(roomsQuery, async (snapshot) => {
@@ -364,17 +325,6 @@ export const fetchAllLocations = async () => {
   }
 };
 
-// ✅ Function to fetch Sanity image URL
-// const getSanityImageUrl = async (imageRef) => {
-//   try {
-//     if (!imageRef) return null; // Ensure imageRef is valid
-//     const imageData = await client.fetch(`*[_id == $imageRef][0]{"url": asset->url}`, { imageRef });
-//     return imageData?.url || null;
-//   } catch (error) {
-//     console.error("Error fetching image URL from Sanity:", error);
-//     return null;
-//   }
-// };
 
 // Helper function to get remaining available semesters for a specific year
 

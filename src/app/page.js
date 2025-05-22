@@ -28,20 +28,34 @@ const LandingPage = () => {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    params.set("year", selectedYear);
-    if (priceValue.min !== null && priceValue.max !== null) {
-      params.set("priceMax", priceValue.max);
-      params.set("priceMin", priceValue.min);
+  
+    // Add year
+    if (selectedYear) {
+      params.set("year", selectedYear);
     }
-    Object.entries(selectedFilters).forEach(([key, value]) => {
+  
+    // Add price range
+    const { min, max } = priceValue;
+    if (min != null && max != null) {
+      params.set("priceMin", min);
+      params.set("priceMax", max);
+    }
+  
+    // Add multi-value filters
+    for (const [key, value] of Object.entries(selectedFilters)) {
       if (Array.isArray(value) && value.length > 0) {
+        // Encode as comma-separated string
         params.set(key, value.join(","));
       }
-    });
-    
-    setParams(`/rooms?${params.toString()}`);
-    router.push(`/rooms?${params.toString()}`);
+    }
+  
+    const queryString = params.toString();
+    const url = `/rooms?${queryString}`;
+  
+    setParams(url);
+    router.push(url);
   };
+  
 
   const years = Array.from(
     { length: 3 },

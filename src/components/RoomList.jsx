@@ -38,7 +38,7 @@ export default function RoomList() {
       year: searchParams.get("year") || null,
       semester: searchParams.get("period")?.split(",") || null,
       roomType: searchParams.get("roomType") || null,
-      location: searchParams.get("location") || null,
+      location: searchParams.get("location")?.split(",") || [], // ✅ fixed here
       minPrice: Number(searchParams.get("priceMin")) || undefined,
       maxPrice: Number(searchParams.get("priceMax")) || undefined,
       propertyType: searchParams.get("propertyType") || null,
@@ -46,6 +46,7 @@ export default function RoomList() {
     }),
     [searchParams]
   );
+  
 
   useEffect(() => {
     let unsubscribe;

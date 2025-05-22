@@ -74,7 +74,7 @@ export default function PropertyMap() {
           _id,
           propertyName,
           propertyDescriptions,
-          "location": location->{
+          "mapData": propertiesMap->{
             coordinates,
             descriptions,
             zipCode,
@@ -82,6 +82,7 @@ export default function PropertyMap() {
           },
           slug
         }`;
+        
 
         const result = await sanityClient.fetch(query);
 
@@ -92,19 +93,22 @@ export default function PropertyMap() {
         }
 
         const formatted = result
-          .filter((p) => p.location?.coordinates)
-          .map((p) => ({
-            id: p._id,
-            propertyName: p.propertyName,
-            address: p.propertyName,
-            addressDescription: p.location.descriptions,
-            zipCode: p.location.zipCode,
-            city: p.location.city,
-            lat: p.location.coordinates.lat,
-            lng: p.location.coordinates.lng,
-            description: p.propertyDescriptions,
-            slug: p.slug?.current,
-          }));
+        .filter((p) => p.mapData?.coordinates)
+        .map((p) => ({
+          id: p._id,
+          propertyName: p.propertyName,
+          address: p.propertyName,
+          addressDescription: p.mapData.descriptions,
+          zipCode: p.mapData.zipCode,
+          city: p.mapData.city,
+          lat: p.mapData.coordinates.lat,
+          lng: p.mapData.coordinates.lng,
+          description: p.propertyDescriptions,
+          slug: p.slug?.current,
+        }));
+      
+      
+      
 
         setProperties(formatted);
       } catch (err) {

@@ -29,6 +29,12 @@ export const propertySchema = {
       to: [{ type: "location" }],
     },
     {
+      name: "propertiesMap", // This name will be used in GROQ
+      title: "Map Info",
+      type: "reference",
+      to: [{ type: "propertiesmap" }]
+    },
+    {
       name: "colivingCapacity",
       title: "Coliving Capacity",
       type: "number",
