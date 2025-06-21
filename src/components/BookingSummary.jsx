@@ -10,6 +10,7 @@ const BookingSummary = () => {
   const { state, removeBooking, clearAllBookings } = useBookingState();
   const router = useRouter();
   const { urlSearchParams } = useUrlSearchParams();
+  console.log()
 
   const handleKeepBooking = () => {
     router.push(urlSearchParams); // Navigate to previous page
@@ -27,6 +28,8 @@ const BookingSummary = () => {
           <p className="text-gray-400 text-center py-4">No bookings selected</p>
         ) : (
           state.bookingPeriods.map((booking) => (
+          
+            
             <div
               key={`${booking.roomId}-${booking.year}-${booking.semester}`}
               className="bg-white max-w-xl mx-auto p-4 rounded-md border border-gray-100 relative"
@@ -34,16 +37,14 @@ const BookingSummary = () => {
               <div className="flex gap-4">
                 {/* Room Image */}
                 <div className="w-24 h-24 bg-gray-100 relative flex-shrink-0">
-                  {booking.imageUrl ? (
+                 
                     <Image
-                      src={booking.imageUrl || "/placeholder.svg"}
+                      src={booking.imageUrl || "/room.jpg"}
                       alt={booking.roomTitle}
                       fill
                       className="object-cover"
                     />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200"></div>
-                  )}
+            
                 </div>
 
                 {/* Room Details */}
@@ -57,12 +58,12 @@ const BookingSummary = () => {
                         booking.semester
                       )
                     }
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
 
-                  <h3 className="font-bold text-gray-900">
+                  <h3 className="font-bold mt-4 text-gray-900">
                     {booking.propertyTitle}, {booking.roomTitle}
                   </h3>
 
