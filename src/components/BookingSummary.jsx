@@ -62,7 +62,7 @@ const BookingItem = ({ booking, removeBooking }) => {
             }
             className="absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </button>
 
           <h3 className="font-bold mt-4 text-gray-900">
