@@ -54,7 +54,6 @@ const BookingItem = ({ booking, removeBooking }) => {
             <div className="bg-gray-200 animate-pulse w-full h-full" />
           )}
         </div>
-
         {/* Room Details */}
         <div className="flex-1">
           <button
