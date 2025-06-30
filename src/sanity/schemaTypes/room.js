@@ -32,7 +32,7 @@ export const roomSchema = {
       type: "array",
       of: [{ type: "image" }],
       options: { layout: "grid" },
-      validation: (Rule) => Rule.max(10),
+      validation: (Rule) => Rule.max(20),
     },
     {
       name: "roomNumber",
