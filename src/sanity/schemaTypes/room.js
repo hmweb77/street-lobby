@@ -58,7 +58,7 @@ export const roomSchema = {
     },
     {
       name: "priceSummer",
-      title: "Price ( July/August ) Total",
+      title: "Price ( July/August ) per month",
       type: "number",
       validation: (Rule) => Rule.required().min(0),
     },
@@ -248,12 +248,7 @@ export const roomSchema = {
           return errors.length > 0 ? errors.join(" ") : true;
         }),
     },
-    {
-      name: "isAvailable",
-      title: "Is Available?",
-      type: "boolean",
-      initialValue: true,
-    },
+  
     {
       name: "services",
       title: "Services",

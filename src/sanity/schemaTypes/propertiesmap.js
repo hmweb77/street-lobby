@@ -14,6 +14,11 @@ export const propertiesMap = {
         type: "string",
       },
       {
+        name: "alLicense",
+        title: "AL License",
+        type: "string",
+      },
+      {
         name: "zipCode",
         title: "Zip Code",
         type: "string",

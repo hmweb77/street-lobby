@@ -24,13 +24,13 @@ export const propertySchema = {
     },
     {
       name: "location",
-      title: "Location",
+      title: "Neighborhood Map",
       type: "reference",
       to: [{ type: "location" }],
     },
     {
       name: "propertiesMap", // This name will be used in GROQ
-      title: "Map Info",
+      title: "Properties Map",
       type: "reference",
       to: [{ type: "propertiesmap" }]
     },
@@ -47,11 +47,7 @@ export const propertySchema = {
         list: ["House", "Apartment", "Any"],
       },
     },
-    {
-      name: "alLicense",
-      title: "AL License",
-      type: "string",
-    },
+   
     {
       name: "images",
       title: "Images",

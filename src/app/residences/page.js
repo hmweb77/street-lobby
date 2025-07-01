@@ -74,6 +74,7 @@ export default function PropertyMap() {
           _id,
           propertyName,
           propertyDescriptions,
+          alLicense,
           "mapData": propertiesMap->{
             coordinates,
             descriptions,
@@ -98,6 +99,7 @@ export default function PropertyMap() {
           id: p._id,
           propertyName: p.propertyName,
           address: p.propertyName,
+          alLicense:p.alLicense,
           addressDescription: p.mapData.descriptions,
           zipCode: p.mapData.zipCode,
           city: p.mapData.city,
@@ -160,6 +162,9 @@ export default function PropertyMap() {
                 <p>{property.addressDescription || ""}</p>
                 <p>
                   {property.zipCode || ""} {property.city || ""}
+                </p>
+                <p>
+                AL License : { property.alLicense}
                 </p>
               </div>
             )}
