@@ -270,7 +270,7 @@ export const roomSchema = {
       const isDraft = _id.startsWith("drafts");
       return {
         title: `${title} (Room ${roomNumber})`,
-        subtitle: isDraft ? "Draft" : isAvailable ? "Available" : "Unavailable",
+        // subtitle: isDraft ? "Draft" : isAvailable ? "Available" : "Unavailable",
       };
     },
   },
