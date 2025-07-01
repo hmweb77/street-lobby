@@ -266,10 +266,10 @@ export const roomSchema = {
       isAvailable: "isAvailable",
       _id: "_id",
     },
-    prepare({ title, roomNumber, isAvailable, _id }) {
+    prepare({ title, _id }) {
       const isDraft = _id.startsWith("drafts");
       return {
-        title: `${title} (Room ${roomNumber})`,
+        title: `${title} `,
         // subtitle: isDraft ? "Draft" : isAvailable ? "Available" : "Unavailable",
       };
     },
