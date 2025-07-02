@@ -23,17 +23,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
   try {
-    // Get the raw body as text for signature verification
+    console.log('Webhook received at:', new Date().toISOString());
+    
     const rawBody = await req.text();
     const signature = req.headers.get("stripe-signature");
 
-    // Use the correct webhook secret based on environment
+    // Environment-based secret selection
     const endpointSecret = process.env.NODE_ENV === 'production' 
       ? process.env.STRIPE_WEBHOOK_SECRET_LIVE 
       : process.env.STRIPE_WEBHOOK_SECRET;
 
+    console.log('Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasSecret: !!endpointSecret,
+      secretPrefix: endpointSecret?.substring(0, 15)
+    });
+
     if (!endpointSecret) {
-      console.error("Webhook secret not configured");
+      console.error("Webhook secret not configured for environment:", process.env.NODE_ENV);
       return NextResponse.json(
         { error: "Webhook secret not configured" },
         { status: 500 }
@@ -50,43 +57,76 @@ export async function POST(req) {
 
     let event;
     try {
-      // Verify the webhook signature
       event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
+      console.log(`✅ Webhook signature verified for event: ${event.type}`);
     } catch (err) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
+      console.error(`❌ Webhook signature verification failed: ${err.message}`);
       return NextResponse.json(
         { error: `Webhook signature verification failed: ${err.message}` },
         { status: 400 }
       );
     }
 
-    console.log(`Processing event: ${event.type}`);
+    console.log(`Processing event: ${event.type} (${event.id})`);
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutSessionCompleted(event);
-        break;
-      case "invoice.paid":
-        await handleInvoicePaid(event);
-        break;
-      case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(event);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    try {
+      switch (event.type) {
+        case "checkout.session.completed":
+          await handleCheckoutSessionCompleted(event);
+          break;
+        case "invoice.paid":
+          await handleInvoicePaid(event);
+          break;
+        case "invoice.payment_failed":
+          await handleInvoicePaymentFailed(event);
+          break;
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+    } catch (handlerError) {
+      console.error(`Error in ${event.type} handler:`, handlerError);
+      
+      // Send error notification
+      try {
+        await sendEmail({
+          to: process.env.BREVO_OWNER_SENDER_EMAIL,
+          subject: `🚨 Webhook Handler Error - ${event.type}`,
+          htmlContent: `
+            <h2>Webhook Processing Error</h2>
+            <p><strong>Event Type:</strong> ${event.type}</p>
+            <p><strong>Event ID:</strong> ${event.id}</p>
+            <p><strong>Error:</strong> ${handlerError.message}</p>
+            <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+            <pre>${handlerError.stack}</pre>
+          `,
+        });
+      } catch (notificationError) {
+        console.error('Failed to send error notification:', notificationError);
+      }
+      
+      throw handlerError;
     }
+
+    console.log(`✅ Successfully processed ${event.type} event`);
 
     return NextResponse.json(
       {
         message: "Webhook processed successfully",
         received: true,
+        eventType: event.type,
+        eventId: event.id
       },
       { status: 200 }
     );
+    
   } catch (error) {
-    console.error("Error processing webhook:", error);
+    console.error("❌ Error processing webhook:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { 
+        message: "Internal Server Error", 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }
@@ -94,6 +134,8 @@ export async function POST(req) {
 
 async function handleCheckoutSessionCompleted(event) {
   try {
+    console.log('Processing checkout.session.completed event');
+    
     let session = event.data.object;
     const paymentType = session.metadata?.paymentType;
     
@@ -102,6 +144,8 @@ async function handleCheckoutSessionCompleted(event) {
     }
 
     const sessionId = session.id;
+    
+    // Expand the session to get payment intent details
     session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ["payment_intent"],
     });
@@ -109,20 +153,30 @@ async function handleCheckoutSessionCompleted(event) {
     const customerEmail = session.customer_details?.email;
     const customerName = session.customer_details?.name;
     const paymentIntent = session.payment_intent;
+    
+    if (!paymentIntent) {
+      console.error(`No payment intent found for session: ${sessionId}`);
+      return;
+    }
+    
     const paymentMethodId = paymentIntent.payment_method;
 
     console.log(`Processing checkout session: ${sessionId}`);
 
+    // Get payment info from your storage
     const paymentInfo = await getPaymentInfo(sessionId);
     if (!paymentInfo) {
       console.error(`No payment info found for session: ${sessionId}`);
       return;
     }
 
-    await updatePaymentMethodAndSetDefault(
-      paymentInfo.stripeCustomerId,
-      paymentMethodId
-    );
+    // Update payment method
+    if (paymentInfo.stripeCustomerId && paymentMethodId) {
+      await updatePaymentMethodAndSetDefault(
+        paymentInfo.stripeCustomerId,
+        paymentMethodId
+      );
+    }
 
     const bookingPeriods = paymentInfo.bookingInformation;
     const roomUpdatesMap = new Map(JSON.parse(paymentInfo.roomUpdatesMap));
@@ -130,23 +184,43 @@ async function handleCheckoutSessionCompleted(event) {
 
     // Create bookings and subscriptions
     for (const period of bookingPeriods) {
-      const bookingId = await createBooking(period);
-      bookingIds.push(bookingId);
+      try {
+        const bookingId = await createBooking(period);
+        bookingIds.push(bookingId);
 
-      if (period.semester === "1st Semester" || period.semester === "2nd Semester") {
-        await createSubscriptionForSemester(period, paymentInfo.stripeCustomerId, bookingId);
+        if (period.semester === "1st Semester" || period.semester === "2nd Semester") {
+          await createSubscriptionForSemester(period, paymentInfo.stripeCustomerId, bookingId);
+        }
+      } catch (bookingError) {
+        console.error(`Error creating booking for period:`, period, bookingError);
+        // Continue with other periods
       }
     }
 
     // Update room availability
-    await addBookingToRoom(roomUpdatesMap);
+    try {
+      await addBookingToRoom(roomUpdatesMap);
+    } catch (roomUpdateError) {
+      console.error('Error updating room availability:', roomUpdateError);
+      // Don't throw - booking is created, room update can be manual
+    }
 
     // Send confirmation emails
-    await sendBookingConfirmationEmails(bookingPeriods, customerEmail, customerName, sessionId);
+    try {
+      await sendBookingConfirmationEmails(bookingPeriods, customerEmail, customerName, sessionId);
+    } catch (emailError) {
+      console.error('Error sending confirmation emails:', emailError);
+      // Don't throw - booking is created, email can be sent manually
+    }
 
     // Cleanup
-    await deletePaymentInfo(sessionId);
-    await cleanupExpiredPeriods();
+    try {
+      await deletePaymentInfo(sessionId);
+      await cleanupExpiredPeriods();
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
+      // Don't throw - main process is complete
+    }
 
     console.log(`Successfully processed booking for session: ${sessionId}`);
   } catch (error) {
@@ -244,54 +318,108 @@ async function createSubscriptionForSemester(period, customerId, bookingId) {
 
 async function handleInvoicePaid(event) {
   try {
+    console.log('Processing invoice.paid event:', event.data.object.id);
+    
     const invoice = event.data.object;
     const customer = await stripe.customers.retrieve(invoice.customer);
 
     const paymentUpdates = [];
     const paymentItems = [];
 
+    // Add better error handling for line items
+    if (!invoice.lines || !invoice.lines.data || invoice.lines.data.length === 0) {
+      console.log('No line items found in invoice:', invoice.id);
+      return;
+    }
+
     for (const lineItem of invoice.lines.data) {
-      if (lineItem.price.type === "recurring") {
-        const subscription = await stripe.subscriptions.retrieve(lineItem.subscription);
-        const metadata = subscription.metadata;
+      try {
+        // Check if price exists and has type property
+        if (!lineItem.price) {
+          console.warn('Line item missing price:', lineItem.id);
+          continue;
+        }
 
-        paymentUpdates.push(updateBookingPayment(metadata, lineItem.period));
+        if (!lineItem.price.type) {
+          console.warn('Line item price missing type:', lineItem.id);
+          continue;
+        }
 
-        paymentItems.push({
-          description: metadata.description || `Booking ${metadata.bookingId || "N/A"}`,
-          amount: lineItem.amount,
-          periodStart: lineItem.period.start * 1000,
-          periodEnd: lineItem.period.end * 1000,
-          currency: invoice.currency.toUpperCase(),
-        });
+        if (lineItem.price.type === "recurring") {
+          // Check if subscription exists
+          if (!lineItem.subscription) {
+            console.warn('Recurring line item missing subscription:', lineItem.id);
+            continue;
+          }
+
+          const subscription = await stripe.subscriptions.retrieve(lineItem.subscription);
+          
+          if (!subscription.metadata) {
+            console.warn('Subscription missing metadata:', lineItem.subscription);
+            continue;
+          }
+
+          const metadata = subscription.metadata;
+
+          // Add to payment updates
+          paymentUpdates.push(updateBookingPayment(metadata, lineItem.period));
+
+          // Add to payment items for email
+          paymentItems.push({
+            description: metadata.description || `Booking ${metadata.bookingId || "N/A"}`,
+            amount: lineItem.amount || 0,
+            periodStart: lineItem.period?.start ? lineItem.period.start * 1000 : Date.now(),
+            periodEnd: lineItem.period?.end ? lineItem.period.end * 1000 : Date.now(),
+            currency: invoice.currency?.toUpperCase() || 'EUR',
+          });
+        }
+      } catch (lineItemError) {
+        console.error(`Error processing line item ${lineItem.id}:`, lineItemError);
+        // Continue processing other line items
+        continue;
       }
     }
 
-    await Promise.all(paymentUpdates);
-
-    if (customer.email && paymentItems.length > 0) {
-      const totalAmount = paymentItems.reduce((sum, item) => sum + item.amount, 0);
-      const emailContent = RecurringPaymentEmail({
-        customerName: customer.name || "Valued Customer",
-        paymentItems,
-        totalAmount,
-        invoiceId: invoice.id,
-        currency: invoice.currency.toUpperCase(),
-      });
-
-      await Promise.all([
-        sendEmail({
-          to: customer.email,
-          subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
-          htmlContent: emailContent,
-        }),
-        sendEmail({
-          to: process.env.BREVO_OWNER_SENDER_EMAIL,
-          subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
-          htmlContent: emailContent,
-        })
-      ]);
+    // Process payment updates
+    if (paymentUpdates.length > 0) {
+      await Promise.all(paymentUpdates);
+      console.log(`Updated ${paymentUpdates.length} booking payments`);
     }
+
+    // Send email if we have payment items and customer email
+    if (customer.email && paymentItems.length > 0) {
+      try {
+        const totalAmount = paymentItems.reduce((sum, item) => sum + item.amount, 0);
+        const emailContent = RecurringPaymentEmail({
+          customerName: customer.name || "Valued Customer",
+          paymentItems,
+          totalAmount,
+          invoiceId: invoice.id,
+          currency: invoice.currency?.toUpperCase() || 'EUR',
+        });
+
+        await Promise.all([
+          sendEmail({
+            to: customer.email,
+            subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
+            htmlContent: emailContent,
+          }),
+          sendEmail({
+            to: process.env.BREVO_OWNER_SENDER_EMAIL,
+            subject: `Payment Processed - ${new Date().toLocaleDateString()}`,
+            htmlContent: emailContent,
+          })
+        ]);
+
+        console.log('Payment confirmation emails sent successfully');
+      } catch (emailError) {
+        console.error('Error sending payment emails:', emailError);
+        // Don't throw - email failure shouldn't fail the webhook
+      }
+    } else {
+      console.log('Skipping email - missing customer email or payment items');
+    }
+
   } catch (error) {
     console.error("Error processing invoice payment:", error);
     throw error;
