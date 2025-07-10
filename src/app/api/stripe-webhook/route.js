@@ -28,7 +28,7 @@ export async function POST(req) {
     // Request Body.
     const rawBody = await req.text();
     const body = JSON.parse(rawBody);
-
+//const
     // const { event  } = body;
     // console.log("🚀 ~ POST ~ event:", event)
     const event = stripe.webhooks.constructEvent(
