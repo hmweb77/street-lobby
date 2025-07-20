@@ -275,6 +275,14 @@ export async function POST(req) {
             senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
             senderName: process.env.BREVO_OWNER_SENDER_NAME,
           });
+          // Send email to owner
+  await sendEmail({
+    to: "streetlobby.co@gmail.com", // Owner email
+    subject: `🏠 New Booking Alert - ${customerName} - €${(totalPaid / 100).toFixed(2)}`,
+    htmlContent: emailContent,
+    senderEmail: process.env.BREVO_OWNER_SENDER_EMAIL,
+    senderName: process.env.BREVO_OWNER_SENDER_NAME,
+  });
         })();
 
         addBookingToRoom(roomUpdatesMap);

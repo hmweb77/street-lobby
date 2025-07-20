@@ -96,11 +96,18 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
             }
           );
 
+          // Sort rooms alphabetically by title
+          const sortedRooms = roomsWithAvailableSemesters.sort((a, b) => {
+            const titleA = a.title || '';
+            const titleB = b.title || '';
+            return titleA.localeCompare(titleB);
+          });
+
           listenToValidProposedPeriods(
-            roomsWithAvailableSemesters,
+            sortedRooms,
             onSnapshotCallback
           );
-          // onSnapshotCallback(roomsWithAvailableSemesters);
+          // onSnapshotCallback(sortedRooms);
         } catch (error) {
           console.error("Error processing rooms:", error);
           onSnapshotCallback([]); // Fallback in case of error
@@ -206,12 +213,19 @@ export const fetchFilteredRooms = async (filters, onSnapshotCallback) => {
           };
         });
 
+        // Sort rooms alphabetically by title
+        const sortedRooms = roomsWithAvailableSemesters.sort((a, b) => {
+          const titleA = a.title || '';
+          const titleB = b.title || '';
+          return titleA.localeCompare(titleB);
+        });
+
         listenToValidProposedPeriods(
-          roomsWithAvailableSemesters,
+          sortedRooms,
           onSnapshotCallback
         );
 
-        // onSnapshotCallback(roomsWithAvailableSemesters);
+        // onSnapshotCallback(sortedRooms);
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);
@@ -282,11 +296,18 @@ export const fetchRoomsBySlug = async (slug, onSnapshotCallback) => {
           };
         });
 
+        // Sort rooms alphabetically by title
+        const sortedRooms = roomsWithAvailableSemesters.sort((a, b) => {
+          const titleA = a.title || '';
+          const titleB = b.title || '';
+          return titleA.localeCompare(titleB);
+        });
+
         listenToValidProposedPeriods(
-          roomsWithAvailableSemesters,
+          sortedRooms,
           onSnapshotCallback
         );
-        // onSnapshotCallback(roomsWithAvailableSemesters);
+        // onSnapshotCallback(sortedRooms);
       } catch (error) {
         console.error("Processing error:", error);
         onSnapshotCallback([]);
