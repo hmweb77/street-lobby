@@ -22,12 +22,12 @@ const Navbar = () => {
   }, [bookingCount]);
 
   const menuItems = [
-    { label: "Home", href: "/" },
+
     { label: "About", href: "/about" },
-    { label: "Residences", href: "/residences" },
     { label: "How to book", href: "/howtobook" },
-    { label: "Rooms for rent", href: "/rooms" },
     { label: "Terms & conditions", href: "/terms" },
+    { label: "Residences", href: "/residences" },
+    { label: "Rooms for rent", href: "/rooms" },
     { label: "Contact", href: "/contact" },
   ];
 

@@ -12,7 +12,7 @@ function page() {
   };
   return (
     <main className="px-4 py-8 max-w-7xl mx-auto">
-      <PageTitle title={"ABOUT"} />
+      {/* <PageTitle title={"ABOUT"} /> */}
 
       <div className="max-w-5xl mx-auto px-4 py-8 font-sans">
         <div className="space-y-4">

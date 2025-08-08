@@ -5,7 +5,7 @@ import { Phone, Instagram } from "lucide-react";
 export default function ContactInfo() {
   return (
     <main className="px-4 py-8 max-w-7xl mx-auto min-h-screen">
-      <PageTitle title={"CONTACT"} />
+      {/* <PageTitle title={"CONTACT"} /> */}
       <div className="max-w-md mx-auto p-6 font-sans">
         <div className="mb-6">
           <p className="font-medium">

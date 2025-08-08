@@ -142,7 +142,7 @@ export default function PropertyMap() {
 
   return (
     <main className="px-4 py-8 max-w-7xl mx-auto">
-      <PageTitle title="RESIDENCES" />
+      {/* <PageTitle title="RESIDENCES" /> */}
 
       <div className="mb-6 mx-auto w-full max-w-5xl flex flex-col items-center space-y-2">
         {properties.map((property) => (

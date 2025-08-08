@@ -155,9 +155,9 @@ const LandingPage = () => {
   };
 
   return (
-    <main className="pb-8">
+    <main className="pb-1">
       <div>
-        <PageTitle title={"BOOK NOW"} isShowBack={false} />
+        {/* <PageTitle title={"BOOK NOW"} isShowBack={false} /> */}
         {/* <div className="flex justify-center">
           <h1 className="relative text-4xl md:text-5xl font-black mb-2 tracking-wide">
             <span className="absolute -right-1 text-[#4AE54A] z-0">
@@ -166,13 +166,13 @@ const LandingPage = () => {
             <span className="relative text-black z-10">BOOK NOW</span>
           </h1>
         </div> */}
-        <div className="mb-4 text-center">
+        {/* <div className="mb-4 text-center">
           <p className="tracking-tight md:tracking-widest  text-base font-normal">
             your next staycation in Lisbon
           </p>
-        </div>
+        </div> */}
 
-        <div className="mb-8 flex justify-center items-center">
+        <div className="mb-1 flex justify-center items-center">
           <Image
             src="/Rectangle 1.svg"
             alt="Featured"
@@ -183,14 +183,14 @@ const LandingPage = () => {
           <Image
             src="/Rectangle 25.svg"
             alt="Featured"
-            width={1440}
-            height={409}
+            width={1240}
+            height={309}
             className="rounded-lg hidden lg:block"
           />
         </div>
 
-        <div className="relative max-w-lg mx-auto mb-8 px-4">
-          <div className="w-full border-2 border-black rounded py-2 px-4 flex items-center">
+        <div className="relative max-w-lg mx-auto px-4">
+          <div className="w-full border-2 border-black rounded py-1 px-4 flex items-center">
             <button
               onClick={() =>
                 document.getElementById("yearScroller").scrollBy({
@@ -366,9 +366,9 @@ const LandingPage = () => {
           })}
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-4 md:mt-1 mb-4 flex justify-center">
           <button
-            className="bg-black text-white py-3 px-8 rounded-full font-medium"
+            className="bg-black text-white py-2 px-8 rounded-full font-medium"
             onClick={handleSearch}
           >
             Search
