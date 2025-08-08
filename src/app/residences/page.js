@@ -79,6 +79,7 @@ export default function PropertyMap() {
             coordinates,
             descriptions,
             zipCode,
+            alLicense,
             city
           },
           slug
